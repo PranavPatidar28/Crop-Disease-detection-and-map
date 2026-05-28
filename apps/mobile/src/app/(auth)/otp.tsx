@@ -1,16 +1,13 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable } from 'react-native';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AuthCard } from '@/features/auth/components/auth-card';
-import { GradientButton } from '@/features/auth/components/gradient-button';
+import { Button } from '@/components/ui/button';
 import { OtpInput } from '@/features/auth/components/otp-input';
 import { useSendOtp } from '@/features/auth/hooks/use-send-otp';
 import { useVerifyOtp } from '@/features/auth/hooks/use-verify-otp';
-import { palette } from '@/theme/colors';
 import { Text, View } from '@/tw';
 import { normalizeError } from '@/utils/errors';
 
@@ -44,7 +41,6 @@ export default function OtpScreen() {
     }
     try {
       await verifyOtp.mutateAsync({ phone, otp: code });
-      // Auth store flips isAuthenticated; (auth)/_layout redirects to "/".
     } catch (err) {
       setError(normalizeError(err).message);
       setOtp('');
@@ -64,83 +60,66 @@ export default function OtpScreen() {
 
   return (
     <View className="flex-1 bg-bg">
-      <LinearGradient
-        colors={[palette.brand[700], palette.brand[900], '#0b1220']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={{ position: 'absolute', inset: 0 }}
-      />
       <SafeAreaView style={{ flex: 1 }}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
-          <View className="flex-1 justify-end gap-6 px-5 pb-10">
-            <Animated.View entering={FadeInUp.duration(450)}>
-              <View className="gap-2 px-1">
-                <Pressable
-                  onPress={() => router.back()}
-                  accessibilityRole="button"
-                  accessibilityLabel="Back"
-                >
-                  <Text className="text-sm text-white/70">‹ Back</Text>
-                </Pressable>
-                <Text className="text-4xl font-bold tracking-tight text-white">
-                  Enter the code
-                </Text>
-                <Text className="text-base text-white/70">
-                  We sent a 6-digit code to +91 {phone}.
-                </Text>
-              </View>
+          <View className="px-4 pt-3">
+            <Pressable
+              onPress={() => router.back()}
+              accessibilityRole="button"
+              accessibilityLabel="Back"
+              className="self-start"
+            >
+              <Text className="text-sm font-bold text-brand-700">‹ Back</Text>
+            </Pressable>
+          </View>
+
+          <View className="flex-1 items-center justify-center gap-5 px-6">
+            <Animated.View entering={FadeInDown.duration(400)} className="items-center gap-1">
+              <Text className="text-2xl font-extrabold tracking-tight text-text">
+                Enter 6-digit code
+              </Text>
+              <Text className="text-sm text-text-muted">Sent to +91 {phone}</Text>
             </Animated.View>
 
-            <Animated.View entering={FadeInDown.delay(150).duration(450)}>
-              <AuthCard>
-                <View className="gap-5">
-                  <OtpInput
-                    value={otp}
-                    onChangeText={setOtp}
-                    error={error}
-                    onComplete={handleSubmit}
-                  />
+            <OtpInput
+              value={otp}
+              onChangeText={setOtp}
+              error={error}
+              onComplete={handleSubmit}
+            />
 
-                  <GradientButton
-                    label={verifyOtp.isPending ? 'Verifying…' : 'Verify'}
-                    loading={verifyOtp.isPending}
-                    onPress={() => handleSubmit()}
-                  />
+            <Pressable accessibilityRole="button" onPress={handleResend} disabled={secondsLeft > 0 || sendOtp.isPending}>
+              <Text
+                className={
+                  secondsLeft > 0
+                    ? 'text-sm font-bold text-text-faint'
+                    : 'text-sm font-bold text-brand-700'
+                }
+              >
+                {secondsLeft > 0
+                  ? `Resend in ${secondsLeft}s`
+                  : sendOtp.isPending
+                    ? 'Sending…'
+                    : 'Resend code'}
+              </Text>
+            </Pressable>
+          </View>
 
-                  <View className="flex-row items-center justify-center gap-1">
-                    <Text className="text-sm text-text-muted">Didn&apos;t get it?</Text>
-                    <Pressable
-                      accessibilityRole="button"
-                      onPress={handleResend}
-                      disabled={secondsLeft > 0 || sendOtp.isPending}
-                    >
-                      <Text
-                        className={
-                          secondsLeft > 0
-                            ? 'text-sm font-semibold text-text-subtle'
-                            : 'text-sm font-semibold text-brand-500'
-                        }
-                      >
-                        {secondsLeft > 0
-                          ? `Resend in ${secondsLeft}s`
-                          : sendOtp.isPending
-                          ? 'Sending…'
-                          : 'Resend OTP'}
-                      </Text>
-                    </Pressable>
-                  </View>
-
-                  <View className="rounded-xl bg-brand-500/10 px-3 py-2.5">
-                    <Text className="text-xs text-text-muted">
-                      Demo OTP: <Text className="font-semibold text-text">123456</Text>
-                    </Text>
-                  </View>
-                </View>
-              </AuthCard>
-            </Animated.View>
+          <View className="gap-2 px-4 pb-6">
+            <Button
+              label={verifyOtp.isPending ? 'Verifying…' : 'Verify'}
+              variant="gradient"
+              size="lg"
+              loading={verifyOtp.isPending}
+              disabled={otp.length !== 6}
+              onPress={() => handleSubmit()}
+            />
+            <Text className="text-center text-xs text-text-faint">
+              Demo OTP: 123456
+            </Text>
           </View>
         </KeyboardAvoidingView>
       </SafeAreaView>

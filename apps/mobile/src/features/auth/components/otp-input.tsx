@@ -150,14 +150,14 @@ function OtpCell({ char, isFocused, hasError }: OtpCellProps) {
   return (
     <Animated.View style={cellStyle}>
       <View
-        className={`h-14 w-12 items-center justify-center rounded-2xl border ${
+        className={`h-14 w-12 items-center justify-center rounded-2xl ${
           hasError
-            ? 'border-danger bg-danger/10'
-            : isFocused
-              ? 'border-brand-500 bg-surface'
-              : isFilled
-                ? 'border-border-strong bg-surface-elevated'
-                : 'border-border bg-surface'
+            ? 'border-2 border-danger bg-surface'
+            : isFilled
+              ? 'border-2 border-brand-600 bg-brand-50'
+              : isFocused
+                ? 'border-2 border-brand-600 bg-surface'
+                : 'border border-border bg-surface'
         }`}
       >
         <Animated.View style={charStyle}>
