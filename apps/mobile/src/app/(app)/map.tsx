@@ -397,6 +397,7 @@ export default function MapScreen() {
       <ReportDetailSheet ref={detailSheetRef} report={selectedReport} userLocation={userLocation.location} />
       <OutbreakDetailSheet ref={outbreakSheetRef} outbreak={selectedOutbreak} />
       <MapFilterSheet ref={filterSheetRef} matchingCount={filteredReports.length} />
+      <ReportsInViewSheet ref={listSheetRef} reports={filteredReports} />
     </View>
   );
 }

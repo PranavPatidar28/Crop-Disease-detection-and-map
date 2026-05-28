@@ -43,7 +43,10 @@ export default function NotificationsScreen() {
 
   const unreadCount = useNotificationsStore((s) => s.unreadCount);
 
-  const items: Notification[] = query.data?.pages.flatMap((p) => p.items) ?? [];
+  const items = useMemo<Notification[]>(
+    () => query.data?.pages.flatMap((p) => p.items) ?? [],
+    [query.data],
+  );
   const groups = useMemo(() => groupByDay(items), [items]);
 
   const handlePress = (n: Notification) => {
