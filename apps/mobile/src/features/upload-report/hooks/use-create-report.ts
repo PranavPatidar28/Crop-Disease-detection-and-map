@@ -9,7 +9,7 @@ import { useAuthStore } from '@/store/auth.store';
 import { cloudinaryApi } from '../api/cloudinary.api';
 import { reportsApi } from '../api/reports.api';
 import { useOfflineQueueStore } from '../store/offline-queue.store';
-import type { PickedImage, Report, ReportDraft, ReportLocation, UploadState } from '../types';
+import type { PickedImage, Report, ReportDraft, ReportLocation, Severity, UploadState } from '../types';
 import { compressImage } from '../utils/compress-image';
 import { copyToUploadsDir, deleteLocalFile } from '../utils/file-storage';
 
@@ -18,9 +18,20 @@ interface CreateReportInput {
   cropTypeId: string;
   cropTypeName: string;
   notes?: string;
-  location: ReportLocation;
+  location: { latitude: number; longitude: number; manual?: boolean };
   /** When true, skip the network and enqueue offline. */
   forceOffline?: boolean;
+  /** Optional pre-diagnosed disease (e.g., from cloud/on-device AI in the report flow). */
+  diseaseHint?: string;
+  /** Optional pre-diagnosed severity. */
+  severityHint?: Severity;
+  /** When false, the report is created privately and not added to the public outbreak map. */
+  shareToMap?: boolean;
+  /**
+   * When true, the hook does not auto-navigate on success — the caller
+   * (e.g., the report-flow state machine) will handle navigation itself.
+   */
+  skipNavigation?: boolean;
 }
 
 interface UseCreateReportResult {
@@ -28,7 +39,8 @@ interface UseCreateReportResult {
   progress: number;
   error: string | null;
   result: Report | null;
-  submit: (input: CreateReportInput) => Promise<void>;
+  /** Resolves to the created report ID on success, undefined when queued offline or failed. */
+  submit: (input: CreateReportInput) => Promise<string | undefined>;
   reset: () => void;
 }
 
@@ -58,7 +70,7 @@ export function useCreateReport(): UseCreateReportResult {
       if (!isAuthenticated) {
         setError('Please sign in to upload a report.');
         setState('failed');
-        return;
+        return undefined;
       }
 
       setError(null);
@@ -77,7 +89,7 @@ export function useCreateReport(): UseCreateReportResult {
       } catch (err) {
         setError((err as Error).message ?? 'Failed to compress image');
         setState('failed');
-        return;
+        return undefined;
       }
 
       // Persist the compressed file under our own directory so it survives cache eviction.
@@ -92,11 +104,17 @@ export function useCreateReport(): UseCreateReportResult {
         persistentUri = compressedUri;
       }
 
+      const reportLocation: ReportLocation = {
+        latitude: input.location.latitude,
+        longitude: input.location.longitude,
+        manual: input.location.manual ?? false,
+      };
+
       const draft: ReportDraft = {
         cropTypeId: input.cropTypeId,
         cropTypeName: input.cropTypeName,
         notes: input.notes,
-        location: input.location,
+        location: reportLocation,
         localImageUri: persistentUri,
         clientId,
       };
@@ -110,7 +128,7 @@ export function useCreateReport(): UseCreateReportResult {
           createdAt: new Date().toISOString(),
         });
         setState('queued-offline');
-        return;
+        return undefined;
       }
 
       // Step 2 — upload to Cloudinary
@@ -130,7 +148,7 @@ export function useCreateReport(): UseCreateReportResult {
           createdAt: new Date().toISOString(),
         });
         setState('queued-offline');
-        return;
+        return undefined;
       }
 
       // Step 3 — backend report creation
@@ -144,6 +162,12 @@ export function useCreateReport(): UseCreateReportResult {
           notes: draft.notes,
           latitude: draft.location.latitude,
           longitude: draft.location.longitude,
+          // Pass through report-flow hints. The backend may ignore unknown
+          // fields today; this is a best-effort propagation so the diagnosis
+          // surfaces as soon as the API supports it.
+          diseaseHint: input.diseaseHint,
+          severityHint: input.severityHint,
+          shareToMap: input.shareToMap,
         });
         setResult(created);
         setState('success');
@@ -158,7 +182,10 @@ export function useCreateReport(): UseCreateReportResult {
         // Seed the detail query so the result screen renders instantly,
         // then navigate. The screen polls until processing finishes.
         queryClient.setQueryData(['reports', created.id], created);
-        router.replace({ pathname: '/reports/[id]', params: { id: created.id } });
+        if (!input.skipNavigation) {
+          router.replace({ pathname: '/reports/[id]', params: { id: created.id } });
+        }
+        return created.id;
       } catch (err) {
         // Cloudinary succeeded but our server didn't — enqueue so we can retry
         // the backend call later. clientId guarantees idempotency.
@@ -174,6 +201,7 @@ export function useCreateReport(): UseCreateReportResult {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(
           () => undefined,
         );
+        return undefined;
       }
     },
     [enqueue, isAuthenticated, queryClient],
