@@ -1,10 +1,15 @@
+import { LinearGradient } from 'expo-linear-gradient';
+
 import { Text, View } from '@/tw';
+import { palette } from '@/theme/colors';
 import { cn } from '@/utils/cn';
 
 export interface AvatarProps {
   name?: string | null;
   fallback?: string;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  /** When true, draws a thin success ring around the avatar. */
+  verified?: boolean;
   className?: string;
 }
 
@@ -12,12 +17,14 @@ const sizeClass: Record<NonNullable<AvatarProps['size']>, string> = {
   sm: 'h-8 w-8',
   md: 'h-11 w-11',
   lg: 'h-14 w-14',
+  xl: 'h-16 w-16',
 };
 
 const textClass: Record<NonNullable<AvatarProps['size']>, string> = {
   sm: 'text-xs',
   md: 'text-base',
   lg: 'text-xl',
+  xl: 'text-2xl',
 };
 
 function getInitials(name?: string | null, fallback = '?'): string {
@@ -27,19 +34,26 @@ function getInitials(name?: string | null, fallback = '?'): string {
 }
 
 /**
- * Initials-only avatar (image upload comes later). Themed via brand-500/20
- * + brand-200 text so it reads on both light and dark surfaces.
+ * Soft Sage gradient avatar. Initials only — image upload not in scope.
+ * `verified` adds a thin success-tinted ring.
  */
-export function Avatar({ name, fallback, size = 'md', className }: AvatarProps) {
+export function Avatar({ name, fallback, size = 'md', verified, className }: AvatarProps) {
   return (
     <View
       className={cn(
-        'items-center justify-center rounded-full bg-brand-500/20',
+        'items-center justify-center overflow-hidden rounded-full',
         sizeClass[size],
+        verified && 'border-2 border-success',
         className,
       )}
     >
-      <Text className={cn('font-semibold text-brand-300', textClass[size])}>
+      <LinearGradient
+        colors={[palette.brand[400], palette.brand[600]]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={{ position: 'absolute', inset: 0 }}
+      />
+      <Text className={cn('font-bold text-white', textClass[size])}>
         {getInitials(name, fallback)}
       </Text>
     </View>

@@ -11,7 +11,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { useTheme } from '@/hooks/use-theme';
 import { View } from '@/tw';
 import { cn } from '@/utils/cn';
 
@@ -40,7 +39,6 @@ const radiusClass: Record<NonNullable<SkeletonProps['rounded']>, string> = {
  * that misbehaved on narrow rows and stutter-overlapped on tall cards).
  */
 export function Skeleton({ className, style, width, height = 16, rounded = 'md' }: SkeletonProps) {
-  const theme = useTheme();
   const progress = useSharedValue(0);
   const [measuredWidth, setMeasuredWidth] = useState(0);
 
@@ -74,7 +72,7 @@ export function Skeleton({ className, style, width, height = 16, rounded = 'md' 
   return (
     <View
       onLayout={onLayout}
-      className={cn('overflow-hidden bg-surface', radiusClass[rounded], className)}
+      className={cn('overflow-hidden bg-border', radiusClass[rounded], className)}
       style={[
         {
           width: width as ViewStyle['width'],
@@ -85,8 +83,8 @@ export function Skeleton({ className, style, width, height = 16, rounded = 'md' 
     >
       <Animated.View style={[{ flex: 1 }, animatedStyle]}>
         <LinearGradient
-          colors={['transparent', `${theme.borderStrong}66`, `${theme.borderStrong}33`, 'transparent']}
-          locations={[0, 0.45, 0.55, 1]}
+          colors={['transparent', 'rgba(232,228,220,0.6)', 'rgba(250,250,246,0.9)', 'rgba(232,228,220,0.6)', 'transparent']}
+          locations={[0, 0.4, 0.5, 0.6, 1]}
           start={{ x: 0, y: 0.5 }}
           end={{ x: 1, y: 0.5 }}
           style={{ flex: 1 }}

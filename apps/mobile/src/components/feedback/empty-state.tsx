@@ -1,91 +1,63 @@
-import { useEffect, type ReactNode } from 'react';
-import Animated, {
-  cancelAnimation,
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
+import { type ReactNode } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Text, View } from '@/tw';
+import { palette } from '@/theme/colors';
 import { cn } from '@/utils/cn';
 
 export interface EmptyStateProps {
+  icon?: ReactNode;
+  emoji?: string;
   title: string;
   description?: string;
-  icon?: ReactNode;
   actionLabel?: string;
   onAction?: () => void;
   className?: string;
 }
 
 /**
- * Standard empty state. The icon sits inside a softly pulsing ring so the
- * placeholder reads as "ready, just nothing to show yet" rather than "broken".
+ * Soft Sage empty state — glow tile + title + sub + optional ghost CTA.
  */
 export function EmptyState({
+  icon,
+  emoji,
   title,
   description,
-  icon,
   actionLabel,
   onAction,
   className,
 }: EmptyStateProps) {
   return (
-    <View className={cn('items-center justify-center gap-4 px-6 py-10', className)}>
-      <PulsingIconHalo>{icon}</PulsingIconHalo>
-      <View className="items-center gap-1">
-        <Text className="text-lg font-semibold text-text">{title}</Text>
-        {description ? (
-          <Text className="text-center text-sm text-text-muted">{description}</Text>
-        ) : null}
+    <View
+      className={cn('items-center gap-3 px-6 py-12', className)}
+    >
+      <View className="h-16 w-16 items-center justify-center overflow-hidden rounded-2xl border border-border bg-surface">
+        <LinearGradient
+          pointerEvents="none"
+          colors={[`${palette.brand[400]}33`, 'transparent']}
+          start={{ x: 0.2, y: 0.2 }}
+          end={{ x: 0.9, y: 0.9 }}
+          style={{ position: 'absolute', inset: 0 }}
+        />
+        {icon ?? <Text className="text-3xl">{emoji ?? '🌾'}</Text>}
       </View>
-      {actionLabel && onAction ? (
-        <View className="mt-2">
-          <Button label={actionLabel} onPress={onAction} variant="secondary" size="md" />
-        </View>
+      <Text className="text-center text-base font-bold text-text">{title}</Text>
+      {description ? (
+        <Text className="max-w-[260px] text-center text-sm leading-5 text-text-muted">
+          {description}
+        </Text>
       ) : null}
-    </View>
-  );
-}
-
-function PulsingIconHalo({ children }: { children: ReactNode }) {
-  const pulse = useSharedValue(0);
-
-  useEffect(() => {
-    pulse.value = withRepeat(
-      withTiming(1, { duration: 2200, easing: Easing.inOut(Easing.ease) }),
-      -1,
-      true,
-    );
-    return () => cancelAnimation(pulse);
-  }, [pulse]);
-
-  const haloStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: 1 + pulse.value * 0.15 }],
-    opacity: 0.35 + pulse.value * 0.25,
-  }));
-
-  return (
-    <View className="items-center justify-center">
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          {
-            position: 'absolute',
-            width: 96,
-            height: 96,
-            borderRadius: 48,
-            backgroundColor: 'rgba(16, 185, 129, 0.10)',
-          },
-          haloStyle,
-        ]}
-      />
-      <View className="h-16 w-16 items-center justify-center rounded-full bg-surface">
-        {children ?? <View className="h-6 w-6 rounded-full bg-border-strong" />}
-      </View>
+      {actionLabel && onAction ? (
+        <Button
+          label={actionLabel}
+          variant="ghost"
+          size="sm"
+          onPress={onAction}
+          fullWidth={false}
+          className="mt-2"
+        />
+      ) : null}
     </View>
   );
 }

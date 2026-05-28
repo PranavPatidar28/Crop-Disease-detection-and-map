@@ -54,15 +54,17 @@ export const Input = forwardRef<RNTextInput, InputProps>(function Input(
   return (
     <View className={cn('gap-1.5', className)}>
       {label ? (
-        <Text className="text-sm font-medium text-text-muted">{label}</Text>
+        <Text className="text-xs font-bold uppercase tracking-[1.4px] text-text-subtle">
+          {label}
+        </Text>
       ) : null}
 
       <View
         className={cn(
           'flex-row items-center rounded-xl border bg-surface px-3',
           multiline ? 'min-h-24 py-3 items-start' : 'h-12',
-          focused && !hasError && 'border-brand-500',
-          !focused && !hasError && 'border-border',
+          focused && !hasError ? 'border-brand-600' : 'border-border',
+          focused && !hasError ? 'border-2' : 'border',
           hasError && 'border-danger',
           !editable && 'opacity-60',
         )}
@@ -74,7 +76,7 @@ export const Input = forwardRef<RNTextInput, InputProps>(function Input(
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          placeholderTextColor={theme.textSubtle}
+          placeholderTextColor={theme.textFaint}
           secureTextEntry={secureTextEntry}
           autoCapitalize={autoCapitalize}
           keyboardType={keyboardType}
@@ -97,7 +99,7 @@ export const Input = forwardRef<RNTextInput, InputProps>(function Input(
       </View>
 
       {hasError ? (
-        <Text className="text-xs text-danger">{error}</Text>
+        <Text className="text-xs font-medium text-danger">{error}</Text>
       ) : helper ? (
         <Text className="text-xs text-text-subtle">{helper}</Text>
       ) : null}
