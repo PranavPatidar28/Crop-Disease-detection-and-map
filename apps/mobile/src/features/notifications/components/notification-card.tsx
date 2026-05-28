@@ -1,82 +1,85 @@
-import { GlassView } from 'expo-glass-effect';
-import { AlertTriangle, Bell, Camera, Info } from 'lucide-react-native';
-import { memo } from 'react';
-import { Platform } from 'react-native';
+import { CheckCircle2, Layers, TriangleAlert } from 'lucide-react-native';
+import { Pressable } from 'react-native';
 
-import { PressableScale } from '@/components/ui/pressable-scale';
-import { useTheme } from '@/hooks/use-theme';
+import { Chip } from '@/components/ui/chip';
 import { Text, View } from '@/tw';
+import { palette } from '@/theme/colors';
 import { cn } from '@/utils/cn';
-import { severityVisuals, timeAgo } from '@/utils/severity';
+import { timeAgo } from '@/utils/severity';
 
-import type { Notification } from '../api/notifications.api';
+import type { Notification, NotificationType } from '../api/notifications.api';
 
-interface NotificationCardProps {
+interface Props {
   notification: Notification;
-  onPress?: (n: Notification) => void;
+  onPress: (n: Notification) => void;
 }
 
-const ICON_FOR_TYPE = {
-  OUTBREAK: AlertTriangle,
-  REPORT: Camera,
-  WARNING: AlertTriangle,
-  SYSTEM: Info,
-} as const;
+interface Visual {
+  Icon: typeof TriangleAlert;
+  tint: string;
+  bg: string;
+}
 
-function NotificationCardImpl({ notification: n, onPress }: NotificationCardProps) {
-  const theme = useTheme();
-  const visuals = severityVisuals(n.severity);
-  const Icon = ICON_FOR_TYPE[n.type] ?? Bell;
+const ICON_BY_TYPE: Record<NotificationType, Visual> = {
+  OUTBREAK: { Icon: TriangleAlert, tint: palette.status.danger, bg: '#fee2e2' },
+  REPORT: { Icon: CheckCircle2, tint: palette.status.success, bg: '#ecfdf5' },
+  WARNING: { Icon: TriangleAlert, tint: palette.status.warning, bg: '#fef3c7' },
+  SYSTEM: { Icon: Layers, tint: palette.status.warning, bg: '#fef3c7' },
+};
+
+function pickIcon(type: NotificationType): Visual {
+  return ICON_BY_TYPE[type] ?? ICON_BY_TYPE.SYSTEM;
+}
+
+export function NotificationCard({ notification, onPress }: Props) {
+  const { Icon, tint, bg } = pickIcon(notification.type);
+  const isCritical = notification.type === 'OUTBREAK';
+  const unread = !notification.read;
 
   return (
-    <PressableScale
-      accessibilityRole="button"
-      accessibilityLabel={n.title}
-      onPress={() => onPress?.(n)}
-      pressedScale={0.98}
-    >
-      <GlassView
-        glassEffectStyle="regular"
-        tintColor={Platform.OS === 'ios' ? `${theme.surfaceElevated}AA` : theme.surfaceElevated}
-        style={{ borderRadius: 20, overflow: 'hidden' }}
+    <Pressable accessibilityRole="button" onPress={() => onPress(notification)}>
+      <View
+        className={cn(
+          'flex-row items-start gap-3 rounded-xl border bg-surface p-3',
+          unread ? 'border-brand-100' : 'border-border',
+        )}
+        style={{
+          borderLeftWidth: isCritical ? 3 : 1,
+          borderLeftColor: isCritical ? palette.status.danger : undefined,
+        }}
       >
         <View
-          className={cn(
-            'flex-row items-start gap-3 rounded-[20px] border p-3',
-            n.read ? 'border-white/10' : 'border-brand-500/30',
-          )}
+          className="h-10 w-10 items-center justify-center rounded-xl"
+          style={{ backgroundColor: bg }}
         >
-          <View
-            className={cn(
-              'mt-0.5 h-10 w-10 items-center justify-center rounded-2xl',
-              visuals.bgClass,
-            )}
-          >
-            <Icon size={18} color={visuals.rawColor} strokeWidth={2.2} />
-          </View>
-
-          <View className="flex-1 gap-0.5">
-            <View className="flex-row items-center justify-between gap-2">
-              <Text
-                className={cn(
-                  'flex-1 text-sm',
-                  n.read ? 'font-medium text-text-muted' : 'font-semibold text-text',
-                )}
-                numberOfLines={1}
-              >
-                {n.title}
-              </Text>
-              {!n.read ? <View className="h-2 w-2 rounded-full bg-brand-500" /> : null}
-            </View>
-            <Text className="text-xs text-text-muted" numberOfLines={2}>
-              {n.body}
-            </Text>
-            <Text className="mt-1 text-[11px] text-text-subtle">{timeAgo(n.createdAt)}</Text>
-          </View>
+          <Icon size={18} color={tint} strokeWidth={2.2} />
         </View>
-      </GlassView>
-    </PressableScale>
+        <View className="flex-1 gap-0.5">
+          <Text className="text-sm font-bold text-text" numberOfLines={2}>
+            {notification.title}
+          </Text>
+          {notification.body ? (
+            <Text className="text-xs text-text-muted" numberOfLines={2}>
+              {notification.body}
+            </Text>
+          ) : null}
+          <Text className="mt-1 text-[11px] text-text-subtle">
+            {timeAgo(notification.createdAt)}
+          </Text>
+        </View>
+        {isCritical ? <Chip label="High" tone="danger" /> : null}
+        {unread ? (
+          <View
+            style={{
+              width: 8,
+              height: 8,
+              borderRadius: 4,
+              backgroundColor: palette.brand[600],
+              marginTop: 6,
+            }}
+          />
+        ) : null}
+      </View>
+    </Pressable>
   );
 }
-
-export const NotificationCard = memo(NotificationCardImpl);

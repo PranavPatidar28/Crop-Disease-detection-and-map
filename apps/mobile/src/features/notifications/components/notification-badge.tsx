@@ -49,10 +49,10 @@ export function NotificationBadge({ count, size = 'sm' }: NotificationBadgeProps
         {
           alignItems: 'center',
           justifyContent: 'center',
-          backgroundColor: '#ef4444',
+          backgroundColor: palette.brand[600],
           borderRadius: 999,
           borderWidth: 1.5,
-          borderColor: palette.brand[900],
+          borderColor: '#ffffff',
           ...sizeStyle,
         },
         style,
