@@ -1,8 +1,6 @@
-import { useColorScheme } from './use-color-scheme';
-import { themes, type ThemePalette } from '@/theme/colors';
+import { lightColors, type ThemePalette } from '@/theme/colors';
 
-/** Returns the active palette (raw colors) based on the OS color scheme. */
+/** Returns the active palette. Light-only after redesign. */
 export function useTheme(): ThemePalette {
-  const scheme = useColorScheme();
-  return themes[scheme];
+  return lightColors;
 }

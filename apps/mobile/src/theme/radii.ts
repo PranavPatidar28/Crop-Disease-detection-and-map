@@ -3,9 +3,10 @@ export const radii = {
   xs: 4,
   sm: 6,
   md: 10,
-  lg: 14,
-  xl: 20,
-  '2xl': 28,
+  lg: 12,
+  xl: 14,
+  '2xl': 20,
+  '3xl': 24,
   full: 9999,
 } as const;
 

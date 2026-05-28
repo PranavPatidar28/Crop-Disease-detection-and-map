@@ -1,10 +1,9 @@
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import { LinearGradient } from 'expo-linear-gradient';
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider as NavThemeProvider } from 'expo-router';
+import { DefaultTheme, Stack, ThemeProvider as NavThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { useColorScheme } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
   cancelAnimation,
@@ -39,10 +38,39 @@ import { Text, View } from '@/tw';
 
 void SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
+/**
+ * The root layout is intentionally thin — it just composes providers.
+ * Hooks that touch any provider's context (TanStack Query, theme, etc.) must
+ * live inside <AppShell />, which is rendered as a child of the providers.
+ */
 export default function RootLayout() {
-  const scheme = useColorScheme();
-  const navTheme = scheme === 'dark' ? DarkTheme : DefaultTheme;
+  const navTheme = DefaultTheme;
 
+  return (
+    <AppErrorBoundary>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <QueryProvider>
+            <ThemeProvider>
+              <SocketProvider>
+                <ToastProvider>
+                  <BottomSheetModalProvider>
+                    <NavThemeProvider value={navTheme}>
+                      <StatusBar style="dark" />
+                      <AppShell />
+                    </NavThemeProvider>
+                  </BottomSheetModalProvider>
+                </ToastProvider>
+              </SocketProvider>
+            </ThemeProvider>
+          </QueryProvider>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+    </AppErrorBoundary>
+  );
+}
+
+function AppShell() {
   const isHydrated = useAuthStore((s) => s.isHydrated);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const hydrate = useAuthStore((s) => s.hydrate);
@@ -57,6 +85,7 @@ export default function RootLayout() {
   useNetworkConnectivity();
 
   // Drain the offline queue whenever the user is signed in.
+  // (Uses useQueryClient — must be inside <QueryProvider />.)
   useOfflineQueue(isAuthenticated && bootDone);
 
   // Register the device's Expo push token once authenticated.
@@ -81,53 +110,32 @@ export default function RootLayout() {
     };
   }, [hydrate, hydrateQueue, hydrateLiveReports]);
 
+  if (!bootDone || !isHydrated) {
+    return <Splash />;
+  }
+
   return (
-    <AppErrorBoundary>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <SafeAreaProvider>
-          <QueryProvider>
-            <ThemeProvider>
-              <SocketProvider>
-                <ToastProvider>
-                  <NotificationsProvider enabled={isAuthenticated}>
-                    <BottomSheetModalProvider>
-                      <NavThemeProvider value={navTheme}>
-                        <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
-                        {!bootDone || !isHydrated ? (
-                          <Splash />
-                        ) : (
-                          <>
-                            <Stack
-                              screenOptions={{
-                                headerShown: false,
-                                animation: 'slide_from_right',
-                                contentStyle: { backgroundColor: 'transparent' },
-                              }}
-                            >
-                              <Stack.Screen
-                                name="reports/[id]"
-                                options={{ animation: 'slide_from_bottom' }}
-                              />
-                              <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
-                              <Stack.Screen
-                                name="(onboarding)"
-                                options={{ animation: 'fade' }}
-                              />
-                            </Stack>
-                            {/* Persistent offline banner — sits above all routes when offline/unstable */}
-                            <OfflineBanner />
-                          </>
-                        )}
-                      </NavThemeProvider>
-                    </BottomSheetModalProvider>
-                  </NotificationsProvider>
-                </ToastProvider>
-              </SocketProvider>
-            </ThemeProvider>
-          </QueryProvider>
-        </SafeAreaProvider>
-      </GestureHandlerRootView>
-    </AppErrorBoundary>
+    <NotificationsProvider enabled={isAuthenticated}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          animation: 'slide_from_right',
+          contentStyle: { backgroundColor: 'transparent' },
+        }}
+      >
+        <Stack.Screen
+          name="reports/[id]"
+          options={{ animation: 'slide_from_bottom' }}
+        />
+        <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
+        <Stack.Screen
+          name="(onboarding)"
+          options={{ animation: 'fade' }}
+        />
+      </Stack>
+      {/* Persistent offline banner — sits above all routes when offline/unstable */}
+      <OfflineBanner />
+    </NotificationsProvider>
   );
 }
 

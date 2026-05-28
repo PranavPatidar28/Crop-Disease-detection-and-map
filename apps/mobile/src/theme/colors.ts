@@ -1,7 +1,6 @@
 /**
- * Color tokens for the Crop Disease Mapping app.
+ * Color tokens for the AgroRadar app — Soft Sage (light-only).
  * Mirrored into Tailwind theme via global.css CSS variables.
- * Use this file when raw color values are needed (charts, shadows, native APIs).
  */
 export const palette = {
   brand: {
@@ -11,68 +10,54 @@ export const palette = {
     300: '#6ee7b7',
     400: '#34d399',
     500: '#10b981',
-    600: '#059669',
+    600: '#0d9488',
     700: '#047857',
     800: '#065f46',
     900: '#064e3b',
   },
   status: {
-    success: '#10b981',
-    warning: '#f59e0b',
-    danger: '#ef4444',
-    info: '#3b82f6',
+    success: '#047857',
+    successTint: '#ecfdf5',
+    warning: '#92400e',
+    warningTint: '#fef3c7',
+    danger: '#b91c1c',
+    dangerTint: '#fee2e2',
+    info: '#1d4ed8',
+    infoTint: '#dbeafe',
   },
 } as const;
 
 export const lightColors = {
-  bg: '#ffffff',
-  surface: '#f7f8fa',
+  bg: '#fbfaf7',
+  surface: '#ffffff',
+  surfaceMuted: '#fdfcf7',
   surfaceElevated: '#ffffff',
-  border: '#e5e7eb',
-  borderStrong: '#d1d5db',
+  border: '#efeae0',
+  borderStrong: '#e8e4dc',
   text: '#0b1220',
-  textMuted: '#5b6472',
-  textSubtle: '#8a93a4',
+  textMuted: '#475569',
+  textSubtle: '#64748b',
+  textFaint: '#94a3b8',
   textInverse: '#ffffff',
   primary: palette.brand[600],
-  primaryMuted: palette.brand[100],
-  ...palette.status,
+  primaryStart: palette.brand[500],
+  primaryEnd: palette.brand[600],
+  primaryDeep: palette.brand[900],
+  primaryTint: palette.brand[50],
+  success: palette.status.success,
+  successTint: palette.status.successTint,
+  warning: palette.status.warning,
+  warningTint: palette.status.warningTint,
+  danger: palette.status.danger,
+  dangerTint: palette.status.dangerTint,
+  info: palette.status.info,
+  infoTint: palette.status.infoTint,
 } as const;
 
-export const darkColors = {
-  bg: '#0b1220',
-  surface: '#11182a',
-  surfaceElevated: '#161e33',
-  border: '#1f2a44',
-  borderStrong: '#2a3656',
-  text: '#f4f6fb',
-  textMuted: '#a3acbf',
-  textSubtle: '#6f7a91',
-  textInverse: '#0b1220',
-  primary: palette.brand[400],
-  primaryMuted: palette.brand[900],
-  ...palette.status,
-} as const;
+export type ThemePalette = typeof lightColors;
+export type ColorScheme = 'light';
 
-export type ColorScheme = 'light' | 'dark';
-export type ThemePalette = {
-  bg: string;
-  surface: string;
-  surfaceElevated: string;
-  border: string;
-  borderStrong: string;
-  text: string;
-  textMuted: string;
-  textSubtle: string;
-  textInverse: string;
-  primary: string;
-  primaryMuted: string;
-  success: string;
-  warning: string;
-  danger: string;
-  info: string;
-};
+/** Light-only after redesign. The export shape is kept for backwards compat. */
 export const themes: Record<ColorScheme, ThemePalette> = {
   light: lightColors,
-  dark: darkColors,
 };
