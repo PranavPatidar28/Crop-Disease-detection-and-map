@@ -172,7 +172,7 @@ function Splash() {
   return (
     <View className="flex-1 bg-bg">
       <LinearGradient
-        colors={[palette.brand[700], palette.brand[900], '#0b1220']}
+        colors={[palette.brand[50], '#ffffff', '#fbfaf7']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={{ position: 'absolute', inset: 0 }}
@@ -188,27 +188,35 @@ function Splash() {
                 height: 120,
                 borderRadius: 60,
                 backgroundColor: palette.brand[400],
+                opacity: 0.25,
               },
               glowStyle,
             ]}
           />
           <Animated.View entering={FadeIn.duration(450)} style={breatheStyle}>
             <View
-              className="h-20 w-20 items-center justify-center rounded-3xl border border-white/15 bg-white/10"
+              className="h-20 w-20 items-center justify-center overflow-hidden rounded-3xl border border-border"
               style={{
-                shadowColor: palette.brand[300],
-                shadowOffset: { width: 0, height: 0 },
-                shadowOpacity: 0.6,
-                shadowRadius: 20,
+                shadowColor: palette.brand[600],
+                shadowOffset: { width: 0, height: 8 },
+                shadowOpacity: 0.25,
+                shadowRadius: 18,
+                elevation: 8,
               }}
             >
+              <LinearGradient
+                colors={[palette.brand[400], palette.brand[600]]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={{ position: 'absolute', inset: 0 }}
+              />
               <Text className="text-4xl">🌾</Text>
             </View>
           </Animated.View>
         </View>
         <Animated.View entering={FadeIn.delay(150).duration(450)} className="items-center gap-1">
-          <Text className="text-xl font-semibold text-white">{APP_NAME}</Text>
-          <Text className="text-xs font-medium uppercase tracking-[3px] text-white/55">
+          <Text className="text-xl font-bold text-text">{APP_NAME}</Text>
+          <Text className="text-[11px] font-bold uppercase tracking-[3px] text-brand-700">
             Crop intelligence
           </Text>
         </Animated.View>
