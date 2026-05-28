@@ -1,0 +1,226 @@
+// Prisma schema for the Crop Disease Report Mapping System
+// Reference: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  FARMER
+  ADMIN
+}
+
+enum Severity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum ProcessingStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+}
+
+enum NotificationType {
+  OUTBREAK
+  REPORT
+  WARNING
+  SYSTEM
+}
+
+enum DevicePlatform {
+  IOS
+  ANDROID
+  WEB
+}
+
+model User {
+  id        String   @id @default(cuid())
+  phone     String   @unique
+  name      String?
+  role      UserRole @default(FARMER)
+  district  String?
+  state     String?
+  latitude  Float?
+  longitude Float?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  otpTokens     OtpToken[]
+  reports       Report[]
+  plots         Plot[]
+  notifications Notification[]
+  pushTokens    PushToken[]
+  preferences   NotificationPreferences?
+
+  @@index([state, district])
+}
+
+/// Stateful mock OTP store. Designed to be swapped to a real OTP provider
+/// (Twilio / MSG91) without changing the contract: a row is created on
+/// `send-otp`, validated and consumed on `verify-otp`.
+model OtpToken {
+  id         String   @id @default(cuid())
+  phone      String
+  code       String
+  expiresAt  DateTime
+  consumedAt DateTime?
+  attempts   Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  user   User?   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId String?
+
+  @@index([phone, createdAt])
+}
+
+/// Disease report submitted by a farmer. The image lives on Cloudinary;
+/// `imagePublicId` is kept so the asset can be deleted if the report is removed.
+/// Disease fields are populated asynchronously by the AI service after creation.
+model Report {
+  id            String   @id @default(cuid())
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+  /// Optional client-provided idempotency key (uuid). When present and a row
+  /// with this (userId, clientId) already exists, `POST /reports` returns the
+  /// existing row instead of creating a duplicate. Enables safe retries from
+  /// the offline queue.
+  clientId      String?
+  cropType      String
+  imageUrl      String
+  imagePublicId String
+  notes         String?
+  latitude      Float
+  longitude     Float
+
+  // AI diagnosis fields (populated asynchronously)
+  disease          String?
+  confidence       Float?
+  severity         Severity?
+  recommendations  String[]         @default([])
+  processingStatus ProcessingStatus @default(PENDING)
+  aiError          String?
+  processedAt      DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, clientId])
+  @@index([userId, createdAt])
+  @@index([latitude, longitude])
+  @@index([processingStatus])
+}
+
+/// Geo-cluster of recent reports for the same disease. Maintained by
+/// `OutbreakProcessor` — owns its own creation / escalation / resolution
+/// lifecycle. Read by the realtime map and the dashboard.
+model OutbreakZone {
+  id                  String   @id @default(cuid())
+  disease             String
+  /// Center of the zone (running average of contributing report coordinates).
+  latitude            Float
+  longitude           Float
+  /// Effective radius in meters. Starts at OUTBREAK_CREATE_RADIUS_KM, can grow
+  /// to OUTBREAK_ESCALATE_RADIUS_KM when escalating.
+  radius              Float    @default(3000)
+  reportCount         Int      @default(0)
+  highCount           Int      @default(0)
+  severity            Severity @default(LOW)
+  /// Crop types contributing to this outbreak (e.g. ["Tomato", "Potato"]).
+  affectedCropTypes   String[] @default([])
+  /// `true` while the zone is actively gathering reports. Set to `false` by
+  /// the scheduler when no new reports arrive within OUTBREAK_DEACTIVATE_HOURS.
+  active              Boolean  @default(true)
+  resolvedAt          DateTime?
+  /// Timestamp of the most recent contributing report.
+  lastSeenAt          DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([latitude, longitude])
+  @@index([disease, lastSeenAt])
+  @@index([active, lastSeenAt])
+}
+
+/// A farmer's registered plot of land. Used as the anchor for nearby-outbreak
+/// notifications: instead of tracking the user's live location, we notify them
+/// when an outbreak intersects any of their active plots.
+model Plot {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  name      String
+  latitude  Float
+  longitude Float
+  cropTypes String[] @default([])
+  areaAcres Float?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, active])
+  @@index([latitude, longitude])
+}
+
+/// A user-targeted notification. Persisted so users see their history and can
+/// mark items read across sessions. Realtime delivery via Socket.IO; OS push
+/// via Expo when the app is backgrounded.
+model Notification {
+  id        String           @id @default(cuid())
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  type      NotificationType
+  title     String
+  body      String
+  /// Severity tag for UI tinting; reuses the existing Severity enum.
+  severity  Severity?
+  /// Optional location for "tap to view on map".
+  latitude  Float?
+  longitude Float?
+  /// Generic deep-link payload (outbreakId, reportId, etc.).
+  data      Json?
+  read      Boolean          @default(false)
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  @@index([userId, read, createdAt])
+  @@index([userId, createdAt])
+}
+
+/// Expo push token registered by a mobile client.
+model PushToken {
+  id         String         @id @default(cuid())
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+  token      String         @unique
+  platform   DevicePlatform
+  lastSeenAt DateTime       @default(now())
+  createdAt  DateTime       @default(now())
+
+  @@index([userId])
+}
+
+/// Per-user notification preferences. v8 ships schema only — no UI yet.
+/// Defaults: all categories enabled.
+model NotificationPreferences {
+  id                  String   @id @default(cuid())
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId              String   @unique
+  outbreakAlerts      Boolean  @default(true)
+  reportAlerts        Boolean  @default(true)
+  severityEscalations Boolean  @default(true)
+  resolvedAlerts      Boolean  @default(true)
+  /// Quiet hours range (24h clock, 0-23). null → no quiet hours.
+  quietHoursStart     Int?
+  quietHoursEnd       Int?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}

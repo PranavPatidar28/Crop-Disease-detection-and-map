@@ -1,0 +1,2 @@
+web: node dist/main.js
+release: node node_modules/prisma/build/index.js migrate deploy
