@@ -1,7 +1,5 @@
-import { GlassView } from 'expo-glass-effect';
-import { CloudOff, Wifi } from 'lucide-react-native';
+import { CloudOff, RefreshCw, Wifi } from 'lucide-react-native';
 import { useEffect } from 'react';
-import { Platform } from 'react-native';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -16,17 +14,52 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useNetworkStore } from '@/features/offline-sync/store/network.store';
 import { useSyncStatusStore } from '@/features/offline-sync/store/sync-status.store';
-import { useTheme } from '@/hooks/use-theme';
 import { palette } from '@/theme/colors';
 import { Text, View } from '@/tw';
 
+type Tone = {
+  /** Tailwind class for surface (tint) background. */
+  bgClass: string;
+  /** Tailwind class for border. */
+  borderClass: string;
+  /** Tailwind class for label text. */
+  textClass: string;
+  /** Tailwind class for muted/sub text. */
+  subTextClass: string;
+  /** Hex color used by the icon. */
+  iconColor: string;
+};
+
+const TONE: Record<'offline' | 'unstable' | 'syncing', Tone> = {
+  offline: {
+    bgClass: 'bg-warning-tint',
+    borderClass: 'border-warning-tint',
+    textClass: 'text-warning',
+    subTextClass: 'text-warning/80',
+    iconColor: palette.status.warning,
+  },
+  unstable: {
+    bgClass: 'bg-warning-tint',
+    borderClass: 'border-warning-tint',
+    textClass: 'text-warning',
+    subTextClass: 'text-warning/80',
+    iconColor: palette.status.warning,
+  },
+  syncing: {
+    bgClass: 'bg-brand-50',
+    borderClass: 'border-brand-100',
+    textClass: 'text-brand-700',
+    subTextClass: 'text-brand-700/80',
+    iconColor: palette.brand[600],
+  },
+};
+
 /**
  * Persistent connectivity banner. Slides in from the top when offline or
- * unstable, plus a brief celebratory state when reconnecting from offline
- * with queued items.
+ * unstable, plus a brief syncing state when reconnecting from offline with
+ * queued items. Soft Sage light styling.
  */
 export function OfflineBanner() {
-  const theme = useTheme();
   const state = useNetworkStore((s) => s.state);
   const queueDepth = useSyncStatusStore((s) => s.queueDepth);
   const phase = useSyncStatusStore((s) => s.phase);
@@ -34,16 +67,16 @@ export function OfflineBanner() {
   const isOffline = state === 'offline';
   const isUnstable = state === 'unstable';
   const showSyncing = state === 'online' && phase === 'syncing' && queueDepth > 0;
-
   const visible = isOffline || isUnstable || showSyncing;
 
   if (!visible) return null;
 
-  const tone = isOffline
-    ? { fg: theme.text, bg: 'rgba(245, 158, 11, 0.12)', accent: palette.brand[400], color: '#f59e0b' }
+  const variant: 'offline' | 'unstable' | 'syncing' = isOffline
+    ? 'offline'
     : isUnstable
-      ? { fg: theme.text, bg: 'rgba(245, 158, 11, 0.10)', accent: '#f59e0b', color: '#f59e0b' }
-      : { fg: theme.text, bg: 'rgba(16, 185, 129, 0.12)', accent: palette.brand[500], color: palette.brand[400] };
+      ? 'unstable'
+      : 'syncing';
+  const tone = TONE[variant];
 
   const label = isOffline
     ? "You're offline"
@@ -53,11 +86,11 @@ export function OfflineBanner() {
 
   const subtext = isOffline
     ? queueDepth > 0
-      ? `${queueDepth} pending — we'll sync when you're back`
-      : 'Your work is saved locally'
+      ? `· ${queueDepth} report${queueDepth === 1 ? '' : 's'} queued · will sync when connected`
+      : '· cached data shown'
     : isUnstable
-      ? 'Some requests may fail; we’ll retry automatically'
-      : 'Almost done';
+      ? '· retrying automatically'
+      : '· almost done';
 
   return (
     <SafeAreaView
@@ -77,34 +110,27 @@ export function OfflineBanner() {
         pointerEvents="box-none"
         style={{ paddingHorizontal: 12, paddingTop: 4 }}
       >
-        <GlassView
-          glassEffectStyle="regular"
-          tintColor={
-            Platform.OS === 'ios'
-              ? `${theme.surfaceElevated}DD`
-              : `${theme.surfaceElevated}EE`
-          }
-          style={{ borderRadius: 16, overflow: 'hidden' }}
+        <View
+          className={`flex-row items-center gap-2 rounded-xl border ${tone.borderClass} ${tone.bgClass} px-3 py-2`}
         >
-          <View
-            className="flex-row items-center gap-3 rounded-2xl border border-white/10 px-3 py-2"
-            style={{ backgroundColor: tone.bg }}
-          >
-            <PulsingIcon offline={isOffline} color={tone.color} />
-            <View className="flex-1 gap-0.5">
-              <Text className="text-xs font-semibold text-text">{label}</Text>
-              <Text className="text-[11px] text-text-muted" numberOfLines={1}>
-                {subtext}
-              </Text>
-            </View>
-          </View>
-        </GlassView>
+          <PulsingIcon variant={variant} color={tone.iconColor} />
+          <Text className={`text-xs font-bold ${tone.textClass}`}>{label}</Text>
+          <Text className={`flex-1 text-xs ${tone.subTextClass}`} numberOfLines={1}>
+            {subtext}
+          </Text>
+        </View>
       </Animated.View>
     </SafeAreaView>
   );
 }
 
-function PulsingIcon({ offline, color }: { offline: boolean; color: string }) {
+function PulsingIcon({
+  variant,
+  color,
+}: {
+  variant: 'offline' | 'unstable' | 'syncing';
+  color: string;
+}) {
   const pulse = useSharedValue(1);
 
   useEffect(() => {
@@ -120,10 +146,12 @@ function PulsingIcon({ offline, color }: { offline: boolean; color: string }) {
 
   return (
     <Animated.View style={[{ alignItems: 'center', justifyContent: 'center' }, style]}>
-      {offline ? (
-        <CloudOff size={16} color={color} strokeWidth={2.4} />
+      {variant === 'offline' ? (
+        <CloudOff size={14} color={color} strokeWidth={2.4} />
+      ) : variant === 'unstable' ? (
+        <Wifi size={14} color={color} strokeWidth={2.4} />
       ) : (
-        <Wifi size={16} color={color} strokeWidth={2.4} />
+        <RefreshCw size={14} color={color} strokeWidth={2.4} />
       )}
     </Animated.View>
   );

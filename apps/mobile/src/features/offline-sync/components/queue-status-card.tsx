@@ -1,13 +1,14 @@
-import { GlassView } from 'expo-glass-effect';
 import { CheckCircle2, CloudOff, Inbox, RefreshCw, TriangleAlert } from 'lucide-react-native';
-import { Platform, Pressable } from 'react-native';
+
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { palette } from '@/theme/colors';
+import { Text, View } from '@/tw';
+import { cn } from '@/utils/cn';
 
 import { useNetworkStore } from '../store/network.store';
 import { useSyncStatusStore } from '../store/sync-status.store';
 import { useOfflineQueueStore } from '@/features/upload-report/store/offline-queue.store';
-import { useTheme } from '@/hooks/use-theme';
-import { palette } from '@/theme/colors';
-import { Text, View } from '@/tw';
 
 interface QueueStatusCardProps {
   className?: string;
@@ -15,7 +16,7 @@ interface QueueStatusCardProps {
 }
 
 /**
- * Surfaces the offline queue's state in a glass card. Suitable for the
+ * Surfaces the offline queue's state in a light card. Suitable for the
  * dashboard and upload screens.
  *
  *  - Hidden when there are no queued items AND the most recent sync succeeded.
@@ -23,7 +24,6 @@ interface QueueStatusCardProps {
  *  - Optional "Retry now" action.
  */
 export function QueueStatusCard({ className, onRetryAll }: QueueStatusCardProps) {
-  const theme = useTheme();
   const networkState = useNetworkStore((s) => s.state);
   const phase = useSyncStatusStore((s) => s.phase);
   const lastSyncedAt = useSyncStatusStore((s) => s.lastSyncedAt);
@@ -37,21 +37,30 @@ export function QueueStatusCard({ className, onRetryAll }: QueueStatusCardProps)
   const failed = items.filter((i) => i.status === 'failed').length;
 
   const offline = networkState === 'offline';
+  const isFailureState = phase === 'failed' || failed > 0;
+  const isSyncing = phase === 'syncing';
+
+  const tileBgClass = offline
+    ? 'bg-warning-tint'
+    : isFailureState
+      ? 'bg-danger-tint'
+      : 'bg-brand-50';
+
   const headlineIcon = offline ? (
-    <CloudOff size={18} color="#f59e0b" strokeWidth={2.2} />
-  ) : phase === 'failed' || failed > 0 ? (
-    <TriangleAlert size={18} color={theme.danger} strokeWidth={2.2} />
-  ) : phase === 'syncing' ? (
-    <RefreshCw size={18} color={palette.brand[300]} strokeWidth={2.2} />
+    <CloudOff size={18} color={palette.status.warning} strokeWidth={2.2} />
+  ) : isFailureState ? (
+    <TriangleAlert size={18} color={palette.status.danger} strokeWidth={2.2} />
+  ) : isSyncing ? (
+    <RefreshCw size={18} color={palette.brand[600]} strokeWidth={2.2} />
   ) : (
-    <Inbox size={18} color={palette.brand[300]} strokeWidth={2.2} />
+    <Inbox size={18} color={palette.brand[600]} strokeWidth={2.2} />
   );
 
   const headline = offline
     ? `${items.length} ${items.length === 1 ? 'upload' : 'uploads'} waiting`
-    : phase === 'syncing'
+    : isSyncing
       ? `Syncing ${items.length} ${items.length === 1 ? 'upload' : 'uploads'}`
-      : phase === 'failed' || failed > 0
+      : isFailureState
         ? `${items.length} pending · ${failed} need attention`
         : `${items.length} pending sync`;
 
@@ -61,25 +70,22 @@ export function QueueStatusCard({ className, onRetryAll }: QueueStatusCardProps)
       ? lastError
       : `Pending ${pending} · Uploading ${uploading}${failed ? ` · Failed ${failed}` : ''}`;
 
+  // Progress: items completed (i.e. not in items list) vs the original count
+  // is unknown here; we show progress as uploading-vs-total when syncing.
+  const total = items.length || 1;
+  const progressed = uploading + (items.length - pending - uploading - failed);
+  const progressFraction = isSyncing ? Math.min(1, Math.max(0, progressed / total)) : 0;
+
   return (
-    <GlassView
-      glassEffectStyle="regular"
-      tintColor={Platform.OS === 'ios' ? `${theme.surfaceElevated}AA` : theme.surfaceElevated}
-      style={{ borderRadius: 20, overflow: 'hidden' }}
-    >
-      <View
-        className={[
-          'gap-3 rounded-[20px] border p-3',
-          phase === 'failed' || failed > 0
-            ? 'border-danger/30'
-            : offline
-              ? 'border-warning/30'
-              : 'border-white/10',
-          className ?? '',
-        ].join(' ')}
-      >
+    <View className={cn(className)}>
+      <Card padding="md" className="gap-3">
         <View className="flex-row items-start gap-3">
-          <View className="mt-0.5 h-9 w-9 items-center justify-center rounded-2xl bg-surface">
+          <View
+            className={cn(
+              'mt-0.5 h-9 w-9 items-center justify-center rounded-2xl border border-border',
+              tileBgClass,
+            )}
+          >
             {headlineIcon}
           </View>
           <View className="flex-1 gap-0.5">
@@ -87,9 +93,9 @@ export function QueueStatusCard({ className, onRetryAll }: QueueStatusCardProps)
             <Text className="text-[11px] text-text-muted" numberOfLines={2}>
               {subline}
             </Text>
-            {lastSyncedAt && phase !== 'failed' && !offline ? (
+            {lastSyncedAt && !isFailureState && !offline ? (
               <View className="mt-1 flex-row items-center gap-1.5">
-                <CheckCircle2 size={11} color={palette.brand[400]} strokeWidth={2.4} />
+                <CheckCircle2 size={11} color={palette.brand[600]} strokeWidth={2.4} />
                 <Text className="text-[10px] text-text-subtle">
                   Last synced {new Date(lastSyncedAt).toLocaleTimeString()}
                 </Text>
@@ -98,20 +104,25 @@ export function QueueStatusCard({ className, onRetryAll }: QueueStatusCardProps)
           </View>
         </View>
 
-        {!offline && (failed > 0 || phase === 'failed') && onRetryAll ? (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Retry sync"
-            onPress={onRetryAll}
-            style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
-          >
-            <View className="flex-row items-center justify-center gap-1.5 rounded-xl border border-brand-500/40 bg-brand-500/10 py-2">
-              <RefreshCw size={14} color={palette.brand[300]} strokeWidth={2.2} />
-              <Text className="text-xs font-semibold text-brand-300">Retry now</Text>
-            </View>
-          </Pressable>
+        {isSyncing ? (
+          <View className="h-1.5 overflow-hidden rounded-full bg-border">
+            <View
+              className="h-full rounded-full bg-brand-500"
+              style={{ width: `${Math.round(progressFraction * 100)}%` }}
+            />
+          </View>
         ) : null}
-      </View>
-    </GlassView>
+
+        {!offline && isFailureState && onRetryAll ? (
+          <Button
+            label="Retry now"
+            variant="ghost"
+            size="sm"
+            onPress={onRetryAll}
+            leftSlot={<RefreshCw size={14} color={palette.brand[600]} strokeWidth={2.2} />}
+          />
+        ) : null}
+      </Card>
+    </View>
   );
 }
