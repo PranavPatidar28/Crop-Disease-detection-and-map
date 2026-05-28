@@ -1,4 +1,4 @@
-import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetModal } from '@gorhom/bottom-sheet';
 import * as Haptics from 'expo-haptics';
 import { Home, MapPinOff } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -9,13 +9,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CROP_BY_NAME } from '@/constants/crops';
 import {
-  ConnectionPill,
   HeatmapLayer,
   MapCluster,
   MapControls,
+  MapFilterChips,
   MapFilterSheet,
   MapMarker,
+  MapSearchBar,
   ReportDetailSheet,
+  ReportsInViewSheet,
 } from '@/features/map-system/components';
 import {
   useNearbyReports,
@@ -29,14 +31,13 @@ import {
 } from '@/features/map-system/store/map-filters.store';
 import type { MapRegion, OutbreakZone } from '@/features/map-system/types';
 import { buildClusterIndex, getClusters } from '@/features/map-system/utils/cluster';
-import { darkMapStyle } from '@/features/map-system/utils/map-style';
+import { lightMapStyle } from '@/features/map-system/utils/map-style';
 import {
   OutbreakDetailSheet,
   OutbreakZoneLayer,
 } from '@/features/outbreak-system/components';
 import { useOutbreaks } from '@/features/outbreak-system/hooks';
 import { useActivePlots } from '@/features/plots/hooks/use-plots';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useSocket } from '@/providers/socket-provider';
 import { palette } from '@/theme/colors';
 import type { Report } from '@/features/upload-report/types';
@@ -51,11 +52,11 @@ const FALLBACK_REGION: Region = {
 };
 
 export default function MapScreen() {
-  const colorScheme = useColorScheme();
   const mapRef = useRef<MapView | null>(null);
   const detailSheetRef = useRef<BottomSheetModal>(null);
   const filterSheetRef = useRef<BottomSheetModal>(null);
   const outbreakSheetRef = useRef<BottomSheetModal>(null);
+  const listSheetRef = useRef<BottomSheet>(null);
 
   const userLocation = useUserLocation(true);
   const { isConnected } = useSocket();
@@ -102,10 +103,14 @@ export default function MapScreen() {
   // Build a single nearby query from current region + filters
   const nearbyParams = useMemo(() => {
     if (!region) return null;
+    // Backend caps radius at 1000km. The initial country-wide fallback
+    // (latitudeDelta=18 → ~1980km) would otherwise 400, so we clamp here.
+    const rawRadius = Math.round(region.latitudeDelta * 110);
+    const radiusKm = Math.min(1000, Math.max(20, rawRadius));
     return {
       lat: region.latitude,
       lng: region.longitude,
-      radiusKm: Math.max(20, Math.round(region.latitudeDelta * 110)),
+      radiusKm,
       limit: 200,
       severity:
         filters.severities.length === 1 ? filters.severities[0] : undefined,
@@ -208,9 +213,7 @@ export default function MapScreen() {
         showsMyLocationButton={false}
         showsCompass={false}
         toolbarEnabled={false}
-        customMapStyle={
-          Platform.OS === 'android' && colorScheme === 'dark' ? darkMapStyle : undefined
-        }
+        customMapStyle={Platform.OS === 'android' ? lightMapStyle : undefined}
       >
         {showHeatmap ? <HeatmapLayer reports={filteredReports} /> : null}
 
@@ -311,35 +314,43 @@ export default function MapScreen() {
           : null}
       </MapView>
 
-      {/* Top status pill */}
-      <SafeAreaView edges={['top']} pointerEvents="box-none" style={{ position: 'absolute', top: 0, left: 0, right: 0 }}>
-        <View
-          pointerEvents="box-none"
-          className="flex-row items-start justify-between px-4 pt-2"
-        >
-          <Animated.View entering={FadeIn.duration(400)}>
-            <ConnectionPill
+      {/* Top search bar + filter chip rail */}
+      <SafeAreaView
+        edges={['top']}
+        pointerEvents="box-none"
+        style={{ position: 'absolute', top: 0, left: 0, right: 0 }}
+      >
+        <Animated.View entering={FadeIn.duration(400)} pointerEvents="box-none">
+          <View pointerEvents="box-none" className="gap-2 px-4 pt-2">
+            <MapSearchBar
               isConnected={isConnected}
               reportCount={filteredReports.length}
+              onPressSearch={() => filterSheetRef.current?.present()}
+              onPressFilter={() => filterSheetRef.current?.present()}
             />
-          </Animated.View>
-          {nearby.isFetching ? (
-            <View
-              style={{
-                marginTop: 6,
-                marginRight: 4,
-                width: 28,
-                height: 28,
-                borderRadius: 14,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: 'rgba(11,18,32,0.6)',
-              }}
-            >
-              <ActivityIndicator color={palette.brand[400]} size="small" />
+            <View pointerEvents="box-none" className="flex-row items-center justify-between gap-2">
+              <View className="flex-1">
+                <MapFilterChips />
+              </View>
+              {nearby.isFetching ? (
+                <View
+                  style={{
+                    width: 28,
+                    height: 28,
+                    borderRadius: 14,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#ffffff',
+                    borderWidth: 1,
+                    borderColor: '#efeae0',
+                  }}
+                >
+                  <ActivityIndicator color={palette.brand[600]} size="small" />
+                </View>
+              ) : null}
             </View>
-          ) : null}
-        </View>
+          </View>
+        </Animated.View>
       </SafeAreaView>
 
       {/* Right floating controls */}

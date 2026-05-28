@@ -44,8 +44,15 @@ export const ReportDetailSheet = forwardRef<BottomSheetModal, ReportDetailSheetP
       <BottomSheetModal
         ref={ref}
         snapPoints={['38%', '92%']}
-        backgroundStyle={{ backgroundColor: theme.surfaceElevated }}
-        handleIndicatorStyle={{ backgroundColor: theme.borderStrong }}
+        backgroundStyle={{
+          backgroundColor: '#ffffff',
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24,
+          borderWidth: 1,
+          borderColor: '#efeae0',
+          borderBottomWidth: 0,
+        }}
+        handleIndicatorStyle={{ backgroundColor: '#e8e4dc', width: 36 }}
         backdropComponent={(props) => (
           <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.4} />
         )}

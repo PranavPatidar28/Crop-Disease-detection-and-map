@@ -1,11 +1,8 @@
-import { GlassView } from 'expo-glass-effect';
-import { Filter, Layers, Locate } from 'lucide-react-native';
-import { Platform } from 'react-native';
+import { Layers, Locate, SlidersHorizontal } from 'lucide-react-native';
 
 import { PressableScale } from '@/components/ui/pressable-scale';
-import { useTheme } from '@/hooks/use-theme';
+import { View } from '@/tw';
 import { palette } from '@/theme/colors';
-import { Text, View } from '@/tw';
 
 interface MapControlsProps {
   layerMode: 'markers' | 'heatmap' | 'both';
@@ -15,6 +12,49 @@ interface MapControlsProps {
   onFilter: () => void;
 }
 
+const FabBtn = ({
+  active,
+  onPress,
+  accessibilityLabel,
+  children,
+}: {
+  active?: boolean;
+  onPress: () => void;
+  accessibilityLabel: string;
+  children: React.ReactNode;
+}) => (
+  <PressableScale
+    accessibilityRole="button"
+    accessibilityLabel={accessibilityLabel}
+    onPress={onPress}
+    pressedScale={0.92}
+    haptic="selection"
+    className="h-10 w-10 items-center justify-center rounded-xl border border-border bg-surface"
+    style={{
+      shadowColor: '#0f172a',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.08,
+      shadowRadius: 12,
+      elevation: 4,
+    }}
+  >
+    {children}
+    {active ? (
+      <View
+        style={{
+          position: 'absolute',
+          top: 4,
+          right: 4,
+          width: 6,
+          height: 6,
+          borderRadius: 3,
+          backgroundColor: palette.brand[600],
+        }}
+      />
+    ) : null}
+  </PressableScale>
+);
+
 export function MapControls({
   layerMode,
   filtersActive,
@@ -22,72 +62,26 @@ export function MapControls({
   onLayerToggle,
   onFilter,
 }: MapControlsProps) {
-  const theme = useTheme();
-
+  const layerActive = layerMode !== 'markers';
   return (
     <View className="gap-2">
-      <ControlButton onPress={onLocate} accessibilityLabel="Center on me">
-        <Locate size={18} color={theme.text} strokeWidth={2.2} />
-      </ControlButton>
-
-      <ControlButton onPress={onLayerToggle} accessibilityLabel="Toggle map layers">
-        <Layers size={18} color={theme.text} strokeWidth={2.2} />
-        <Text className="text-[10px] font-semibold uppercase tracking-wider text-text-muted">
-          {layerMode === 'markers' ? 'Pins' : layerMode === 'heatmap' ? 'Heat' : 'Both'}
-        </Text>
-      </ControlButton>
-
-      <ControlButton onPress={onFilter} accessibilityLabel="Open filters">
-        <Filter size={18} color={theme.text} strokeWidth={2.2} />
-        {filtersActive ? (
-          <View
-            style={{
-              position: 'absolute',
-              top: 6,
-              right: 6,
-              width: 8,
-              height: 8,
-              borderRadius: 4,
-              backgroundColor: palette.brand[400],
-              borderWidth: 1.5,
-              borderColor: theme.surfaceElevated,
-            }}
-          />
-        ) : null}
-      </ControlButton>
+      <FabBtn onPress={onLocate} accessibilityLabel="Center on me">
+        <Locate size={18} color={palette.brand[700]} strokeWidth={2.2} />
+      </FabBtn>
+      <FabBtn active={layerActive} onPress={onLayerToggle} accessibilityLabel="Toggle map layers">
+        <Layers
+          size={18}
+          color={layerActive ? palette.brand[600] : palette.brand[700]}
+          strokeWidth={2.2}
+        />
+      </FabBtn>
+      <FabBtn active={filtersActive} onPress={onFilter} accessibilityLabel="Open filters">
+        <SlidersHorizontal
+          size={18}
+          color={filtersActive ? palette.brand[600] : palette.brand[700]}
+          strokeWidth={2.2}
+        />
+      </FabBtn>
     </View>
-  );
-}
-
-function ControlButton({
-  onPress,
-  accessibilityLabel,
-  children,
-}: {
-  onPress: () => void;
-  accessibilityLabel: string;
-  children: React.ReactNode;
-}) {
-  const theme = useTheme();
-  return (
-    <PressableScale
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-      onPress={onPress}
-      pressedScale={0.92}
-      haptic="selection"
-    >
-      <GlassView
-        glassEffectStyle="regular"
-        tintColor={
-          Platform.OS === 'ios' ? `${theme.surfaceElevated}AA` : `${theme.surfaceElevated}E6`
-        }
-        style={{ borderRadius: 16, overflow: 'hidden' }}
-      >
-        <View className="h-12 w-12 items-center justify-center gap-0.5 rounded-2xl border border-white/15">
-          {children}
-        </View>
-      </GlassView>
-    </PressableScale>
   );
 }
