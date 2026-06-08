@@ -326,7 +326,6 @@ export default function MapScreen() {
               isConnected={isConnected}
               reportCount={filteredReports.length}
               onPressSearch={() => filterSheetRef.current?.present()}
-              onPressFilter={() => filterSheetRef.current?.present()}
             />
             <View pointerEvents="box-none" className="flex-row items-center justify-between gap-2">
               <View className="flex-1">
