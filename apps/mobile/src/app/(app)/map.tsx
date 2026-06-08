@@ -301,7 +301,7 @@ export default function MapScreen() {
                   coordinate={{ latitude: report.latitude, longitude: report.longitude }}
                   onPress={() => handleMarkerPress(report)}
                   tracksViewChanges={false}
-                  anchor={{ x: 0.5, y: 0.5 }}
+                  anchor={{ x: 0.5, y: 1 }}
                 >
                   <MapMarker
                     severity={report.severity}
