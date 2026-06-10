@@ -25,31 +25,55 @@ export class PushService {
   }
 
   /**
-   * Sends one notification to all of a user's registered tokens.
+   * Sends multiple notifications to users' registered tokens efficiently.
+   * Batches database queries and push payload dispatching.
    */
-  async sendToUser(userId: string, notification: Notification): Promise<void> {
-    const tokens = await this.prisma.pushToken.findMany({
-      where: { userId },
-      select: { token: true },
-    });
-    if (tokens.length === 0) return;
+  async sendMultiple(notifications: Notification[]): Promise<void> {
+    if (notifications.length === 0) return;
 
-    const messages: ExpoPushMessage[] = tokens
-      .filter((t) => Expo.isExpoPushToken(t.token))
-      .map((t) => ({
-        to: t.token,
-        sound: 'default',
-        title: notification.title,
-        body: notification.body,
-        data: {
-          notificationId: notification.id,
-          ...((notification.data as Record<string, unknown> | null) ?? {}),
-        },
-        priority: notification.severity === 'HIGH' ? 'high' : 'default',
-      }));
+    const userIds = Array.from(new Set(notifications.map((n) => n.userId)));
+
+    // Batch DB query to avoid N+1
+    const userTokens = await this.prisma.pushToken.findMany({
+      where: { userId: { in: userIds } },
+      select: { userId: true, token: true },
+    });
+
+    if (userTokens.length === 0) return;
+
+    // Group valid tokens by userId for O(1) lookup
+    const tokensByUserId = new Map<string, string[]>();
+    for (const t of userTokens) {
+      if (Expo.isExpoPushToken(t.token)) {
+        const existing = tokensByUserId.get(t.userId) || [];
+        existing.push(t.token);
+        tokensByUserId.set(t.userId, existing);
+      }
+    }
+
+    const messages: ExpoPushMessage[] = [];
+
+    for (const notification of notifications) {
+      const tokens = tokensByUserId.get(notification.userId) || [];
+      for (const token of tokens) {
+        messages.push({
+          to: token,
+          sound: 'default',
+          title: notification.title,
+          body: notification.body,
+          data: {
+            notificationId: notification.id,
+            ...((notification.data as Record<string, unknown> | null) ?? {}),
+          },
+          priority: notification.severity === 'HIGH' ? 'high' : 'default',
+        });
+      }
+    }
 
     if (messages.length === 0) return;
 
+    // Chunking happens across all notifications instead of per-user
+    // This allows Expo SDK to effectively batch network requests
     const chunks = this.expo.chunkPushNotifications(messages);
     for (const chunk of chunks) {
       try {
@@ -59,6 +83,13 @@ export class PushService {
         this.logger.warn(`Expo push send failed: ${(err as Error).message}`);
       }
     }
+  }
+
+  /**
+   * Sends one notification to all of a user's registered tokens.
+   */
+  async sendToUser(userId: string, notification: Notification): Promise<void> {
+    await this.sendMultiple([notification]);
   }
 
   private async handleTickets(
