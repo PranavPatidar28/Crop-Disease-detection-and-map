@@ -127,6 +127,10 @@ function AppShell() {
           name="reports/[id]"
           options={{ animation: 'slide_from_bottom' }}
         />
+        <Stack.Screen
+          name="report"
+          options={{ animation: 'slide_from_bottom' }}
+        />
         <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
         <Stack.Screen
           name="(onboarding)"
