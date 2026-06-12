@@ -22,16 +22,6 @@ interface Props {
   onCancel: () => void;
 }
 
-/** Flash modes we cycle through with the toggle button: off → auto → on → off. */
-const FLASH_CYCLE = ['off', 'auto', 'on'] as const;
-type CycledFlash = (typeof FLASH_CYCLE)[number];
-
-const FLASH_LABEL: Record<CycledFlash, string> = {
-  off: 'Off',
-  auto: 'Auto',
-  on: 'On',
-};
-
 /**
  * Step 1 of the report flow. Renders a live in-page camera preview
  * (expo-camera `CameraView`) with a shutter button, a flash-mode toggle,
@@ -41,7 +31,7 @@ const FLASH_LABEL: Record<CycledFlash, string> = {
 export function CaptureScreen({ onCaptured, onCancel }: Props) {
   const [permission, requestPermission] = useCameraPermissions();
   const cameraRef = useRef<CameraView>(null);
-  const [flash, setFlash] = useState<CycledFlash>('off');
+  const [torchOn, setTorchOn] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
 
@@ -138,7 +128,8 @@ export function CaptureScreen({ onCaptured, onCancel }: Props) {
         ref={cameraRef}
         style={{ flex: 1 }}
         facing="back"
-        flash={flash}
+        enableTorch={torchOn}
+        flash={torchOn ? 'on' : 'off'}
         onCameraReady={() => setIsReady(true)}
       />
 
@@ -166,17 +157,16 @@ export function CaptureScreen({ onCaptured, onCancel }: Props) {
           </View>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`Flash ${FLASH_LABEL[flash]}`}
-            onPress={() =>
-              setFlash((f) => FLASH_CYCLE[(FLASH_CYCLE.indexOf(f) + 1) % FLASH_CYCLE.length])
-            }
+            accessibilityState={{ selected: torchOn }}
+            accessibilityLabel={torchOn ? 'Turn flash off' : 'Turn flash on'}
+            onPress={() => setTorchOn((on) => !on)}
             className="h-10 w-10 items-center justify-center rounded-full"
-            style={{ backgroundColor: flash === 'off' ? 'rgba(0,0,0,0.45)' : palette.brand[600] }}
+            style={{ backgroundColor: torchOn ? palette.brand[600] : 'rgba(0,0,0,0.45)' }}
           >
-            {flash === 'off' ? (
-              <ZapOff size={18} color="#ffffff" strokeWidth={2.4} />
-            ) : (
+            {torchOn ? (
               <Zap size={18} color="#ffffff" strokeWidth={2.4} fill="#ffffff" />
+            ) : (
+              <ZapOff size={18} color="#ffffff" strokeWidth={2.4} />
             )}
           </Pressable>
         </View>
@@ -188,7 +178,7 @@ export function CaptureScreen({ onCaptured, onCancel }: Props) {
         <View className="items-center pb-3">
           <View className="rounded-full px-3 py-1.5" style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}>
             <Text className="text-xs font-medium text-white">
-              Frame the affected leaf · flash {FLASH_LABEL[flash]}
+              Frame the affected leaf · flash {torchOn ? 'on' : 'off'}
             </Text>
           </View>
         </View>
