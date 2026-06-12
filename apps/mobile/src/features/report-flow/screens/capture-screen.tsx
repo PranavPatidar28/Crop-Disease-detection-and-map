@@ -24,7 +24,7 @@ interface Props {
 
 /**
  * Step 1 of the report flow. Renders a live in-page camera preview
-  * (expo-camera `CameraView`) with a shutter button, a torch toggle,
+ * (expo-camera `CameraView`) with a shutter button, a torch toggle,
  * and a gallery picker. Falls back to a permission-request screen when
  * camera access has not been granted yet.
  */
