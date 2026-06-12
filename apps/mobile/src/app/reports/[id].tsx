@@ -149,7 +149,7 @@ export default function ReportDetailScreen() {
               <Animated.View entering={FadeInDown.delay(260).duration(400)}>
                 <ResultActions
                   report={report}
-                  onUploadAnother={() => router.replace('/upload')}
+                  onUploadAnother={() => router.replace('/report')}
                   onViewOnMap={() => router.push('/map')}
                 />
               </Animated.View>

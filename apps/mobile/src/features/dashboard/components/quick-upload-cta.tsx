@@ -11,7 +11,7 @@ export function QuickUploadCTA() {
     <PressableScale
       accessibilityRole="button"
       accessibilityLabel="Report a disease"
-      onPress={() => router.push('/upload')}
+      onPress={() => router.push('/report')}
       haptic="light"
       pressedScale={0.97}
       className="overflow-hidden rounded-2xl"
