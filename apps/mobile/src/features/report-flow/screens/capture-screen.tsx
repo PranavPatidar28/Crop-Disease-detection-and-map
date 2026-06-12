@@ -24,7 +24,7 @@ interface Props {
 
 /**
  * Step 1 of the report flow. Renders a live in-page camera preview
- * (expo-camera `CameraView`) with a shutter button, a flash-mode toggle,
+  * (expo-camera `CameraView`) with a shutter button, a torch toggle,
  * and a gallery picker. Falls back to a permission-request screen when
  * camera access has not been granted yet.
  */
@@ -156,8 +156,8 @@ export function CaptureScreen({ onCaptured, onCancel }: Props) {
             </Text>
           </View>
           <Pressable
-            accessibilityRole="button"
-            accessibilityState={{ selected: torchOn }}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: torchOn }}
             accessibilityLabel={torchOn ? 'Turn flash off' : 'Turn flash on'}
             onPress={() => setTorchOn((on) => !on)}
             className="h-10 w-10 items-center justify-center rounded-full"
