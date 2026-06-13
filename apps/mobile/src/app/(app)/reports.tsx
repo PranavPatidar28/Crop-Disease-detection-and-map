@@ -72,11 +72,7 @@ export default function ReportsScreen() {
             </Text>
           </View>
           {reports.length > 0 ? (
-            <ReportFilterBar
-              value={filter}
-              onChange={setFilter}
-              matchingCount={filtered.length}
-            />
+            <ReportFilterBar value={filter} onChange={setFilter} />
           ) : null}
         </View>
 

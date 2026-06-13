@@ -1,10 +1,8 @@
-import { ChevronDown, Search, SlidersHorizontal, X } from 'lucide-react-native';
-import { useRef } from 'react';
+import { Search, X } from 'lucide-react-native';
 import { TextInput } from 'react-native';
-import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 
+import { Dropdown, type DropdownOption } from '@/components/ui/dropdown';
 import { PressableScale } from '@/components/ui/pressable-scale';
-import { ReportFilterSheet } from '@/features/disease-analysis/components/report-filter-sheet';
 import type {
   ReportFilter,
   SeverityFilter,
@@ -12,24 +10,36 @@ import type {
 } from '@/features/disease-analysis/utils/filter-reports';
 import { useTheme } from '@/hooks/use-theme';
 import { palette } from '@/theme/colors';
-import { Text, View } from '@/tw';
-import { cn } from '@/utils/cn';
+import { View } from '@/tw';
 
 interface ReportFilterBarProps {
   value: ReportFilter;
   onChange: (next: ReportFilter) => void;
-  /** Count shown on the sheet's apply button. */
-  matchingCount: number;
 }
 
-const SEVERITY_LABELS: Record<SeverityFilter, string> = {
+const SEVERITY_OPTIONS: DropdownOption<SeverityFilter>[] = [
+  { value: 'all', label: 'All severities' },
+  { value: 'LOW', label: 'Low' },
+  { value: 'MEDIUM', label: 'Medium' },
+  { value: 'HIGH', label: 'High' },
+];
+
+const STATUS_OPTIONS: DropdownOption<StatusFilter>[] = [
+  { value: 'all', label: 'Any status' },
+  { value: 'analyzed', label: 'Analyzed' },
+  { value: 'processing', label: 'Processing' },
+  { value: 'failed', label: 'Failed' },
+];
+
+// Pill label shows the active selection, or the category name when 'all'.
+const SEVERITY_PILL: Record<SeverityFilter, string> = {
   all: 'Severity',
   LOW: 'Low',
   MEDIUM: 'Medium',
   HIGH: 'High',
 };
 
-const STATUS_LABELS: Record<StatusFilter, string> = {
+const STATUS_PILL: Record<StatusFilter, string> = {
   all: 'Status',
   analyzed: 'Analyzed',
   processing: 'Processing',
@@ -37,16 +47,13 @@ const STATUS_LABELS: Record<StatusFilter, string> = {
 };
 
 /**
- * Search + filter triggers for the reports history screen. Purely controlled —
- * owns no filter state. The severity/status options live in a bottom sheet
- * (ReportFilterSheet) opened by the trigger buttons, keeping the bar compact.
- * Filtering itself happens client-side in the screen via filterReports().
+ * Search + severity + status filters for the reports history screen. Purely
+ * controlled — owns no state. Severity/Status are anchored dropdowns (open on
+ * top of all UI); filtering happens client-side in the screen via
+ * filterReports().
  */
-export function ReportFilterBar({ value, onChange, matchingCount }: ReportFilterBarProps) {
+export function ReportFilterBar({ value, onChange }: ReportFilterBarProps) {
   const theme = useTheme();
-  const sheetRef = useRef<BottomSheetModal>(null);
-
-  const openSheet = () => sheetRef.current?.present();
 
   return (
     <View className="gap-2.5">
@@ -77,75 +84,23 @@ export function ReportFilterBar({ value, onChange, matchingCount }: ReportFilter
       </View>
 
       <View className="flex-row gap-2">
-        <FilterTrigger
-          label={SEVERITY_LABELS[value.severity]}
-          active={value.severity !== 'all'}
-          onPress={openSheet}
-          leftSlot={
-            <SlidersHorizontal
-              size={14}
-              color={value.severity !== 'all' ? '#fff' : palette.brand[600]}
-              strokeWidth={2.2}
-            />
-          }
+        <Dropdown
+          triggerVariant="pill"
+          align="start"
+          value={value.severity === 'all' ? null : value.severity}
+          items={SEVERITY_OPTIONS}
+          onSelect={(severity) => onChange({ ...value, severity })}
+          label={SEVERITY_PILL[value.severity]}
         />
-        <FilterTrigger
-          label={STATUS_LABELS[value.status]}
-          active={value.status !== 'all'}
-          onPress={openSheet}
+        <Dropdown
+          triggerVariant="pill"
+          align="end"
+          value={value.status === 'all' ? null : value.status}
+          items={STATUS_OPTIONS}
+          onSelect={(status) => onChange({ ...value, status })}
+          label={STATUS_PILL[value.status]}
         />
       </View>
-
-      <ReportFilterSheet
-        ref={sheetRef}
-        value={value}
-        onChange={onChange}
-        matchingCount={matchingCount}
-      />
     </View>
-  );
-}
-
-interface FilterTriggerProps {
-  label: string;
-  active: boolean;
-  onPress: () => void;
-  leftSlot?: React.ReactNode;
-}
-
-function FilterTrigger({ label, active, onPress, leftSlot }: FilterTriggerProps) {
-  const theme = useTheme();
-  return (
-    <PressableScale
-      accessibilityRole="button"
-      accessibilityLabel={`Filter by ${label}`}
-      onPress={onPress}
-      pressedScale={0.97}
-      haptic="selection"
-      className="flex-1"
-    >
-      <View
-        className={cn(
-          'flex-row items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5',
-          active ? 'border-brand-600 bg-brand-600' : 'border-border bg-surface',
-        )}
-      >
-        {leftSlot}
-        <Text
-          className={cn(
-            'text-[13px] font-bold',
-            active ? 'text-white' : 'text-text',
-          )}
-          numberOfLines={1}
-        >
-          {label}
-        </Text>
-        <ChevronDown
-          size={14}
-          color={active ? '#fff' : theme.textMuted}
-          strokeWidth={2.2}
-        />
-      </View>
-    </PressableScale>
   );
 }
