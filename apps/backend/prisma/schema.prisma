@@ -105,9 +105,18 @@ model Report {
   confidence       Float?
   severity         Severity?
   recommendations  String[]         @default([])
+  /// Full farmer-facing advisory captured from a rich AI provider (e.g. the HF
+  /// RAG pipeline): primary diagnosis, top-3/possible-other predictions,
+  /// urgency, symptoms-to-confirm, prevention, and the RAG explanation. Null
+  /// when the provider only supplies the flat fields above (mock/fastapi).
+  advisory         Json?
   processingStatus ProcessingStatus @default(PENDING)
   aiError          String?
   processedAt      DateTime?
+  /// True once this report has been counted into an OutbreakZone. Prevents a
+  /// reprocess (re-running AI on an already-SUCCESS report) from double-counting
+  /// it into the same zone and skewing severity escalation.
+  outbreakContributed Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
