@@ -187,9 +187,10 @@ function buildReports(): SeedReport[] {
     });
   }
 
-  // --- 3 Healthy reports (green branch) ---
+  // --- 3 Healthy reports (green branch). Each crop MUST have a `healthy`
+  // folder on disk / catalog entry (soybean/rice/sorghum do not). ---
   const healthy: Array<{ cropType: string; cropFolder: string }> = [
-    { cropType: 'Soybean', cropFolder: 'soyabean' },
+    { cropType: 'Maize', cropFolder: 'maize' },
     { cropType: 'Wheat', cropFolder: 'wheat' },
     { cropType: 'Sugarcane', cropFolder: 'sugarcane' },
   ];
