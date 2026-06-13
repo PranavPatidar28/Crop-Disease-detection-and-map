@@ -34,7 +34,7 @@ const MOBILE_KEYS = [
   'maize/common_rust',
   'cotton/curl_virus',
   'chilli/bacterial_spot',
-  'soyabean/healthy',
+  'maize/healthy',
   'wheat/healthy',
 ];
 
