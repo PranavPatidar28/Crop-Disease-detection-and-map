@@ -48,18 +48,18 @@ function loadManifest(): Manifest {
 
 const manifest = loadManifest();
 
-/** Returns a real Cloudinary image for a crop/disease, or a picsum fallback. */
+/** Returns a real Cloudinary image for a crop/disease folder, or a picsum fallback. */
 function imageFor(
-  crop: string,
-  disease: string,
+  cropFolder: string,
+  diseaseFolder: string,
   index: number,
 ): { imageUrl: string; imagePublicId: string } {
-  const images = manifest[crop]?.[disease] ?? [];
+  const images = manifest[cropFolder]?.[diseaseFolder] ?? [];
   if (images.length > 0) {
     const img = images[index % images.length]!;
     return { imageUrl: img.url, imagePublicId: img.publicId };
   }
-  const seed = `${crop}-${disease}-${index}`;
+  const seed = `${cropFolder}-${diseaseFolder}-${index}`;
   return {
     imageUrl: `https://picsum.photos/seed/${encodeURIComponent(seed)}/640/480`,
     imagePublicId: `seed-fallback-${seed}`,
@@ -376,66 +376,59 @@ async function seed(): Promise<void> {
   logger.info(`✓ ${NOTIFICATION_TEMPLATES.length} notifications seeded for primary user`);
 
   // Outbreak zones — built from contributing cluster reports.
-  const soybeanReports = reports.filter(
-    (r) => r.cropFolder === 'soyabean' && r.diseaseFolder === 'yellow_mosaic',
-  );
-  const wheatReports = reports.filter(
-    (r) => r.cropFolder === 'wheat' && r.diseaseFolder === 'stripe_rust',
-  );
-  const tomatoReports = reports.filter(
-    (r) => r.cropFolder === 'tomato' && r.diseaseFolder === 'late_blight',
-  );
+  const zoneSpecs = [
+    {
+      disease: 'Yellow Mosaic Virus',
+      anchor: SEHORE,
+      radius: 5000,
+      severity: Severity.HIGH,
+      crops: ['Soybean'],
+      reports: reports.filter(
+        (r) => r.cropFolder === 'soyabean' && r.diseaseFolder === 'yellow_mosaic',
+      ),
+    },
+    {
+      disease: 'Stripe Rust (Yellow Rust)',
+      anchor: VIDISHA,
+      radius: 4500,
+      severity: Severity.MEDIUM,
+      crops: ['Wheat'],
+      reports: reports.filter(
+        (r) => r.cropFolder === 'wheat' && r.diseaseFolder === 'stripe_rust',
+      ),
+    },
+    {
+      disease: 'Late Blight',
+      anchor: BHOPAL,
+      radius: 4000,
+      severity: Severity.LOW,
+      crops: ['Tomato'],
+      reports: reports.filter(
+        (r) => r.cropFolder === 'tomato' && r.diseaseFolder === 'late_blight',
+      ),
+    },
+  ];
 
   await prisma.outbreakZone.deleteMany({
-    where: {
-      disease: {
-        in: ['Yellow Mosaic Virus', 'Stripe Rust (Yellow Rust)', 'Late Blight'],
-      },
-    },
+    where: { disease: { in: zoneSpecs.map((z) => z.disease) } },
   });
 
-  await prisma.outbreakZone.create({
-    data: {
-      disease: 'Yellow Mosaic Virus',
-      latitude: SEHORE.lat,
-      longitude: SEHORE.lng,
-      radius: 5000,
-      reportCount: soybeanReports.length,
-      highCount: soybeanReports.filter((r) => r.severity === Severity.HIGH).length,
-      severity: Severity.HIGH,
-      affectedCropTypes: ['Soybean'],
-      active: true,
-      lastSeenAt: new Date(),
-    },
-  });
-  await prisma.outbreakZone.create({
-    data: {
-      disease: 'Stripe Rust (Yellow Rust)',
-      latitude: VIDISHA.lat,
-      longitude: VIDISHA.lng,
-      radius: 4500,
-      reportCount: wheatReports.length,
-      highCount: wheatReports.filter((r) => r.severity === Severity.HIGH).length,
-      severity: Severity.MEDIUM,
-      affectedCropTypes: ['Wheat'],
-      active: true,
-      lastSeenAt: new Date(),
-    },
-  });
-  await prisma.outbreakZone.create({
-    data: {
-      disease: 'Late Blight',
-      latitude: BHOPAL.lat,
-      longitude: BHOPAL.lng,
-      radius: 4000,
-      reportCount: tomatoReports.length,
-      highCount: tomatoReports.filter((r) => r.severity === Severity.HIGH).length,
-      severity: Severity.LOW,
-      affectedCropTypes: ['Tomato'],
-      active: true,
-      lastSeenAt: new Date(),
-    },
-  });
+  for (const z of zoneSpecs) {
+    await prisma.outbreakZone.create({
+      data: {
+        disease: z.disease,
+        latitude: z.anchor.lat,
+        longitude: z.anchor.lng,
+        radius: z.radius,
+        reportCount: z.reports.length,
+        highCount: z.reports.filter((r) => r.severity === Severity.HIGH).length,
+        severity: z.severity,
+        affectedCropTypes: z.crops,
+        active: true,
+        lastSeenAt: new Date(),
+      },
+    });
+  }
   logger.info('✓ 3 outbreak zones seeded (HIGH Sehore, MEDIUM Vidisha, LOW Bhopal)');
 
   logger.info('✅ Demo seed complete.');
