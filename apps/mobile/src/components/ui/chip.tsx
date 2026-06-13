@@ -56,16 +56,15 @@ export function Chip({ label, active = false, tone = 'neutral', onPress, leftSlo
   if (active) {
     return (
       <PressableScale onPress={onPress} disabled={!onPress} pressedScale={0.96} haptic="selection">
-        <View className={cn(baseClass, 'overflow-hidden')}>
-          <LinearGradient
-            colors={[palette.brand[500], palette.brand[600]]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={[StyleSheet.absoluteFill, styles.gradient]}
-          />
+        <LinearGradient
+          colors={[palette.brand[500], palette.brand[600]]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.activePill}
+        >
           {leftSlot}
-          <Text className={cn(labelClass, 'z-10')}>{label}</Text>
-        </View>
+          <Text className={labelClass}>{label}</Text>
+        </LinearGradient>
       </PressableScale>
     );
   }
@@ -88,3 +87,19 @@ export function Chip({ label, active = false, tone = 'neutral', onPress, leftSlo
     </PressableScale>
   );
 }
+
+// The active pill renders its content INSIDE the gradient (not as an overlay
+// sibling). Under the new architecture / Fabric, an absolutely-filled gradient
+// wrapped in an animated PressableScale can paint over later siblings, which made
+// the white label disappear. Mirrors `baseClass` (flex-row / gap-1 / rounded-full
+// / px-3 / py-1.5) so the layout is identical to the inactive chip.
+const styles = StyleSheet.create({
+  activePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderRadius: 9999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+});
