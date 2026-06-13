@@ -6,6 +6,7 @@ import { Pressable } from 'react-native';
 import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useTranslation } from '@/i18n';
 import { Text, View } from '@/tw';
 import { palette } from '@/theme/colors';
 import { timeAgo } from '@/utils/severity';
@@ -23,18 +24,20 @@ const SEVERITY_TONE: Record<Severity, 'success' | 'warning' | 'danger'> = {
   high: 'danger',
 };
 
-const SEVERITY_LABEL: Record<Severity, string> = {
-  low: 'Low',
-  medium: 'Medium',
-  high: 'High',
+const SEVERITY_KEY: Record<Severity, 'severity.low' | 'severity.medium' | 'severity.high'> = {
+  low: 'severity.low',
+  medium: 'severity.medium',
+  high: 'severity.high',
 };
 
 export function RecentReports({ reports, loading }: RecentReportsProps) {
+  const { t } = useTranslation();
+
   if (loading || !reports) {
     return (
       <View className="gap-2">
         <View className="flex-row items-center justify-between px-1">
-          <Text className="text-base font-bold text-text">Latest in your area</Text>
+          <Text className="text-base font-bold text-text">{t('dashboard.latestInArea')}</Text>
         </View>
         <Skeleton height={180} rounded="xl" />
       </View>
@@ -47,17 +50,17 @@ export function RecentReports({ reports, loading }: RecentReportsProps) {
     <View className="gap-2">
       <View className="flex-row items-center justify-between px-1">
         <Text className="text-base font-bold tracking-tight text-text">
-          Latest in your area
+          {t('dashboard.latestInArea')}
         </Text>
         <Pressable accessibilityRole="button" onPress={() => router.push('/reports' as Href)}>
-          <Text className="text-xs font-bold text-brand-700">View all</Text>
+          <Text className="text-xs font-bold text-brand-700">{t('common.viewAll')}</Text>
         </Pressable>
       </View>
 
       <Card padding="none">
         {top.length === 0 ? (
           <View className="px-4 py-6">
-            <Text className="text-sm text-text-muted">No nearby reports yet.</Text>
+            <Text className="text-sm text-text-muted">{t('dashboard.noNearbyReports')}</Text>
           </View>
         ) : (
           top.map((r, i) => (
@@ -94,7 +97,7 @@ export function RecentReports({ reports, loading }: RecentReportsProps) {
                 </View>
                 {r.severity ? (
                   <Chip
-                    label={SEVERITY_LABEL[r.severity]}
+                    label={t(SEVERITY_KEY[r.severity])}
                     tone={SEVERITY_TONE[r.severity] ?? 'warning'}
                   />
                 ) : null}

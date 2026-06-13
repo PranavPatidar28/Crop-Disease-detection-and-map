@@ -23,11 +23,13 @@ import type { Notification, NotificationType } from '@/features/notifications/ap
 import { useNotificationsStore } from '@/features/notifications/store/notifications.store';
 import { groupByDay } from '@/features/notifications/utils/group-by-day';
 import { useTheme } from '@/hooks/use-theme';
+import { useTranslation } from '@/i18n';
 import { usePreferencesStore } from '@/store/preferences.store';
 import { Text, View } from '@/tw';
 
 export default function NotificationsScreen() {
   const theme = useTheme();
+  const { t } = useTranslation();
   const [filter, setFilter] = useState<NotificationFilterValue>('all');
 
   const { unreadOnly, type } = useMemo<{
@@ -73,14 +75,14 @@ export default function NotificationsScreen() {
           </View>
           <View className="flex-row items-end justify-between gap-3">
             <View className="flex-1">
-              <Text className="text-3xl font-extrabold tracking-tight text-text">Alerts</Text>
+              <Text className="text-3xl font-extrabold tracking-tight text-text">{t('notifications.title')}</Text>
               <Text className="text-sm text-text-muted">
-                Outbreaks and updates from your region
+                {t('notifications.subtitle')}
               </Text>
             </View>
             {unreadCount > 0 ? (
               <TextButton
-                label="Mark all read"
+                label={t('notifications.markAllRead')}
                 size="sm"
                 disabled={markAllRead.isPending}
                 onPress={() => markAllRead.mutate()}
@@ -100,9 +102,9 @@ export default function NotificationsScreen() {
           <View className="flex-1 items-center justify-center">
             <EmptyState
               emoji="📡"
-              title="Couldn't load alerts"
-              description="Check your connection and try again."
-              actionLabel="Retry"
+              title={t('notifications.errorTitle')}
+              description={t('notifications.errorDesc')}
+              actionLabel={t('common.retry')}
               onAction={() => query.refetch()}
             />
           </View>
@@ -110,9 +112,9 @@ export default function NotificationsScreen() {
           <View className="flex-1 items-center justify-center">
             <EmptyState
               emoji="🌾"
-              title="All clear in your area"
-              description={`We'll alert you when outbreaks within ${alertRadiusKm} km need attention.`}
-              actionLabel="Adjust alert radius"
+              title={t('notifications.allClearTitle')}
+              description={t('notifications.allClearDesc', { km: alertRadiusKm })}
+              actionLabel={t('notifications.adjustRadius')}
               onAction={() => router.push('/profile')}
             />
           </View>

@@ -5,6 +5,7 @@ import { Chip } from '@/components/ui/chip';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { SectionLabel } from '@/components/ui/section-label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useTranslation } from '@/i18n';
 import { usePreferencesStore } from '@/store/preferences.store';
 import { Text, View } from '@/tw';
 
@@ -21,6 +22,7 @@ interface OutbreakSummaryProps {
  * and a context line.
  */
 export function OutbreakSummary({ summary, loading }: OutbreakSummaryProps) {
+  const { t } = useTranslation();
   const alertRadiusKm = usePreferencesStore((s) => s.alertRadiusKm);
 
   if (loading || !summary) {
@@ -30,10 +32,10 @@ export function OutbreakSummary({ summary, loading }: OutbreakSummaryProps) {
   const newCount = summary.reportsThisWeek ?? 0;
   const trend: { label: string; tone: 'success' | 'warning' | 'info' } =
     summary.activeOutbreaks <= 3
-      ? { label: 'Stable', tone: 'success' }
+      ? { label: t('dashboard.trendStable'), tone: 'success' }
       : summary.activeOutbreaks > 10
-        ? { label: 'Rising', tone: 'warning' }
-        : { label: 'Active', tone: 'info' };
+        ? { label: t('dashboard.trendRising'), tone: 'warning' }
+        : { label: t('dashboard.trendActive'), tone: 'info' };
 
   return (
     <PressableScale
@@ -43,7 +45,7 @@ export function OutbreakSummary({ summary, loading }: OutbreakSummaryProps) {
       haptic="selection"
     >
       <Card variant="glow" padding="lg">
-        <SectionLabel>{`Today · ${alertRadiusKm} km radius`}</SectionLabel>
+        <SectionLabel>{t('dashboard.todayRadius', { km: alertRadiusKm })}</SectionLabel>
         <View className="mt-2 flex-row items-end justify-between">
           <Text
             className="font-extrabold text-brand-900"
@@ -53,13 +55,15 @@ export function OutbreakSummary({ summary, loading }: OutbreakSummaryProps) {
           </Text>
           <View className="flex-row gap-2 pb-2">
             <Chip label={trend.label} tone={trend.tone} />
-            {newCount > 0 ? <Chip label={`+${newCount} new`} tone="warning" /> : null}
+            {newCount > 0 ? (
+              <Chip label={t('dashboard.newCount', { count: newCount })} tone="warning" />
+            ) : null}
           </View>
         </View>
         <Text className="mt-2 text-xs text-text-muted">
           {summary.highSeverityZones > 0
-            ? `${summary.highSeverityZones} high-severity zones nearby`
-            : 'No high-severity zones near you'}
+            ? t('dashboard.highSeverityZones', { count: summary.highSeverityZones })
+            : t('dashboard.noHighSeverity')}
         </Text>
       </Card>
     </PressableScale>

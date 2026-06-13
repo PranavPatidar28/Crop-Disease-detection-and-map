@@ -9,6 +9,7 @@ import { BottomActionBar } from '@/components/layout/bottom-action-bar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { SeverityBadge } from '@/features/disease-analysis/components/severity-badge';
+import { useTranslation } from '@/i18n';
 import { palette } from '@/theme/colors';
 import { Text, View } from '@/tw';
 
@@ -26,6 +27,7 @@ interface Props {
  * forward: open the report on the map, or kick off another report.
  */
 export function SubmittedScreen({ result, cropType, reportId, onAnother }: Props) {
+  const { t } = useTranslation();
   return (
     <View className="flex-1 bg-bg">
       <SafeAreaView edges={['top']} style={{ flex: 1 }}>
@@ -55,9 +57,9 @@ export function SubmittedScreen({ result, cropType, reportId, onAnother }: Props
             entering={FadeInDown.delay(100).duration(400)}
             className="items-center gap-1"
           >
-            <Text className="text-2xl font-extrabold tracking-tight text-text">Submitted</Text>
+            <Text className="text-2xl font-extrabold tracking-tight text-text">{t('reportFlow.submitted')}</Text>
             <Text className="text-center text-sm text-text-muted">
-              Saved to your history and shared with nearby farmers.
+              {t('reportFlow.submittedDesc')}
             </Text>
           </Animated.View>
 
@@ -66,18 +68,18 @@ export function SubmittedScreen({ result, cropType, reportId, onAnother }: Props
               <View className="flex-row flex-wrap items-center gap-2">
                 <SeverityBadge severity={result.severity} />
                 <Text className="text-sm font-bold text-text">
-                  {cropType ?? '—'} · {result.disease ?? 'Manual entry'}
+                  {cropType ?? '—'} · {result.disease ?? t('reportFlow.manualEntry')}
                 </Text>
               </View>
-              <Text className="mt-1 text-xs text-text-subtle">just now</Text>
+              <Text className="mt-1 text-xs text-text-subtle">{t('reportFlow.justNow')}</Text>
             </Card>
           </Animated.View>
         </View>
 
         <BottomActionBar divider={false}>
-          <Button label="View on map" variant="ghost" onPress={() => router.replace('/map')} />
+          <Button label={t('reportFlow.viewOnMap')} variant="ghost" onPress={() => router.replace('/map')} />
           <Button
-            label={reportId ? 'View this report' : 'Report another'}
+            label={reportId ? t('reportFlow.viewThisReport') : t('reportFlow.reportAnother')}
             variant="gradient"
             onPress={() =>
               reportId

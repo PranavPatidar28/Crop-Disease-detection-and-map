@@ -5,6 +5,7 @@ import { forwardRef } from 'react';
 import { IconButton } from '@/components/ui/icon-button';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { useTheme } from '@/hooks/use-theme';
+import { useTranslation } from '@/i18n';
 import {
   LANGUAGE_OPTIONS,
   type LanguageCode,
@@ -14,11 +15,12 @@ import { palette } from '@/theme/colors';
 import { Text, View } from '@/tw';
 
 /**
- * Language picker. Stored preference only — the app does not yet swap copy at
- * runtime, so we show a small note to set the right expectation.
+ * Language picker. English and Hindi swap UI copy at runtime; the remaining
+ * options are selectable but fall back to English, tagged "Coming soon".
  */
 export const LanguageSheet = forwardRef<BottomSheetModal>(function LanguageSheet(_props, ref) {
   const theme = useTheme();
+  const { t } = useTranslation();
   const language = usePreferencesStore((s) => s.language);
   const setLanguage = usePreferencesStore((s) => s.setLanguage);
 
@@ -49,8 +51,8 @@ export const LanguageSheet = forwardRef<BottomSheetModal>(function LanguageSheet
       <BottomSheetView style={{ paddingBottom: 32 }}>
         <View className="flex-row items-center justify-between px-5 pb-1 pt-1">
           <View>
-            <Text className="text-xl font-bold text-text">Language</Text>
-            <Text className="text-xs text-text-muted">Choose your preferred language</Text>
+            <Text className="text-xl font-bold text-text">{t('language.title')}</Text>
+            <Text className="text-xs text-text-muted">{t('language.subtitle')}</Text>
           </View>
           <IconButton
             accessibilityLabel="Close"
@@ -79,6 +81,13 @@ export const LanguageSheet = forwardRef<BottomSheetModal>(function LanguageSheet
                   }`}
                 >
                   <Text className="flex-1 text-base font-bold text-text">{option.label}</Text>
+                  {!option.implemented ? (
+                    <View className="rounded-full bg-surface-muted px-2 py-0.5">
+                      <Text className="text-[10px] font-bold uppercase tracking-[0.5px] text-text-subtle">
+                        {t('language.comingSoon')}
+                      </Text>
+                    </View>
+                  ) : null}
                   {selected ? (
                     <Check size={18} color={palette.brand[600]} strokeWidth={2.6} />
                   ) : null}

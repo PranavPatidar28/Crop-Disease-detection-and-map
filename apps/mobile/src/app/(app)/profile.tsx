@@ -30,12 +30,14 @@ import { onboardingStorage } from '@/features/plots/onboarding-storage';
 import { AlertRadiusSheet, EditProfileSheet, LanguageSheet } from '@/features/profile/components';
 import { MapPickerSheet } from '@/features/upload-report/components/map-picker-sheet';
 import { useReportsCount } from '@/features/upload-report/hooks';
+import { useTranslation } from '@/i18n';
 import { useAuthStore } from '@/store/auth.store';
 import { languageLabel, usePreferencesStore } from '@/store/preferences.store';
 import { lightColors, palette } from '@/theme/colors';
 import { Text, View } from '@/tw';
 
 export default function ProfileScreen() {
+  const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const { data: plots } = useActivePlots();
@@ -53,9 +55,9 @@ export default function ProfileScreen() {
   const alertRadiusRef = useRef<BottomSheetModal>(null);
   const languageRef = useRef<BottomSheetModal>(null);
 
-  const location = [user?.district, user?.state].filter(Boolean).join(', ') || 'Not set';
+  const location = [user?.district, user?.state].filter(Boolean).join(', ') || t('profile.locationNotSet');
   const role = (user?.role ?? 'farmer').toLowerCase();
-  const roleLabel = role ? role[0]!.toUpperCase() + role.slice(1) : 'Farmer';
+  const roleLabel = role === 'farmer' ? t('profile.roleFarmer') : role[0]!.toUpperCase() + role.slice(1);
   const reportsValue = reportsCountPending ? '—' : String(reportsCount ?? 0);
 
   const handleLogout = async () => {
@@ -77,7 +79,7 @@ export default function ProfileScreen() {
                 <Avatar name={user?.name} fallback="🌾" size="xl" verified />
                 <View className="flex-1">
                   <Text className="text-xl font-extrabold tracking-tight text-text" numberOfLines={1}>
-                    {user?.name ?? 'Welcome'}
+                    {user?.name ?? t('profile.welcome')}
                   </Text>
                   <Text className="mt-0.5 text-sm text-text-muted">+91 {user?.phone ?? '—'}</Text>
                   <View className="mt-2 flex-row">
@@ -85,7 +87,7 @@ export default function ProfileScreen() {
                   </View>
                 </View>
                 <IconButton
-                  accessibilityLabel="Edit profile"
+                  accessibilityLabel={t('profile.editProfile')}
                   variant="tint"
                   icon={<Pencil size={16} color={palette.brand[700]} strokeWidth={2.2} />}
                   onPress={() => editProfileRef.current?.present()}
@@ -97,12 +99,12 @@ export default function ProfileScreen() {
                 <StatTile
                   icon={<FileText size={15} color={palette.brand[700]} strokeWidth={2.3} />}
                   value={reportsValue}
-                  label="Reports"
+                  label={t('profile.statReports')}
                 />
                 <StatTile
                   icon={<Sprout size={15} color={palette.brand[700]} strokeWidth={2.3} />}
                   value={String(plots?.length ?? 0)}
-                  label="Active plots"
+                  label={t('profile.statActivePlots')}
                 />
               </View>
             </Card>
@@ -111,9 +113,9 @@ export default function ProfileScreen() {
           {/* Plots */}
           <Animated.View entering={FadeInDown.delay(100).duration(400)}>
             <View className="flex-row items-center justify-between px-1">
-              <SectionLabel>Plots</SectionLabel>
+              <SectionLabel>{t('profile.plots')}</SectionLabel>
               <TextButton
-                label="Add plot"
+                label={t('profile.addPlot')}
                 size="sm"
                 leftSlot={<Plus size={12} color={palette.brand[700]} strokeWidth={2.4} />}
                 onPress={() => {
@@ -149,9 +151,9 @@ export default function ProfileScreen() {
                     <View className="h-10 w-10 items-center justify-center rounded-xl bg-brand-50">
                       <Sprout size={18} color={palette.brand[700]} strokeWidth={2.2} />
                     </View>
-                    <Text className="text-sm font-bold text-text">No plots yet</Text>
+                    <Text className="text-sm font-bold text-text">{t('profile.noPlotsTitle')}</Text>
                     <Text className="max-w-[260px] text-center text-xs text-text-muted">
-                      Add your first field to start receiving outbreak notifications.
+                      {t('profile.noPlotsDesc')}
                     </Text>
                   </View>
                 </PressableScale>
@@ -161,14 +163,14 @@ export default function ProfileScreen() {
 
           {/* Settings */}
           <Animated.View entering={FadeInDown.delay(160).duration(400)}>
-            <SectionLabel>Settings</SectionLabel>
+            <SectionLabel>{t('profile.settings')}</SectionLabel>
             <View className="mt-2">
               <Card padding="none">
                 <ListRow
                   isFirst
                   icon={<Bell size={18} color={palette.brand[700]} strokeWidth={2.2} />}
-                  label="Notifications"
-                  value={notificationsEnabled ? 'Outbreak alerts on' : 'Outbreak alerts off'}
+                  label={t('profile.notifications')}
+                  value={notificationsEnabled ? t('profile.alertsOn') : t('profile.alertsOff')}
                   rightSlot={
                     <Switch
                       value={notificationsEnabled}
@@ -181,19 +183,19 @@ export default function ProfileScreen() {
                 />
                 <ListRow
                   icon={<Radius size={18} color={palette.brand[700]} strokeWidth={2.2} />}
-                  label="Alert radius"
-                  value={`${alertRadiusKm} km around you`}
+                  label={t('profile.alertRadius')}
+                  value={t('profile.alertRadiusValue', { km: alertRadiusKm })}
                   onPress={() => alertRadiusRef.current?.present()}
                 />
                 <ListRow
                   icon={<Globe size={18} color={palette.brand[700]} strokeWidth={2.2} />}
-                  label="Language"
+                  label={t('profile.language')}
                   value={languageLabel(language)}
                   onPress={() => languageRef.current?.present()}
                 />
                 <ListRow
                   icon={<MapPin size={18} color={palette.brand[700]} strokeWidth={2.2} />}
-                  label="Location"
+                  label={t('profile.location')}
                   value={location}
                   onPress={() => editProfileRef.current?.present()}
                 />
@@ -205,14 +207,14 @@ export default function ProfileScreen() {
           <Animated.View entering={FadeInDown.delay(220).duration(400)}>
             <PressableScale
               accessibilityRole="button"
-              accessibilityLabel="Sign out"
+              accessibilityLabel={t('profile.signOut')}
               onPress={handleLogout}
               haptic="medium"
               pressedScale={0.98}
               className="flex-row items-center justify-center gap-2 rounded-xl border border-danger-tint bg-danger-tint/40 px-4 py-3.5"
             >
               <LogOut size={16} color={palette.status.danger} strokeWidth={2.2} />
-              <Text className="text-sm font-bold text-danger">Sign out</Text>
+              <Text className="text-sm font-bold text-danger">{t('profile.signOut')}</Text>
             </PressableScale>
           </Animated.View>
         </ScrollView>
