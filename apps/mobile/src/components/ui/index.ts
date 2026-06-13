@@ -3,6 +3,7 @@ export * from './back-button';
 export * from './button';
 export * from './card';
 export * from './chip';
+export * from './dropdown';
 export * from './icon-button';
 export * from './input';
 export * from './loader';
