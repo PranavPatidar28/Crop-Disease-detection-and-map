@@ -42,6 +42,7 @@ import {
 import { useOutbreaks } from '@/features/outbreak-system/hooks';
 import { useActivePlots } from '@/features/plots/hooks/use-plots';
 import { useDebouncedValue } from '@/hooks/use-debounced-value';
+import { useTranslation } from '@/i18n';
 import { useSocket } from '@/providers/socket-provider';
 import { lightColors, palette } from '@/theme/colors';
 import type { Report } from '@/features/upload-report/types';
@@ -62,6 +63,7 @@ export default function MapScreen() {
   const outbreakSheetRef = useRef<BottomSheetModal>(null);
   const listSheetRef = useRef<BottomSheetModal>(null);
 
+  const { t } = useTranslation();
   const userLocation = useUserLocation(true);
   const { isConnected } = useSocket();
 
@@ -416,10 +418,10 @@ export default function MapScreen() {
             <View className="flex-row items-center gap-2 rounded-2xl border border-warning/30 bg-warning/10 p-3">
               <MapPinOff size={16} color={lightColors.warning} strokeWidth={2.2} />
               <Text className="flex-1 text-xs text-warning">
-                Location permission is off. Enable it to see nearby reports.
+                {t('map.locationOff')}
               </Text>
               <TextButton
-                label="Allow"
+                label={t('common.allow')}
                 tone="warning"
                 size="sm"
                 onPress={() => userLocation.refresh()}

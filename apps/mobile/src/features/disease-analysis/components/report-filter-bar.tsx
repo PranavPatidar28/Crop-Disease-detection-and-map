@@ -9,6 +9,7 @@ import type {
   StatusFilter,
 } from '@/features/disease-analysis/utils/filter-reports';
 import { useTheme } from '@/hooks/use-theme';
+import { useTranslation } from '@/i18n';
 import { palette } from '@/theme/colors';
 import { View } from '@/tw';
 
@@ -16,35 +17,6 @@ interface ReportFilterBarProps {
   value: ReportFilter;
   onChange: (next: ReportFilter) => void;
 }
-
-const SEVERITY_OPTIONS: DropdownOption<SeverityFilter>[] = [
-  { value: 'all', label: 'All severities' },
-  { value: 'LOW', label: 'Low' },
-  { value: 'MEDIUM', label: 'Medium' },
-  { value: 'HIGH', label: 'High' },
-];
-
-const STATUS_OPTIONS: DropdownOption<StatusFilter>[] = [
-  { value: 'all', label: 'Any status' },
-  { value: 'analyzed', label: 'Analyzed' },
-  { value: 'processing', label: 'Processing' },
-  { value: 'failed', label: 'Failed' },
-];
-
-// Pill label shows the active selection, or the category name when 'all'.
-const SEVERITY_PILL: Record<SeverityFilter, string> = {
-  all: 'Severity',
-  LOW: 'Low',
-  MEDIUM: 'Medium',
-  HIGH: 'High',
-};
-
-const STATUS_PILL: Record<StatusFilter, string> = {
-  all: 'Status',
-  analyzed: 'Analyzed',
-  processing: 'Processing',
-  failed: 'Failed',
-};
 
 /**
  * Search + severity + status filters for the reports history screen. Purely
@@ -54,6 +26,36 @@ const STATUS_PILL: Record<StatusFilter, string> = {
  */
 export function ReportFilterBar({ value, onChange }: ReportFilterBarProps) {
   const theme = useTheme();
+  const { t } = useTranslation();
+
+  const severityOptions: DropdownOption<SeverityFilter>[] = [
+    { value: 'all', label: t('reportFilter.allSeverities') },
+    { value: 'LOW', label: t('severity.low') },
+    { value: 'MEDIUM', label: t('severity.medium') },
+    { value: 'HIGH', label: t('severity.high') },
+  ];
+
+  const statusOptions: DropdownOption<StatusFilter>[] = [
+    { value: 'all', label: t('reportFilter.anyStatus') },
+    { value: 'analyzed', label: t('reportFilter.analyzed') },
+    { value: 'processing', label: t('reportFilter.processing') },
+    { value: 'failed', label: t('reportFilter.failed') },
+  ];
+
+  // Pill label shows the active selection, or the category name when 'all'.
+  const severityPill: Record<SeverityFilter, string> = {
+    all: t('reportFilter.severity'),
+    LOW: t('severity.low'),
+    MEDIUM: t('severity.medium'),
+    HIGH: t('severity.high'),
+  };
+
+  const statusPill: Record<StatusFilter, string> = {
+    all: t('reportFilter.status'),
+    analyzed: t('reportFilter.analyzed'),
+    processing: t('reportFilter.processing'),
+    failed: t('reportFilter.failed'),
+  };
 
   return (
     <View className="gap-2.5">
@@ -62,7 +64,7 @@ export function ReportFilterBar({ value, onChange }: ReportFilterBarProps) {
         <TextInput
           value={value.search}
           onChangeText={(search) => onChange({ ...value, search })}
-          placeholder="Search crop or disease"
+          placeholder={t('search.cropOrDisease')}
           placeholderTextColor={theme.textFaint}
           style={{ flex: 1, fontSize: 14, color: theme.text, padding: 0 }}
           returnKeyType="search"
@@ -72,7 +74,7 @@ export function ReportFilterBar({ value, onChange }: ReportFilterBarProps) {
         {value.search.length > 0 ? (
           <PressableScale
             accessibilityRole="button"
-            accessibilityLabel="Clear search"
+            accessibilityLabel={t('common.clearSearch')}
             onPress={() => onChange({ ...value, search: '' })}
             pressedScale={0.9}
             haptic="selection"
@@ -89,18 +91,18 @@ export function ReportFilterBar({ value, onChange }: ReportFilterBarProps) {
           align="start"
           className="flex-1"
           value={value.severity === 'all' ? null : value.severity}
-          items={SEVERITY_OPTIONS}
+          items={severityOptions}
           onSelect={(severity) => onChange({ ...value, severity })}
-          label={SEVERITY_PILL[value.severity]}
+          label={severityPill[value.severity]}
         />
         <Dropdown
           triggerVariant="pill"
           align="end"
           className="flex-1"
           value={value.status === 'all' ? null : value.status}
-          items={STATUS_OPTIONS}
+          items={statusOptions}
           onSelect={(status) => onChange({ ...value, status })}
-          label={STATUS_PILL[value.status]}
+          label={statusPill[value.status]}
         />
       </View>
     </View>

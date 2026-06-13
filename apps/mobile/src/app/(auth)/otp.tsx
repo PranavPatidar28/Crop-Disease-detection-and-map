@@ -11,6 +11,7 @@ import { TextButton } from '@/components/ui/text-button';
 import { OtpInput } from '@/features/auth/components/otp-input';
 import { useSendOtp } from '@/features/auth/hooks/use-send-otp';
 import { useVerifyOtp } from '@/features/auth/hooks/use-verify-otp';
+import { useTranslation } from '@/i18n';
 import { AnimatedView, Text, View } from '@/tw';
 import { normalizeError } from '@/utils/errors';
 
@@ -19,6 +20,7 @@ const RESEND_SECONDS = 30;
 export default function OtpScreen() {
   const params = useLocalSearchParams<{ phone?: string }>();
   const phone = params.phone ?? '';
+  const { t } = useTranslation();
   const [otp, setOtp] = useState('');
   const [error, setError] = useState<string | undefined>();
   const [secondsLeft, setSecondsLeft] = useState(RESEND_SECONDS);
@@ -35,11 +37,11 @@ export default function OtpScreen() {
   const handleSubmit = async (code = otp) => {
     setError(undefined);
     if (code.length !== 6) {
-      setError('Enter the 6-digit code');
+      setError(t('otp.errorLength'));
       return;
     }
     if (!phone) {
-      setError('Missing phone number. Please go back and try again.');
+      setError(t('otp.errorMissingPhone'));
       return;
     }
     try {
@@ -75,9 +77,9 @@ export default function OtpScreen() {
           <View className="flex-1 items-center justify-center gap-5 px-6">
             <AnimatedView entering={FadeInDown.duration(400)} className="items-center gap-1">
               <Text className="text-2xl font-extrabold tracking-tight text-text">
-                Enter 6-digit code
+                {t('otp.title')}
               </Text>
-              <Text className="text-sm text-text-muted">Sent to +91 {phone}</Text>
+              <Text className="text-sm text-text-muted">{t('otp.sentTo', { phone })}</Text>
             </AnimatedView>
 
             <OtpInput
@@ -90,10 +92,10 @@ export default function OtpScreen() {
             <TextButton
               label={
                 secondsLeft > 0
-                  ? `Resend in ${secondsLeft}s`
+                  ? t('otp.resendIn', { seconds: secondsLeft })
                   : sendOtp.isPending
-                    ? 'Sending…'
-                    : 'Resend code'
+                    ? t('otp.sending')
+                    : t('otp.resendCode')
               }
               onPress={handleResend}
               disabled={secondsLeft > 0 || sendOtp.isPending}
@@ -103,7 +105,7 @@ export default function OtpScreen() {
 
           <BottomActionBar divider={false}>
             <Button
-              label={verifyOtp.isPending ? 'Verifying…' : 'Verify'}
+              label={verifyOtp.isPending ? t('otp.verifying') : t('otp.verify')}
               variant="gradient"
               size="lg"
               loading={verifyOtp.isPending}
@@ -111,7 +113,7 @@ export default function OtpScreen() {
               onPress={() => handleSubmit()}
             />
             <Text className="text-center text-xs text-text-faint">
-              Demo OTP: 123456
+              {t('otp.demoOtp')}
             </Text>
           </BottomActionBar>
         </KeyboardAvoidingView>

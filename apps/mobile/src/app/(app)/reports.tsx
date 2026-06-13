@@ -21,6 +21,7 @@ import {
 } from '@/features/disease-analysis/utils/filter-reports';
 import { groupReportsByDay } from '@/features/disease-analysis/utils/group-reports-by-day';
 import { useTheme } from '@/hooks/use-theme';
+import { useTranslation } from '@/i18n';
 import { palette } from '@/theme/colors';
 import { Text, View } from '@/tw';
 
@@ -33,6 +34,7 @@ const NEAR_BOTTOM_PX = 240;
  */
 export default function ReportsScreen() {
   const theme = useTheme();
+  const { t } = useTranslation();
   const [filter, setFilter] = useState<ReportFilter>(DEFAULT_REPORT_FILTER);
   const {
     data,
@@ -64,11 +66,15 @@ export default function ReportsScreen() {
       <SafeAreaView edges={['top']} style={{ flex: 1 }}>
         <View className="gap-3 px-4 pb-2 pt-2">
           <View>
-            <Text className="text-3xl font-extrabold tracking-tight text-text">Reports</Text>
+            <Text className="text-3xl font-extrabold tracking-tight text-text">{t('reports.title')}</Text>
             <Text className="text-sm text-text-muted">
               {reports.length > 0
-                ? `${reports.length}${hasNextPage ? '+' : ''} submitted · ${highSeverityCount} high severity`
-                : 'Your crop scans show up here'}
+                ? t('reports.summary', {
+                    count: reports.length,
+                    plus: hasNextPage ? '+' : '',
+                    high: highSeverityCount,
+                  })
+                : t('reports.emptySubtitle')}
             </Text>
           </View>
           {reports.length > 0 ? (
@@ -105,26 +111,26 @@ export default function ReportsScreen() {
             </View>
           ) : isError ? (
             <View className="items-center gap-3 py-16">
-              <Text className="text-base font-bold text-text">Couldn&apos;t load your reports</Text>
+              <Text className="text-base font-bold text-text">{t('reports.loadErrorTitle')}</Text>
               <Text className="max-w-[260px] text-center text-sm text-text-muted">
-                Check your connection and try again.
+                {t('reports.loadErrorDesc')}
               </Text>
-              <Button label="Retry" variant="ghost" onPress={() => refetch()} fullWidth={false} />
+              <Button label={t('common.retry')} variant="ghost" onPress={() => refetch()} fullWidth={false} />
             </View>
           ) : reports.length === 0 ? (
             <EmptyState
               icon={<Leaf size={28} color={palette.brand[600]} strokeWidth={2} />}
-              title="No reports yet"
-              description="Scan your first crop to start tracking diseases. Your reports show up here."
-              actionLabel="Scan a crop"
+              title={t('reports.emptyTitle')}
+              description={t('reports.emptyDesc')}
+              actionLabel={t('reports.emptyAction')}
               onAction={() => router.push('/report')}
             />
           ) : filtered.length === 0 ? (
             <EmptyState
               icon={<SearchX size={28} color={palette.brand[600]} strokeWidth={2} />}
-              title="No matching reports"
-              description="No reports match your current filters. Try clearing them."
-              actionLabel="Clear filters"
+              title={t('reports.noMatchTitle')}
+              description={t('reports.noMatchDesc')}
+              actionLabel={t('reports.clearFilters')}
               onAction={() => setFilter(DEFAULT_REPORT_FILTER)}
             />
           ) : (

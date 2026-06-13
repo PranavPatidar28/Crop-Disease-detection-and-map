@@ -4,6 +4,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Loader } from '@/components/ui/loader';
+import { useTranslation, type TranslationKey } from '@/i18n';
 import { Text, View } from '@/tw';
 
 import type { CapturedImage } from '../types';
@@ -12,11 +13,11 @@ interface Props {
   image: CapturedImage;
 }
 
-const STATUS_COPY = [
-  'Uploading photo…',
-  'Detecting crop…',
-  'Checking for disease…',
-  'Preparing advisory…',
+const STATUS_KEYS: TranslationKey[] = [
+  'reportFlow.statusUploading',
+  'reportFlow.statusDetecting',
+  'reportFlow.statusChecking',
+  'reportFlow.statusAdvisory',
 ];
 
 const COLD_START_AFTER_MS = 6000;
@@ -27,12 +28,13 @@ const COLD_START_AFTER_MS = 6000;
  * cold-start note (the HF space may be waking up).
  */
 export function AnalyzingScreen({ image }: Props) {
+  const { t } = useTranslation();
   const [copyIndex, setCopyIndex] = useState(0);
   const [coldStart, setColdStart] = useState(false);
 
   useEffect(() => {
     const rotate = setInterval(() => {
-      setCopyIndex((i) => (i + 1) % STATUS_COPY.length);
+      setCopyIndex((i) => (i + 1) % STATUS_KEYS.length);
     }, 1800);
     const cold = setTimeout(() => setColdStart(true), COLD_START_AFTER_MS);
     return () => {
@@ -50,11 +52,11 @@ export function AnalyzingScreen({ image }: Props) {
           </View>
           <Loader size={40} />
           <Animated.View key={copyIndex} entering={FadeIn.duration(300)} accessibilityLiveRegion="polite">
-            <Text className="text-center text-base font-bold text-text">{STATUS_COPY[copyIndex]}</Text>
+            <Text className="text-center text-base font-bold text-text">{t(STATUS_KEYS[copyIndex]!)}</Text>
           </Animated.View>
           {coldStart ? (
             <Text className="text-center text-sm text-text-muted">
-              The AI is waking up — this can take a moment the first time.
+              {t('reportFlow.coldStart')}
             </Text>
           ) : null}
         </View>

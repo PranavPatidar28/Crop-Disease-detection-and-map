@@ -1,8 +1,9 @@
 import { Search, X } from 'lucide-react-native';
 import { useState } from 'react';
-import { Pressable, TextInput, View } from 'react-native';
+import { Pressable, TextInput } from 'react-native';
 
 import { SurfaceCard } from '@/features/map-system/components/surface-card';
+import { useTranslation } from '@/i18n';
 import { lightColors, palette } from '@/theme/colors';
 
 interface MapSearchBarProps {
@@ -17,6 +18,7 @@ interface MapSearchBarProps {
  * stays focused on search alone.
  */
 export function MapSearchBar({ value, onChangeText }: MapSearchBarProps) {
+  const { t } = useTranslation();
   const [focused, setFocused] = useState(false);
 
   return (
@@ -38,11 +40,11 @@ export function MapSearchBar({ value, onChangeText }: MapSearchBarProps) {
         onChangeText={onChangeText}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        placeholder="Search crop or disease…"
+        placeholder={t('search.cropOrDiseaseEllipsis')}
         placeholderTextColor={palette.brand[400]}
         returnKeyType="search"
         autoCorrect={false}
-        accessibilityLabel="Search reports by crop or disease"
+        accessibilityLabel={t('search.mapAccessibility')}
         style={{
           flex: 1,
           fontSize: 16,
@@ -54,7 +56,7 @@ export function MapSearchBar({ value, onChangeText }: MapSearchBarProps) {
       {value.length > 0 ? (
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Clear search"
+          accessibilityLabel={t('common.clearSearch')}
           hitSlop={8}
           onPress={() => onChangeText('')}
           style={{

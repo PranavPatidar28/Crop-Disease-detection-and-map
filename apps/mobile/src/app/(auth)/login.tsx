@@ -8,6 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button } from '@/components/ui/button';
 import { PhoneInput } from '@/features/auth/components/phone-input';
 import { useSendOtp } from '@/features/auth/hooks/use-send-otp';
+import { useTranslation } from '@/i18n';
 import { palette } from '@/theme/colors';
 import { AnimatedView, Text, View } from '@/tw';
 import { normalizeError } from '@/utils/errors';
@@ -15,6 +16,7 @@ import { normalizeError } from '@/utils/errors';
 const DEMO_PHONE = '9999999999';
 
 export default function LoginScreen() {
+  const { t } = useTranslation();
   const [phone, setPhone] = useState('');
   const [error, setError] = useState<string | undefined>();
   const sendOtp = useSendOtp();
@@ -22,7 +24,7 @@ export default function LoginScreen() {
   const handleSubmit = async () => {
     setError(undefined);
     if (phone.length !== 10) {
-      setError('Enter a 10-digit phone number');
+      setError(t('login.errorInvalidPhone'));
       return;
     }
     try {
@@ -63,28 +65,28 @@ export default function LoginScreen() {
             </AnimatedView>
             <AnimatedView entering={FadeInDown.delay(80).duration(400)} className="items-center gap-1">
               <Text className="text-3xl font-extrabold tracking-tight text-text">
-                Welcome to AgroRadar
+                {t('login.welcome')}
               </Text>
               <Text className="max-w-[260px] text-center text-sm text-text-muted">
-                Detect, report, and track crop diseases together.
+                {t('login.tagline')}
               </Text>
             </AnimatedView>
           </View>
 
           <AnimatedView entering={FadeInDown.delay(160).duration(400)} className="gap-3 px-4 pb-6">
             <Text className="text-xs font-bold uppercase tracking-[1.4px] text-text-subtle">
-              Phone number
+              {t('login.phoneNumber')}
             </Text>
             <PhoneInput value={phone} onChangeText={setPhone} error={error} />
             <Button
-              label={sendOtp.isPending ? 'Sending OTP…' : 'Send OTP'}
+              label={sendOtp.isPending ? t('login.sendingOtp') : t('login.sendOtp')}
               variant="gradient"
               size="lg"
               loading={sendOtp.isPending}
               onPress={handleSubmit}
             />
             <Text className="text-center text-xs text-text-faint">
-              Demo: use +91 {DEMO_PHONE}. By continuing you agree to our Terms & Privacy.
+              {t('login.demoNote', { phone: DEMO_PHONE })}
             </Text>
           </AnimatedView>
         </KeyboardAvoidingView>

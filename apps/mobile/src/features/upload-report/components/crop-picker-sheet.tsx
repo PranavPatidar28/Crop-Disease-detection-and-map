@@ -5,6 +5,7 @@ import { forwardRef, useCallback, useMemo, useState } from 'react';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { CROPS, type Crop } from '@/constants/crops';
 import { useTheme } from '@/hooks/use-theme';
+import { useTranslation } from '@/i18n';
 import { Text, View } from '@/tw';
 
 interface CropPickerSheetProps {
@@ -15,6 +16,7 @@ interface CropPickerSheetProps {
 export const CropPickerSheet = forwardRef<BottomSheetModal, CropPickerSheetProps>(
   function CropPickerSheet({ selectedId, onSelect }, ref) {
     const theme = useTheme();
+    const { t } = useTranslation();
     const [query, setQuery] = useState('');
 
     const filtered = useMemo(() => {
@@ -43,10 +45,10 @@ export const CropPickerSheet = forwardRef<BottomSheetModal, CropPickerSheetProps
       >
         <View className="flex-1 px-5 pt-2">
           <View className="flex-row items-center justify-between pb-3">
-            <Text className="text-xl font-bold text-text">Choose crop</Text>
+            <Text className="text-xl font-bold text-text">{t('cropPicker.title')}</Text>
             <PressableScale
               accessibilityRole="button"
-              accessibilityLabel="Close"
+              accessibilityLabel={t('common.close')}
               onPress={() => {
                 // @ts-expect-error: ref provided
                 ref?.current?.dismiss();
@@ -64,7 +66,7 @@ export const CropPickerSheet = forwardRef<BottomSheetModal, CropPickerSheetProps
             <BottomSheetTextInput
               value={query}
               onChangeText={setQuery}
-              placeholder="Search crops"
+              placeholder={t('search.crops')}
               placeholderTextColor={theme.textSubtle}
               style={{ flex: 1, height: 44, color: theme.text, fontSize: 15 }}
             />
@@ -110,7 +112,7 @@ export const CropPickerSheet = forwardRef<BottomSheetModal, CropPickerSheetProps
             }}
             ListEmptyComponent={
               <View className="items-center py-10">
-                <Text className="text-sm text-text-muted">No crops match &ldquo;{query}&rdquo;</Text>
+                <Text className="text-sm text-text-muted">{t('cropPicker.noMatch', { query })}</Text>
               </View>
             }
           />

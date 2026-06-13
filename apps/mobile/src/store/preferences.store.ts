@@ -7,13 +7,17 @@ import { STORAGE_KEYS } from '@/constants';
 export const ALERT_RADIUS_OPTIONS = [1, 3, 5, 10, 25] as const;
 export type AlertRadiusKm = (typeof ALERT_RADIUS_OPTIONS)[number];
 
-/** Supported display languages. Stored preference only — no runtime i18n yet. */
+/**
+ * Supported display languages. `implemented` languages swap UI copy at runtime
+ * via the i18n layer; the rest are selectable but fall back to English (shown
+ * with a "Coming soon" tag in the picker).
+ */
 export const LANGUAGE_OPTIONS = [
-  { code: 'en', label: 'English' },
-  { code: 'hi', label: 'हिन्दी (Hindi)' },
-  { code: 'mr', label: 'मराठी (Marathi)' },
-  { code: 'te', label: 'తెలుగు (Telugu)' },
-  { code: 'ta', label: 'தமிழ் (Tamil)' },
+  { code: 'en', label: 'English', implemented: true },
+  { code: 'hi', label: 'हिन्दी (Hindi)', implemented: true },
+  { code: 'mr', label: 'मराठी (Marathi)', implemented: false },
+  { code: 'te', label: 'తెలుగు (Telugu)', implemented: false },
+  { code: 'ta', label: 'தமிழ் (Tamil)', implemented: false },
 ] as const;
 export type LanguageCode = (typeof LANGUAGE_OPTIONS)[number]['code'];
 
