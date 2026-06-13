@@ -17,6 +17,7 @@ import { ConfidenceRing } from '@/features/disease-analysis/components/confidenc
 import { DiseaseAdvisory } from '@/features/disease-analysis/components/disease-advisory';
 import { ProcessingState } from '@/features/disease-analysis/components/processing-state';
 import { RecommendationsList } from '@/features/disease-analysis/components/recommendations-list';
+import { ReportFeedback } from '@/features/disease-analysis/components/report-feedback';
 import { ResultActions } from '@/features/disease-analysis/components/result-actions';
 import { ResultHero } from '@/features/disease-analysis/components/result-hero';
 import { SeverityBadge } from '@/features/disease-analysis/components/severity-badge';
@@ -187,7 +188,11 @@ export default function ReportDetailScreen() {
                 />
               </AnimatedView>
 
-              <AnimatedView entering={FadeInDown.delay(320).duration(400)}>
+              <AnimatedView entering={FadeInDown.delay(300).duration(400)}>
+                <ReportFeedback />
+              </AnimatedView>
+
+              <AnimatedView entering={FadeInDown.delay(360).duration(400)}>
                 <Text className="px-2 text-[11px] text-text-subtle">
                   AI predictions are advisory. For high-severity diagnoses, consult your local
                   agricultural extension officer.
