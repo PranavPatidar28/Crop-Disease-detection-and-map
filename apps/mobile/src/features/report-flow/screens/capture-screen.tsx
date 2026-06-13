@@ -7,10 +7,11 @@ import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { Camera as CameraIcon, Image as ImageIcon, X, Zap, ZapOff } from 'lucide-react-native';
 import { useRef, useState } from 'react';
-import { ActivityIndicator, Pressable } from 'react-native';
+import { ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { palette } from '@/theme/colors';
 import { Text, View } from '@/tw';
@@ -84,16 +85,13 @@ export function CaptureScreen({ onCaptured, onCancel }: Props) {
       <View className="flex-1 bg-bg">
         <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1 }}>
           <View className="flex-row items-center justify-between px-4 py-2">
-            <Pressable
-              accessibilityRole="button"
+            <IconButton
               accessibilityLabel="Close"
+              icon={<X size={18} color={palette.brand[700]} strokeWidth={2.2} />}
               onPress={close}
-              className="h-10 w-10 items-center justify-center rounded-full border border-border bg-surface"
-            >
-              <X size={18} color={palette.brand[700]} strokeWidth={2.2} />
-            </Pressable>
+            />
             <Text className="text-xs font-bold uppercase tracking-[1.4px] text-brand-700">
-              Step 1 of 4
+              Photograph crop
             </Text>
             <View className="h-10 w-10" />
           </View>
@@ -141,25 +139,29 @@ export function CaptureScreen({ onCaptured, onCancel }: Props) {
       >
         {/* Top bar */}
         <View className="flex-row items-center justify-between px-4 py-2">
-          <Pressable
+          <PressableScale
             accessibilityRole="button"
             accessibilityLabel="Close"
             onPress={close}
+            haptic="selection"
+            pressedScale={0.92}
             className="h-10 w-10 items-center justify-center rounded-full"
             style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}
           >
             <X size={18} color="#ffffff" strokeWidth={2.4} />
-          </Pressable>
+          </PressableScale>
           <View className="rounded-full px-3 py-1" style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}>
             <Text className="text-xs font-bold uppercase tracking-[1.4px] text-white">
-              Step 1 of 4
+              Photograph crop
             </Text>
           </View>
-          <Pressable
+          <PressableScale
             accessibilityRole="switch"
             accessibilityState={{ checked: torchOn }}
             accessibilityLabel={torchOn ? 'Turn flash off' : 'Turn flash on'}
             onPress={() => setTorchOn((on) => !on)}
+            haptic="selection"
+            pressedScale={0.92}
             className="h-10 w-10 items-center justify-center rounded-full"
             style={{ backgroundColor: torchOn ? palette.brand[600] : 'rgba(0,0,0,0.45)' }}
           >
@@ -168,7 +170,7 @@ export function CaptureScreen({ onCaptured, onCancel }: Props) {
             ) : (
               <ZapOff size={18} color="#ffffff" strokeWidth={2.4} />
             )}
-          </Pressable>
+          </PressableScale>
         </View>
 
         {/* Spacer pushes controls to the bottom */}

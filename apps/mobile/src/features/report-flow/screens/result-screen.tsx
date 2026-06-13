@@ -1,139 +1,144 @@
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { Image } from 'expo-image';
-import { Pencil } from 'lucide-react-native';
-import { Pressable, ScrollView } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useRef } from 'react';
+import { ScrollView } from 'react-native';
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BottomActionBar } from '@/components/layout/bottom-action-bar';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { SectionLabel } from '@/components/ui/section-label';
-import { palette } from '@/theme/colors';
+import { CROP_BY_NAME } from '@/constants/crops';
+import { DiseaseAdvisory } from '@/features/disease-analysis/components/disease-advisory';
+import { SeverityBadge } from '@/features/disease-analysis/components/severity-badge';
+import { CropPickerRow } from '@/features/upload-report/components/crop-picker-row';
+import { CropPickerSheet } from '@/features/upload-report/components/crop-picker-sheet';
+import { NotesInput } from '@/features/upload-report/components/notes-input';
 import { Text, View } from '@/tw';
 
-import { EngineBadge } from '../components/engine-badge';
-import { RecommendationsCard } from '../components/recommendations-card';
-import { SeverityPill } from '../components/severity-pill';
-import { ShareToggleCard } from '../components/share-toggle-card';
-import { LOW_CONFIDENCE_THRESHOLD } from '../types';
 import type { AnalysisResult, CapturedImage } from '../types';
 
 interface Props {
   image: CapturedImage;
   result: AnalysisResult;
-  shareToMap: boolean;
+  cropType: string | null;
+  notes: string;
   submitting: boolean;
-  onShareChange: (next: boolean) => void;
-  onEdit: () => void;
-  onPickCandidate: (disease: string) => void;
+  onChangeCrop: (cropName: string) => void;
+  onChangeNotes: (notes: string) => void;
   onConfirm: () => void;
 }
 
+const ENGINE_LABEL: Record<AnalysisResult['engine'], string> = {
+  cloud: 'Cloud AI',
+  'on-device': 'On-device',
+  manual: 'Manual entry',
+};
+
+/** First recommended action, surfaced inline as "DO THIS FIRST". */
+function firstAction(result: AnalysisResult): string | null {
+  const list = result.advisory?.whatToDoNow?.length
+    ? result.advisory.whatToDoNow
+    : result.advisory?.rag.immediateActions ?? [];
+  return list[0] ?? null;
+}
+
 /**
- * Step 3 of the report flow. Renders the engine's diagnosis (or the manual
- * fallback when both engines failed), the recommended actions, an "Edit
- * details" escape hatch, and the map-share toggle. When confidence < 0.6
- * and candidates are present, the screen flips into a candidate-picker
- * mode where treatment is hidden until the farmer picks the closest match.
+ * Layout B: triage answer up top, deeper advisory in expandable rows below.
+ * The full advisory (symptoms, all steps, prevention, alternatives, expert
+ * advice) is rendered by DiseaseAdvisory when present (cloud engine).
  */
 export function ResultScreen({
   image,
   result,
-  shareToMap,
+  cropType,
+  notes,
   submitting,
-  onShareChange,
-  onEdit,
-  onPickCandidate,
+  onChangeCrop,
+  onChangeNotes,
   onConfirm,
 }: Props) {
-  const lowConfidence = !!(
-    result.candidates &&
-    result.candidates.length > 0 &&
-    result.confidence !== null &&
-    result.confidence < LOW_CONFIDENCE_THRESHOLD
-  );
+  const cropSheetRef = useRef<BottomSheetModal>(null);
+  const action = firstAction(result);
+  const displayName = result.advisory?.primaryDiagnosis.displayName ?? result.disease ?? 'Manual entry';
+  const crop = cropType ?? result.detectedCrop ?? null;
+  const cropId = crop ? CROP_BY_NAME[crop.toLowerCase()]?.id ?? null : null;
 
   return (
     <View className="flex-1 bg-bg">
       <SafeAreaView edges={['top']} style={{ flex: 1 }}>
-        <View className="flex-row items-center justify-center px-4 py-2">
-          <Text className="text-xs font-bold uppercase tracking-[1.4px] text-brand-700">
-            Step 3 of 4
-          </Text>
-        </View>
-
         <ScrollView
           contentContainerStyle={{ padding: 16, paddingBottom: 32, gap: 16 }}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
+          {/* Answer card */}
           <Animated.View
-            entering={FadeInDown.duration(300)}
-            className="flex-row items-center gap-3"
+            entering={FadeIn.duration(300)}
+            className="overflow-hidden rounded-2xl border border-border bg-surface"
           >
-            <Image
-              source={{ uri: image.uri }}
-              style={{ width: 64, height: 64, borderRadius: 12 }}
-              contentFit="cover"
-            />
-            <View className="flex-1 gap-1">
-              <Text className="text-lg font-extrabold tracking-tight text-text">
-                {lowConfidence ? 'Pick the closest match' : (result.disease ?? 'Manual entry')}
-              </Text>
-              {result.engine !== 'manual' && result.confidence !== null ? (
-                <Text className="text-xs text-text-subtle">
-                  {result.engine === 'cloud' ? 'Cloud diagnosis' : 'On-device diagnosis'} ·{' '}
-                  {Math.round(result.confidence * 100)}% match
+            <View className="flex-row gap-3 p-3">
+              <Image
+                source={{ uri: image.uri }}
+                style={{ width: 64, height: 64, borderRadius: 12 }}
+                contentFit="cover"
+              />
+              <View className="flex-1 gap-1">
+                <Text className="text-[11px] font-bold uppercase tracking-[1.2px] text-brand-700">
+                  {crop ? `${crop} · ` : ''}
+                  {result.confidence != null ? `${result.confidence}% · ` : ''}
+                  {ENGINE_LABEL[result.engine]}
                 </Text>
-              ) : null}
+                <Text className="text-lg font-extrabold leading-tight tracking-tight text-text">
+                  {displayName}
+                </Text>
+                <View className="flex-row flex-wrap items-center gap-1.5">
+                  <SeverityBadge severity={result.severity} />
+                  {result.advisory?.urgency ? (
+                    <Chip label={result.advisory.urgency} tone="warning" />
+                  ) : null}
+                </View>
+              </View>
             </View>
+            {action ? (
+              <View className="border-t border-brand-100 bg-brand-50 px-3 py-2.5">
+                <SectionLabel>Do this first</SectionLabel>
+                <Text className="mt-0.5 text-sm font-semibold text-text">{action}</Text>
+              </View>
+            ) : null}
           </Animated.View>
 
-          <View className="flex-row flex-wrap gap-2">
-            {result.severity ? <SeverityPill severity={result.severity} /> : null}
-            {result.status ? (
-              <Chip
-                label={result.status[0].toUpperCase() + result.status.slice(1)}
-                tone="brand"
-              />
-            ) : null}
-            <EngineBadge engine={result.engine} confidence={result.confidence ?? undefined} />
-          </View>
-
-          {lowConfidence ? (
-            <View className="gap-2">
-              <SectionLabel>Possible matches</SectionLabel>
-              {result.candidates!.map((c) => (
-                <Pressable
-                  key={c.disease}
-                  accessibilityRole="button"
-                  onPress={() => onPickCandidate(c.disease)}
-                  className="flex-row items-center justify-between rounded-xl border border-border bg-surface px-4 py-3"
-                >
-                  <Text className="flex-1 text-sm font-bold text-text">{c.disease}</Text>
-                  <Text className="text-xs font-bold text-brand-700">
-                    {Math.round(c.confidence * 100)}%
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
+          {/* Rich advisory (cloud engine) */}
+          {result.advisory ? (
+            <Animated.View entering={FadeInDown.delay(100).duration(400)}>
+              <DiseaseAdvisory advisory={result.advisory} />
+            </Animated.View>
           ) : (
-            <RecommendationsCard items={result.recommendations} />
+            <Animated.View entering={FadeInDown.delay(100).duration(400)}>
+              <Text className="px-2 text-sm leading-5 text-text-muted">
+                {result.engine === 'on-device'
+                  ? 'Diagnosed offline. A full advisory will appear once this report syncs.'
+                  : 'No automated diagnosis. Set the crop and add details before submitting.'}
+              </Text>
+            </Animated.View>
           )}
 
-          <Pressable
-            accessibilityRole="button"
-            onPress={onEdit}
-            className="flex-row items-center gap-2 self-start rounded-full border border-border bg-surface px-3 py-2"
-          >
-            <Pencil size={12} color={palette.brand[700]} strokeWidth={2.4} />
-            <Text className="text-xs font-bold text-brand-700">
-              Wrong diagnosis? Edit details
-            </Text>
-          </Pressable>
+          {/* Crop correction — lets the farmer fix a wrong detected crop */}
+          <Animated.View entering={FadeInDown.delay(160).duration(400)} className="gap-1.5">
+            <View className="flex-row items-center justify-between px-1">
+              <SectionLabel>{crop ? 'Wrong crop? Tap to change' : 'Which crop is this?'}</SectionLabel>
+            </View>
+            <CropPickerRow cropId={cropId} onPress={() => cropSheetRef.current?.present()} />
+          </Animated.View>
 
-          <ShareToggleCard value={shareToMap} onChange={onShareChange} />
+          {/* Optional notes — context that helps an officer reviewing the report */}
+          <Animated.View entering={FadeInDown.delay(220).duration(400)}>
+            <NotesInput value={notes} onChangeText={onChangeNotes} />
+          </Animated.View>
         </ScrollView>
 
-        <View className="border-t border-border bg-surface px-4 py-3">
+        <BottomActionBar>
           <Button
             label={submitting ? 'Submitting…' : 'Confirm & submit'}
             variant="gradient"
@@ -141,8 +146,14 @@ export function ResultScreen({
             loading={submitting}
             onPress={onConfirm}
           />
-        </View>
+        </BottomActionBar>
       </SafeAreaView>
+
+      <CropPickerSheet
+        ref={cropSheetRef}
+        selectedId={cropId}
+        onSelect={(c) => onChangeCrop(c.name)}
+      />
     </View>
   );
 }
