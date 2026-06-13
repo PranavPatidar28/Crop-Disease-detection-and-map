@@ -60,6 +60,7 @@ export function ReportFilterBar({ value, onChange }: ReportFilterBarProps) {
             onPress={() => onChange({ ...value, search: '' })}
             pressedScale={0.9}
             haptic="selection"
+            hitSlop={8}
           >
             <X size={16} color={palette.brand[400]} strokeWidth={2.2} />
           </PressableScale>
