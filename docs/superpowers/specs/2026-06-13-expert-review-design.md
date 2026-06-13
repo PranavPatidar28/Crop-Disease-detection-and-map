@@ -21,8 +21,14 @@ have (or be awaiting) an expert review so the feature is always visible.
 - A deterministic generator that derives a stable review from a report's `id`
   (stable across the 3s polling refetch on the detail screen).
 - A farmer-facing `ExpertReviewCard` shown on the report detail screen, below the
-  AI advisory section.
-- i18n strings for all new copy (English source + Hindi partial).
+  AI recommendations section.
+
+> **Base-branch note:** This work branches off `master`. On `master` the report
+> detail screen uses **hardcoded English strings** (e.g. "Recommended actions",
+> "Your notes") — there is no `i18n/` layer and no test runner (`jest`). The
+> i18n catalog and a richer advisory renderer exist only on an unmerged feature
+> branch. To avoid entangling with that in-flight work, this feature follows
+> `master`'s actual conventions: hardcoded copy, no new test harness.
 
 **Out of scope (YAGNI)**
 
@@ -123,42 +129,45 @@ expected here, it is display-only) follow existing conventions. Entrance:
 ## Wiring
 
 In `apps/mobile/src/app/reports/[id].tsx`, inside the SUCCESS/result branch,
-the expert review card sits **between** the advisory section and the actions so
-the top-to-bottom layout matches the entrance cascade:
+the expert review card sits **between** the "Recommended actions" section and the
+`ResultActions` button row so the top-to-bottom layout matches the entrance
+cascade:
 
-1. Advisory `AnimatedView` — delay 200 (unchanged)
+1. "Recommended actions" `Animated.View` — delay 200 (unchanged)
 2. `<ExpertReviewCard review={expertReview} />` — delay 240 (new)
-3. `ResultActions` — bumped from delay 260 to delay 300
+3. `ResultActions` `Animated.View` — bumped from delay 260 to delay 300
+4. Disclaimer footnote `Animated.View` — bumped from delay 320 to delay 360
 
 Compute `const expertReview = getExpertReview(report)` once in the result branch
 and pass it to the card. Keeping delays strictly increasing down the page
 preserves the existing staggered effect.
 
-## i18n
+## Copy
 
-Add an `expertReview` section to `apps/mobile/src/i18n/translations/en.ts` (and a
-Hindi partial in `hi.ts`):
+All user-facing strings are hardcoded English inside the component, matching the
+report detail screen's existing convention on `master` (e.g. "Recommended
+actions", "Your notes"). No `i18n/` layer exists on this base branch, so adding
+one is out of scope. Labels used:
 
-- `expertReview.title` — "Expert review"
-- `expertReview.awaiting` — "Awaiting review"
-- `expertReview.pendingBody` — "An agronomist will review your report shortly."
-- `expertReview.statusApproved` — "Approved"
-- `expertReview.statusNeedsRevision` — "Needs revision"
-- `expertReview.statusRejected` — "Not confirmed"
-- `expertReview.tipsTitle` — "Expert tips"
-- `expertReview.reviewedAgo` — "Reviewed {{time}}"
-
-All catalog values flow through `useTranslation()`. The mock generator's
-`adviceNote` / `tips` / expert names are demo content and may stay in the
-generator (not catalog) for the hackathon, consistent with `dashboard.mock.ts`.
+- Section title: "Expert review"
+- Pending chip: "Awaiting review"; pending body: "An agronomist will review your
+  report shortly."
+- Status labels: APPROVED → "Approved", NEEDS_REVISION → "Needs revision",
+  REJECTED → "Not confirmed"
+- Tips header: "Expert tips"
+- Footer: "Reviewed {timeAgo}" via the existing `timeAgo` helper.
 
 ## Testing / verification
 
+`master` has **no test runner** (no `jest`, no `test` script in
+`apps/mobile/package.json`). Standing one up is out of scope for a UI-only demo.
+Verification is:
+
 - `pnpm --filter mobile typecheck` clean.
 - `pnpm --filter mobile lint` clean.
-- A small unit test for `getExpertReview` determinism (same `id` → same review;
-  recent `createdAt` → `PENDING`), matching the existing
-  `filter-reports.test.ts` convention.
+
+Generator determinism is instead guaranteed by construction (pure hash of
+`report.id`) and reviewed by reading the code.
 
 ## Files touched
 
@@ -166,9 +175,5 @@ generator (not catalog) for the hackathon, consistent with `dashboard.mock.ts`.
 | ---- | ------ |
 | `features/upload-report/types.ts` | add `ExpertReview*` types |
 | `features/disease-analysis/mocks/expert-review.mock.ts` | new generator |
-| `features/disease-analysis/mocks/expert-review.mock.test.ts` | new test |
 | `features/disease-analysis/components/expert-review-card.tsx` | new component |
-| `features/disease-analysis/index.ts` (or barrel) | export card if barrel exists |
 | `app/reports/[id].tsx` | render the card |
-| `i18n/translations/en.ts` | add `expertReview` keys |
-| `i18n/translations/hi.ts` | add Hindi partial |
