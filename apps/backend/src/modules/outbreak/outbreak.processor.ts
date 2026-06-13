@@ -57,14 +57,51 @@ export class OutbreakProcessor {
   async handleNewReport(report: Report): Promise<void> {
     if (!report.disease || !report.severity) return;
 
-    const matched = await this.findMatchingZone(report);
-    if (matched) {
-      await this.attachToZone(matched, report);
-      return;
-    }
+    // Idempotency: a report must contribute to a zone at most once. Reprocessing
+    // an already-SUCCESS report would otherwise re-run this and double-count it
+    // into the zone (inflating reportCount/highCount and skewing escalation).
+    if (report.outbreakContributed) return;
 
-    if (await this.shouldCreateZone(report)) {
-      await this.createZone(report);
+    // Serialize all attach/create decisions for the same disease. The processor
+    // is fire-and-forget, so two concurrent SUCCESS reports could both observe
+    // "no matching zone" and both create overlapping zones, or race on a zone's
+    // reportCount (lost update). An in-process per-disease mutex is sufficient
+    // for the single-instance deployment; swap for a Postgres advisory lock when
+    // running multiple instances.
+    await this.runExclusive(report.disease, async () => {
+      const matched = await this.findMatchingZone(report);
+      if (matched) {
+        await this.attachToZone(matched, report);
+      } else if (await this.shouldCreateZone(report)) {
+        await this.createZone(report);
+      } else {
+        return; // below threshold — didn't contribute to any zone yet
+      }
+      // Mark the report as contributed so a later reprocess won't re-count it.
+      await this.prisma.report.update({
+        where: { id: report.id },
+        data: { outbreakContributed: true },
+      });
+    });
+  }
+
+  /** Per-key serialization. Chains async work so same-key calls never overlap. */
+  private readonly locks = new Map<string, Promise<unknown>>();
+
+  private async runExclusive<T>(key: string, fn: () => Promise<T>): Promise<T> {
+    const prior = this.locks.get(key) ?? Promise.resolve();
+    const run = prior.then(fn, fn);
+    // Store a failure-swallowing version so the next same-key caller chains
+    // regardless of this run's outcome.
+    const chained = run.catch(() => undefined);
+    this.locks.set(key, chained);
+    try {
+      return await run;
+    } finally {
+      // Drop the entry when we're still the tail of the chain, to bound the map.
+      if (this.locks.get(key) === chained) {
+        this.locks.delete(key);
+      }
     }
   }
 
@@ -256,19 +293,31 @@ export class OutbreakProcessor {
     });
     if (stale.length === 0) return 0;
 
+    let resolvedCount = 0;
     for (const zone of stale) {
-      const updated = await this.prisma.outbreakZone.update({
-        where: { id: zone.id },
+      // Conditional update guards against a report that attached (and bumped
+      // lastSeenAt) between the findMany above and this write — without the
+      // guard we'd resolve a freshly-active zone and emit a false
+      // outbreak.resolved. updateMany returns count=0 if the row no longer
+      // matches, in which case we skip the event.
+      const result = await this.prisma.outbreakZone.updateMany({
+        where: { id: zone.id, active: true, lastSeenAt: { lt: cutoff } },
         data: { active: false, resolvedAt: new Date() },
       });
+      if (result.count === 0) continue;
+      resolvedCount += 1;
+
+      const updated = await this.prisma.outbreakZone.findUnique({ where: { id: zone.id } });
+      if (!updated) continue;
       this.realtime.outbreakResolved(updated);
       void this.fanout.handleOutbreakResolved(updated).catch((err) => {
         this.logger.warn(`Resolved fanout failed: ${(err as Error).message}`);
       });
     }
+    if (resolvedCount === 0) return 0;
     this.service.invalidate();
-    this.logger.log(`Deactivated ${stale.length} stale outbreak zone(s)`);
-    return stale.length;
+    this.logger.log(`Deactivated ${resolvedCount} stale outbreak zone(s)`);
+    return resolvedCount;
   }
 
   private async deactivationCutoff(): Promise<Date> {

@@ -1,13 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { type OutbreakZone, Prisma, type Report } from '@prisma/client';
+import { type OutbreakZone, Prisma } from '@prisma/client';
 
 import { PrismaService } from '@/modules/prisma/prisma.service';
+import type { NearbyReport } from '@/modules/reports/reports.service';
 
 import type { ListOutbreaksQueryDto } from './dto';
 
 export interface OutbreakWithReports {
   zone: OutbreakZone;
-  contributingReports: Report[];
+  contributingReports: NearbyReport[];
 }
 
 const DEFAULT_SINCE_DAYS = 30;
@@ -41,7 +42,15 @@ export class OutbreakService {
   }
 
   async list(query: ListOutbreaksQueryDto): Promise<OutbreakZone[]> {
-    const cacheKey = `${query.active ?? 'any'}|${query.disease ?? '*'}|${query.severity ?? '*'}|${query.since ?? ''}|${query.limit}`;
+    // JSON-encode the key so a disease string containing the previous '|'
+    // delimiter can't collide with a different filter combination.
+    const cacheKey = JSON.stringify({
+      active: query.active ?? null,
+      disease: query.disease ?? null,
+      severity: query.severity ?? null,
+      since: query.since ?? null,
+      limit: query.limit,
+    });
     const cached = this.cache.get(cacheKey);
     if (cached && cached.expiresAt > Date.now()) {
       return cached.data;
@@ -78,9 +87,11 @@ export class OutbreakService {
 
   /**
    * Returns the most recent SUCCESS reports of this disease within the zone's
-   * radius, ordered by createdAt desc. Used by the detail view.
+   * radius, ordered by createdAt desc. Used by the detail view. Map-safe
+   * projection only — never leaks other farmers' notes / userId / imagePublicId
+   * / aiError (mirrors `/reports/nearby`).
    */
-  async findContributingReports(zone: OutbreakZone): Promise<Report[]> {
+  async findContributingReports(zone: OutbreakZone): Promise<NearbyReport[]> {
     const radiusKm = zone.radius / 1000;
     const dLat = radiusKm / 110.574;
     const dLng = radiusKm / Math.max(0.01, 111.32 * Math.cos((zone.latitude * Math.PI) / 180));
@@ -94,6 +105,21 @@ export class OutbreakService {
       },
       orderBy: { createdAt: 'desc' },
       take: CONTRIBUTING_REPORT_LIMIT,
+      select: {
+        id: true,
+        cropType: true,
+        imageUrl: true,
+        latitude: true,
+        longitude: true,
+        disease: true,
+        confidence: true,
+        severity: true,
+        recommendations: true,
+        processingStatus: true,
+        processedAt: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
   }
 }
