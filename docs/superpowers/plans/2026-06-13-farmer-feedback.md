@@ -16,7 +16,7 @@
 - **Testing reality:** `apps/mobile/jest.config.js` only matches `src/**/*.test.ts` (NOT `.tsx`) and runs in a `node` environment with no React Native runtime. Component/hook tests are out of scope (would need jest-expo). Therefore: extract pure logic into a `.ts` helper and unit-test that; verify the component itself via `tsc --noEmit` + `expo lint` + manual review.
 - **Strings:** `reports/[id].tsx` uses plain English strings (e.g. "Report", "Advisory"), NOT the `t()` i18n keys used on other screens. Match that — use plain English strings in this feature. Do not wire i18n.
 - **Imports:** Use `@/tw` for `Text`, `View`, `TextInput`. Use `@/theme/colors` `palette` for icon colors. Use `@/hooks/use-theme` `useTheme()` for the TextInput's `placeholderTextColor`/text color (matches `input.tsx`, `notes-input.tsx`).
-- **All commands run from the worktree:** `C:\Pranav\Development\Hackathon\Crop Disease detection and map\.worktrees\farmer-feedback`. The mobile app is at `apps/mobile`.
+- **All commands run from the worktree:** `C:\Users\prana\AppData\Local\Temp\opencode\farmer-feedback` (relocated out of `.worktrees/` because Jest's matcher silently skips dot-prefixed path segments, finding 0 tests). The mobile app is at `apps/mobile`.
 
 ---
 
