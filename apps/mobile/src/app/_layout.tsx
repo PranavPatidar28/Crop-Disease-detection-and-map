@@ -4,6 +4,7 @@ import { DefaultTheme, Stack, ThemeProvider as NavThemeProvider } from 'expo-rou
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
+import { StyleSheet } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
   cancelAnimation,
@@ -33,8 +34,9 @@ import { SocketProvider } from '@/providers/socket-provider';
 import { ThemeProvider } from '@/providers/theme-provider';
 import { setUnauthorizedHandler } from '@/services/api';
 import { useAuthStore } from '@/store/auth.store';
+import { usePreferencesStore } from '@/store/preferences.store';
 import { palette } from '@/theme/colors';
-import { Text, View } from '@/tw';
+import { AnimatedView, Text, View } from '@/tw';
 
 void SplashScreen.preventAutoHideAsync().catch(() => undefined);
 
@@ -77,6 +79,7 @@ function AppShell() {
   const logout = useAuthStore((s) => s.logout);
   const hydrateQueue = useOfflineQueueStore((s) => s.hydrate);
   const hydrateLiveReports = useLiveReportsStore((s) => s.hydrate);
+  const hydratePreferences = usePreferencesStore((s) => s.hydrate);
 
   const [bootDone, setBootDone] = useState(false);
 
@@ -98,7 +101,7 @@ function AppShell() {
   useEffect(() => {
     let cancelled = false;
     void (async () => {
-      await Promise.all([hydrate(), hydrateQueue(), hydrateLiveReports()]);
+      await Promise.all([hydrate(), hydrateQueue(), hydrateLiveReports(), hydratePreferences()]);
       await new Promise((r) => setTimeout(r, 200));
       if (!cancelled) {
         setBootDone(true);
@@ -108,7 +111,7 @@ function AppShell() {
     return () => {
       cancelled = true;
     };
-  }, [hydrate, hydrateQueue, hydrateLiveReports]);
+  }, [hydrate, hydrateQueue, hydrateLiveReports, hydratePreferences]);
 
   if (!bootDone || !isHydrated) {
     return <Splash />;
@@ -129,6 +132,10 @@ function AppShell() {
         />
         <Stack.Screen
           name="report"
+          options={{ animation: 'slide_from_bottom' }}
+        />
+        <Stack.Screen
+          name="notifications"
           options={{ animation: 'slide_from_bottom' }}
         />
         <Stack.Screen name="(auth)" options={{ animation: 'fade' }} />
@@ -179,7 +186,7 @@ function Splash() {
         colors={[palette.brand[50], '#ffffff', '#fbfaf7']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={{ position: 'absolute', inset: 0 }}
+        style={StyleSheet.absoluteFill}
       />
       <View className="flex-1 items-center justify-center gap-4">
         <View style={{ width: 120, height: 120, alignItems: 'center', justifyContent: 'center' }}>
@@ -212,18 +219,18 @@ function Splash() {
                 colors={[palette.brand[400], palette.brand[600]]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={{ position: 'absolute', inset: 0 }}
+                style={StyleSheet.absoluteFill}
               />
               <Text className="text-4xl">🌾</Text>
             </View>
           </Animated.View>
         </View>
-        <Animated.View entering={FadeIn.delay(150).duration(450)} className="items-center gap-1">
+        <AnimatedView entering={FadeIn.delay(150).duration(450)} className="items-center gap-1">
           <Text className="text-xl font-bold text-text">{APP_NAME}</Text>
           <Text className="text-[11px] font-bold uppercase tracking-[3px] text-brand-700">
             Crop intelligence
           </Text>
-        </Animated.View>
+        </AnimatedView>
       </View>
     </View>
   );

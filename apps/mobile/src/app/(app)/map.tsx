@@ -1,14 +1,16 @@
-import BottomSheet, { BottomSheetModal } from '@gorhom/bottom-sheet';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import * as Haptics from 'expo-haptics';
 import { Home, MapPinOff } from 'lucide-react-native';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Platform, Pressable } from 'react-native';
-import MapView, { Marker, PROVIDER_GOOGLE, type Region } from 'react-native-maps';
+import { ActivityIndicator, Platform } from 'react-native';
+import MapView, { PROVIDER_GOOGLE, type Region } from 'react-native-maps';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { CROP_BY_NAME } from '@/constants/crops';
+import { TextButton } from '@/components/ui/text-button';
 import {
+  ConnectionPill,
   HeatmapLayer,
   MapCluster,
   MapControls,
@@ -18,6 +20,7 @@ import {
   MapSearchBar,
   ReportDetailSheet,
   ReportsInViewSheet,
+  TrackingMarker,
 } from '@/features/map-system/components';
 import {
   useNearbyReports,
@@ -30,7 +33,7 @@ import {
   windowToSinceIso,
 } from '@/features/map-system/store/map-filters.store';
 import type { MapRegion, OutbreakZone } from '@/features/map-system/types';
-import { buildClusterIndex, getClusters } from '@/features/map-system/utils/cluster';
+import { buildClusterIndex, getClusters, zoomToLongitudeDelta } from '@/features/map-system/utils/cluster';
 import { lightMapStyle } from '@/features/map-system/utils/map-style';
 import {
   OutbreakDetailSheet,
@@ -38,8 +41,9 @@ import {
 } from '@/features/outbreak-system/components';
 import { useOutbreaks } from '@/features/outbreak-system/hooks';
 import { useActivePlots } from '@/features/plots/hooks/use-plots';
+import { useDebouncedValue } from '@/hooks/use-debounced-value';
 import { useSocket } from '@/providers/socket-provider';
-import { palette } from '@/theme/colors';
+import { lightColors, palette } from '@/theme/colors';
 import type { Report } from '@/features/upload-report/types';
 import { Text, View } from '@/tw';
 
@@ -56,7 +60,7 @@ export default function MapScreen() {
   const detailSheetRef = useRef<BottomSheetModal>(null);
   const filterSheetRef = useRef<BottomSheetModal>(null);
   const outbreakSheetRef = useRef<BottomSheetModal>(null);
-  const listSheetRef = useRef<BottomSheet>(null);
+  const listSheetRef = useRef<BottomSheetModal>(null);
 
   const userLocation = useUserLocation(true);
   const { isConnected } = useSocket();
@@ -81,7 +85,25 @@ export default function MapScreen() {
 
   // Track the user's current camera region — defaults to fallback then user's location
   const [region, setRegion] = useState<Region>(FALLBACK_REGION);
+  // Free-text search over crop / disease names, applied client-side on top of
+  // the structured filters below.
+  const [searchQuery, setSearchQuery] = useState('');
+  // Debounced region drives the network query + cluster rebuild, so a fast
+  // pan/zoom doesn't fire a request (and recompute the supercluster index) on
+  // every micro-movement. The live `region` still drives the camera instantly.
+  const debouncedRegion = useDebouncedValue(region, 450);
   const initialCenteredRef = useRef(false);
+
+  // Re-evaluate the relative time window as wall-clock time passes, so reports
+  // age out of a finite window (e.g. "24h") during a long session — not only
+  // when filters change. Ticks once a minute, and only while a finite window is
+  // active (no point recomputing when showing "all").
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    if (filters.window === 'all') return;
+    const id = setInterval(() => setNowTick(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, [filters.window]);
 
   // Once we have user location, center on it (one-shot)
   useEffect(() => {
@@ -102,14 +124,14 @@ export default function MapScreen() {
 
   // Build a single nearby query from current region + filters
   const nearbyParams = useMemo(() => {
-    if (!region) return null;
+    if (!debouncedRegion) return null;
     // Backend caps radius at 1000km. The initial country-wide fallback
     // (latitudeDelta=18 → ~1980km) would otherwise 400, so we clamp here.
-    const rawRadius = Math.round(region.latitudeDelta * 110);
+    const rawRadius = Math.round(debouncedRegion.latitudeDelta * 110);
     const radiusKm = Math.min(1000, Math.max(20, rawRadius));
     return {
-      lat: region.latitude,
-      lng: region.longitude,
+      lat: debouncedRegion.latitude,
+      lng: debouncedRegion.longitude,
       radiusKm,
       limit: 200,
       severity:
@@ -118,7 +140,7 @@ export default function MapScreen() {
       disease: filters.diseases.length === 1 ? filters.diseases[0] : undefined,
       since: windowToSinceIso(filters.window),
     };
-  }, [region, filters.severities, filters.crops, filters.diseases, filters.window]);
+  }, [debouncedRegion, filters.severities, filters.crops, filters.diseases, filters.window]);
 
   const nearby = useNearbyReports(nearbyParams);
 
@@ -126,12 +148,11 @@ export default function MapScreen() {
   // that the server doesn't accept yet, plus live updates from sockets).
   const filteredReports = useMemo(() => {
     const all = Object.values(reportsById);
-    // eslint-disable-next-line react-hooks/purity -- Date.now inside useMemo is fine; recomputes when filters change.
-    const sinceMs = Date.now();
+    const q = searchQuery.trim().toLowerCase();
     const cutoff =
       filters.window === 'all'
         ? 0
-        : sinceMs -
+        : nowTick -
           (filters.window === '24h' ? 24 : filters.window === '7d' ? 7 * 24 : 30 * 24) *
             60 *
             60 *
@@ -146,15 +167,26 @@ export default function MapScreen() {
       if (filters.diseases.length > 0 && (!r.disease || !filters.diseases.includes(r.disease))) {
         return false;
       }
+      if (q) {
+        const haystack = `${r.cropType} ${r.disease ?? ''}`.toLowerCase();
+        if (!haystack.includes(q)) return false;
+      }
       return true;
     });
-  }, [reportsById, filters.severities, filters.crops, filters.diseases, filters.window]);
+  }, [reportsById, filters.severities, filters.crops, filters.diseases, filters.window, nowTick, searchQuery]);
 
   // Clustering
   const clusterIndex = useMemo(() => buildClusterIndex(filteredReports), [filteredReports]);
   const clusters = useMemo(() => {
-    return getClusters(clusterIndex, region as MapRegion);
-  }, [clusterIndex, region]);
+    return getClusters(clusterIndex, debouncedRegion as MapRegion);
+  }, [clusterIndex, debouncedRegion]);
+
+  // Visible outbreak zones — memoized so a live report upsert (which changes
+  // reportsById, not outbreakById) doesn't rebuild every OutbreakZoneLayer.
+  const visibleZones = useMemo(
+    () => Object.values(outbreakById).filter((zone) => (showResolved ? true : zone.active)),
+    [outbreakById, showResolved],
+  );
 
   // Selected report for detail sheet
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
@@ -215,15 +247,17 @@ export default function MapScreen() {
         toolbarEnabled={false}
         customMapStyle={Platform.OS === 'android' ? lightMapStyle : undefined}
       >
-        {showHeatmap ? <HeatmapLayer reports={filteredReports} /> : null}
+        {showHeatmap ? (
+          <HeatmapLayer reports={filteredReports} region={debouncedRegion as MapRegion} />
+        ) : null}
 
         {/* User's own plots — rendered subtly so they don't compete with reports */}
         {plots?.map((plot) => (
-          <Marker
+          <TrackingMarker
             key={`plot-${plot.id}`}
+            contentKey="plot"
             coordinate={{ latitude: plot.latitude, longitude: plot.longitude }}
             anchor={{ x: 0.5, y: 0.5 }}
-            tracksViewChanges={false}
             zIndex={1}
           >
             <View
@@ -240,19 +274,17 @@ export default function MapScreen() {
             >
               <Home size={12} color="#ffffff" strokeWidth={2.6} />
             </View>
-          </Marker>
+          </TrackingMarker>
         ))}
 
         {/* Outbreak zones — v7 */}
-        {Object.values(outbreakById)
-          .filter((zone) => (showResolved ? true : zone.active))
-          .map((zone) => (
-            <OutbreakZoneLayer
-              key={zone.id}
-              zone={zone}
-              onPress={handleOutbreakPress}
-            />
-          ))}
+        {visibleZones.map((zone) => (
+          <OutbreakZoneLayer
+            key={zone.id}
+            zone={zone}
+            onPress={handleOutbreakPress}
+          />
+        ))}
 
         {showMarkers
           ? clusters.map((feature) => {
@@ -261,32 +293,36 @@ export default function MapScreen() {
 
               if ('cluster' in props && props.cluster) {
                 return (
-                  <Marker
+                  <TrackingMarker
                     key={`cluster-${props.cluster_id}`}
+                    contentKey={`${props.point_count}|${props.highCount}|${props.mediumCount}`}
                     coordinate={{ latitude: lat as number, longitude: lng as number }}
                     onPress={() => {
                       const expansionZoom = clusterIndex.getClusterExpansionZoom(
                         props.cluster_id as number,
                       );
-                      const factor = Math.max(2, Math.pow(2, expansionZoom - 6));
+                      // Derive the exact longitudeDelta for the expansion zoom,
+                      // then keep the current aspect ratio for latitudeDelta.
+                      const nextLngDelta = zoomToLongitudeDelta(expansionZoom);
+                      const aspect =
+                        debouncedRegion.latitudeDelta / debouncedRegion.longitudeDelta;
                       mapRef.current?.animateToRegion(
                         {
                           latitude: lat as number,
                           longitude: lng as number,
-                          latitudeDelta: region.latitudeDelta / factor,
-                          longitudeDelta: region.longitudeDelta / factor,
+                          latitudeDelta: nextLngDelta * aspect,
+                          longitudeDelta: nextLngDelta,
                         },
                         500,
                       );
                     }}
-                    tracksViewChanges={false}
                   >
                     <MapCluster
                       count={props.point_count}
                       highCount={props.highCount}
                       mediumCount={props.mediumCount}
                     />
-                  </Marker>
+                  </TrackingMarker>
                 );
               }
 
@@ -296,11 +332,11 @@ export default function MapScreen() {
               const cropEmoji = CROP_BY_NAME[report.cropType.toLowerCase()]?.emoji;
 
               return (
-                <Marker
+                <TrackingMarker
                   key={report.id}
+                  contentKey={`${report.severity}|${report.cropType}`}
                   coordinate={{ latitude: report.latitude, longitude: report.longitude }}
                   onPress={() => handleMarkerPress(report)}
-                  tracksViewChanges={false}
                   anchor={{ x: 0.5, y: 1 }}
                 >
                   <MapMarker
@@ -308,7 +344,7 @@ export default function MapScreen() {
                     cropEmoji={cropEmoji}
                     enablePulse={report.severity === 'HIGH'}
                   />
-                </Marker>
+                </TrackingMarker>
               );
             })
           : null}
@@ -322,14 +358,13 @@ export default function MapScreen() {
       >
         <Animated.View entering={FadeIn.duration(400)} pointerEvents="box-none">
           <View pointerEvents="box-none" className="gap-2 px-4 pt-2">
-            <MapSearchBar
-              isConnected={isConnected}
-              reportCount={filteredReports.length}
-              onPressSearch={() => filterSheetRef.current?.present()}
-            />
+            <MapSearchBar value={searchQuery} onChangeText={setSearchQuery} />
             <View pointerEvents="box-none" className="flex-row items-center justify-between gap-2">
-              <View className="flex-1">
-                <MapFilterChips />
+              <View pointerEvents="box-none" className="flex-1 flex-row items-center gap-2">
+                <ConnectionPill isConnected={isConnected} reportCount={filteredReports.length} />
+                <View className="flex-1">
+                  <MapFilterChips />
+                </View>
               </View>
               {nearby.isFetching ? (
                 <View
@@ -339,9 +374,9 @@ export default function MapScreen() {
                     borderRadius: 14,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: '#ffffff',
+                    backgroundColor: lightColors.surface,
                     borderWidth: 1,
-                    borderColor: '#efeae0',
+                    borderColor: lightColors.border,
                   }}
                 >
                   <ActivityIndicator color={palette.brand[600]} size="small" />
@@ -356,7 +391,7 @@ export default function MapScreen() {
       <SafeAreaView
         edges={['top']}
         pointerEvents="box-none"
-        style={{ position: 'absolute', top: 60, right: 0, bottom: 0, left: 0 }}
+        style={{ position: 'absolute', top: 116, right: 0, bottom: 0, left: 0 }}
       >
         <View pointerEvents="box-none" style={{ alignItems: 'flex-end', paddingRight: 16 }}>
           <MapControls
@@ -365,6 +400,7 @@ export default function MapScreen() {
             onLocate={locateMe}
             onLayerToggle={cycleLayer}
             onFilter={() => filterSheetRef.current?.present()}
+            onList={() => listSheetRef.current?.present()}
           />
         </View>
       </SafeAreaView>
@@ -378,16 +414,16 @@ export default function MapScreen() {
         >
           <View pointerEvents="box-none" className="px-4">
             <View className="flex-row items-center gap-2 rounded-2xl border border-warning/30 bg-warning/10 p-3">
-              <MapPinOff size={16} color="#f59e0b" strokeWidth={2.2} />
+              <MapPinOff size={16} color={lightColors.warning} strokeWidth={2.2} />
               <Text className="flex-1 text-xs text-warning">
                 Location permission is off. Enable it to see nearby reports.
               </Text>
-              <Pressable
-                accessibilityRole="button"
+              <TextButton
+                label="Allow"
+                tone="warning"
+                size="sm"
                 onPress={() => userLocation.refresh()}
-              >
-                <Text className="text-xs font-semibold text-warning">Allow</Text>
-              </Pressable>
+              />
             </View>
           </View>
         </SafeAreaView>

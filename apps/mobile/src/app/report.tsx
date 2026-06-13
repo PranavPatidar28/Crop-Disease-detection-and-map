@@ -1,33 +1,27 @@
 import { router } from 'expo-router';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 
-import { analyzeImage } from '@/features/disease-analysis/api';
 import {
   AnalyzingScreen,
-  EditDetailsSheet,
   ResultScreen,
+  RetakeScreen,
   SubmittedScreen,
 } from '@/features/report-flow';
 import { CaptureScreen } from '@/features/report-flow/screens/capture-lazy';
-import type { EditDetailsSheetHandle } from '@/features/report-flow/components/edit-details-sheet';
 import { useReportFlow } from '@/features/report-flow/use-report-flow';
 import { useCurrentLocation } from '@/features/upload-report/hooks';
 import { View } from '@/tw';
 
 /**
- * Full-screen report flow. Lives in the root stack (outside the tab navigator)
- * so the floating tab bar never covers the camera controls and the user cannot
- * switch tabs mid-capture. Drives a four-step state machine:
- * Capture → Analyzing → Result → Submitted, falling through
- * cloud → on-device → manual when an engine is unavailable.
+ * Full-screen report flow (root stack, outside the tab navigator). Drives:
+ * Capture → Analyzing → (Retake | Result) → Submitted.
+ *
+ * Online: upload → HF via /diseases/analyze → review → confirm.
+ * Offline / HF fails: on-device diagnosis → review → confirm → queued; the
+ * backend upgrades the diagnosis to HF on sync.
  */
 export default function ReportScreen() {
-  const flow = useReportFlow({
-    cloudAnalyze: (image, cropType) =>
-      analyzeImage({ imageUrl: image.uri, cropType: cropType ?? undefined }),
-  });
-
-  const editSheetRef = useRef<EditDetailsSheetHandle>(null);
+  const flow = useReportFlow();
 
   const locationCtl = useCurrentLocation(true);
   useEffect(() => {
@@ -37,11 +31,10 @@ export default function ReportScreen() {
         longitude: locationCtl.location.longitude,
       });
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- flow.setLocation is stable
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally only re-runs on a new GPS fix
   }, [locationCtl.location]);
 
-  const submitting =
-    flow.create.state === 'uploading' || flow.create.state === 'compressing';
+  const submitting = flow.create.state === 'uploading' || flow.create.state === 'processing';
 
   let body: React.ReactNode = null;
   switch (flow.state.step) {
@@ -49,7 +42,19 @@ export default function ReportScreen() {
       body = <CaptureScreen onCaptured={flow.setImage} onCancel={flow.reset} />;
       break;
     case 'analyzing':
-      body = flow.state.image ? <AnalyzingScreen image={flow.state.image} /> : <View />;
+      body = flow.state.image ? <AnalyzingScreen image={flow.state.image} /> : <View className="flex-1 bg-bg" />;
+      break;
+    case 'retake':
+      body =
+        flow.state.image && flow.state.retakeGuidance ? (
+          <RetakeScreen
+            image={flow.state.image}
+            guidance={flow.state.retakeGuidance}
+            onRetake={flow.retake}
+          />
+        ) : (
+          <View className="flex-1 bg-bg" />
+        );
       break;
     case 'result':
       body =
@@ -57,17 +62,15 @@ export default function ReportScreen() {
           <ResultScreen
             image={flow.state.image}
             result={flow.state.result}
-            shareToMap={flow.state.shareToMap}
+            cropType={flow.state.cropType}
+            notes={flow.state.notes}
             submitting={submitting}
-            onShareChange={flow.setShare}
-            onEdit={() => editSheetRef.current?.present()}
-            onPickCandidate={(disease) =>
-              flow.patchResult({ disease, candidates: undefined, confidence: 1 })
-            }
+            onChangeCrop={flow.setCrop}
+            onChangeNotes={flow.setNotes}
             onConfirm={() => void flow.submit()}
           />
         ) : (
-          <View />
+          <View className="flex-1 bg-bg" />
         );
       break;
     case 'submitted':
@@ -75,7 +78,6 @@ export default function ReportScreen() {
         <SubmittedScreen
           result={flow.state.result}
           cropType={flow.state.cropType}
-          shareToMap={flow.state.shareToMap}
           reportId={flow.state.submittedReportId}
           onAnother={() => {
             flow.reset();
@@ -83,21 +85,10 @@ export default function ReportScreen() {
           }}
         />
       ) : (
-        <View />
+        <View className="flex-1 bg-bg" />
       );
       break;
   }
 
-  return (
-    <>
-      {body}
-      {flow.state.result ? (
-        <EditDetailsSheet
-          ref={editSheetRef}
-          initial={flow.state.result}
-          onSave={flow.patchResult}
-        />
-      ) : null}
-    </>
-  );
+  return <>{body}</>;
 }

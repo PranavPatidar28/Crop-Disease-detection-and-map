@@ -3,12 +3,11 @@ import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect } from 'react';
+import { StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PressableScale } from '@/components/ui/pressable-scale';
-import { NotificationBadge } from '@/features/notifications/components/notification-badge';
-import { useUnreadCount } from '@/features/notifications/hooks/use-notifications';
 import { useTheme } from '@/hooks/use-theme';
 import { palette } from '@/theme/colors';
 import { Text, View } from '@/tw';
@@ -18,21 +17,20 @@ import { TabBarIcon, type TabIconName } from './tab-bar-icon';
 const ROUTE_TO_ICON: Record<string, TabIconName> = {
   index: 'house',
   map: 'map',
-  notifications: 'bell',
+  reports: 'reports',
   profile: 'user',
 };
 
 const ROUTE_TO_LABEL: Record<string, string> = {
   index: 'Home',
   map: 'Map',
-  notifications: 'Alerts',
+  reports: 'Reports',
   profile: 'Profile',
 };
 
 export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const unreadCount = useUnreadCount();
 
   const renderTab = (route: BottomTabBarProps['state']['routes'][number], index: number) => {
     const { options } = descriptors[route.key];
@@ -67,17 +65,13 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         tint={tint}
         onPress={onPress}
         onLongPress={onLongPress}
-        badge={
-          iconName === 'bell' && unreadCount > 0 ? (
-            <NotificationBadge count={unreadCount} size="sm" />
-          ) : null
-        }
+        badge={null}
       />
     );
   };
 
   // Split the real tabs around a standalone center FAB:
-  // [index, map] [FAB] [notifications, profile].
+  // [index, map] [FAB] [reports, profile].
   const midpoint = Math.ceil(state.routes.length / 2);
   const leftTabs = state.routes.slice(0, midpoint);
   const rightTabs = state.routes.slice(midpoint);
@@ -159,7 +153,8 @@ function RegularTab({
         <Animated.View
           pointerEvents="none"
           style={[
-            { position: 'absolute', inset: 0, borderRadius: 8, overflow: 'hidden' },
+            StyleSheet.absoluteFill,
+            { borderRadius: 8, overflow: 'hidden' },
             iconBgStyle,
           ]}
         >
@@ -167,7 +162,7 @@ function RegularTab({
             colors={[`${palette.brand[500]}26`, `${palette.brand[600]}26`]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={{ position: 'absolute', inset: 0 }}
+            style={StyleSheet.absoluteFill}
           />
         </Animated.View>
         <View>
@@ -226,7 +221,7 @@ function FabTab({ label, onPress }: FabTabProps) {
           colors={[palette.brand[500], palette.brand[600]]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={{ position: 'absolute', inset: 0 }}
+          style={StyleSheet.absoluteFill}
         />
         <TabBarIcon name="plus" focused color="#ffffff" size={26} />
       </View>

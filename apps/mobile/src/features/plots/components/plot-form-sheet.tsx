@@ -6,9 +6,11 @@ import {
 } from '@gorhom/bottom-sheet';
 import { Crosshair, MapPin, Trash2, X } from 'lucide-react-native';
 import { forwardRef, useEffect, useState } from 'react';
-import { Pressable } from 'react-native';
 
 import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
+import { IconButton } from '@/components/ui/icon-button';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { CROPS } from '@/constants/crops';
 import { useCurrentLocation } from '@/features/upload-report/hooks/use-current-location';
 import { useTheme } from '@/hooks/use-theme';
@@ -150,13 +152,11 @@ export const PlotFormSheet = forwardRef<BottomSheetModal, PlotFormSheetProps>(
           <Text className="text-xl font-bold text-text">
             {isEdit ? 'Edit plot' : 'Add a plot'}
           </Text>
-          <Pressable
-            accessibilityRole="button"
+          <IconButton
+            accessibilityLabel="Close"
+            icon={<X size={18} color={theme.text} strokeWidth={2} />}
             onPress={dismiss}
-            className="h-9 w-9 items-center justify-center rounded-full border border-border bg-surface"
-          >
-            <X size={18} color={theme.text} strokeWidth={2} />
-          </Pressable>
+          />
         </View>
 
         <BottomSheetScrollView contentContainerStyle={{ padding: 20, gap: 16, paddingBottom: 80 }}>
@@ -225,33 +225,14 @@ export const PlotFormSheet = forwardRef<BottomSheetModal, PlotFormSheetProps>(
 
           <Section label="Crops grown here (optional)">
             <View className="flex-row flex-wrap gap-2">
-              {CROPS.map((c) => {
-                const selected = crops.includes(c.name);
-                return (
-                  <Pressable
-                    key={c.id}
-                    accessibilityRole="button"
-                    onPress={() => toggleCrop(c.name)}
-                    style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
-                  >
-                    <View
-                      className={`rounded-full border px-3 py-1.5 ${
-                        selected
-                          ? 'border-brand-600 bg-brand-50'
-                          : 'border-border bg-surface'
-                      }`}
-                    >
-                      <Text
-                        className={`text-xs font-bold ${
-                          selected ? 'text-brand-700' : 'text-text-muted'
-                        }`}
-                      >
-                        {c.emoji} {c.name}
-                      </Text>
-                    </View>
-                  </Pressable>
-                );
-              })}
+              {CROPS.map((c) => (
+                <Chip
+                  key={c.id}
+                  label={`${c.emoji} ${c.name}`}
+                  active={crops.includes(c.name)}
+                  onPress={() => toggleCrop(c.name)}
+                />
+              ))}
             </View>
           </Section>
 
@@ -264,16 +245,18 @@ export const PlotFormSheet = forwardRef<BottomSheetModal, PlotFormSheetProps>(
 
         <View className="flex-row items-center gap-2 border-t border-border bg-surface px-5 py-4">
           {isEdit ? (
-            <Pressable
+            <PressableScale
               accessibilityRole="button"
+              accessibilityLabel="Delete plot"
               onPress={handleDelete}
               disabled={remove.isPending}
-              style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
+              haptic="medium"
+              pressedScale={0.92}
             >
-              <View className="h-12 w-12 items-center justify-center rounded-xl border border-danger-tint bg-danger-tint">
+              <View className={`h-12 w-12 items-center justify-center rounded-xl border border-danger-tint bg-danger-tint ${remove.isPending ? 'opacity-50' : ''}`}>
                 <Trash2 size={16} color={theme.danger} strokeWidth={2.2} />
               </View>
-            </Pressable>
+            </PressableScale>
           ) : null}
           <View className="flex-1">
             <Button
