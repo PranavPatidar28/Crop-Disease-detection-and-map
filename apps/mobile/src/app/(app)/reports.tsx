@@ -52,6 +52,10 @@ export default function ReportsScreen() {
     () => reports.filter((r) => r.severity === 'HIGH').length,
     [reports],
   );
+  // Search/filters run client-side over only the reports already loaded via
+  // infinite scroll. When a filter is active we hide the bottom "loading more"
+  // spinner so we don't imply the filtered set will grow — a deliberate
+  // iteration limitation, not a bug.
   const isFiltering =
     filter.search.trim().length > 0 || filter.severity !== 'all' || filter.status !== 'all';
 
