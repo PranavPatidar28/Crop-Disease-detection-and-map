@@ -15,6 +15,7 @@ import { SectionLabel } from '@/components/ui/section-label';
 import { TextButton } from '@/components/ui/text-button';
 import { ConfidenceRing } from '@/features/disease-analysis/components/confidence-ring';
 import { DiseaseAdvisory } from '@/features/disease-analysis/components/disease-advisory';
+import { ExpertReviewCard } from '@/features/disease-analysis/components/expert-review-card';
 import { ProcessingState } from '@/features/disease-analysis/components/processing-state';
 import { RecommendationsList } from '@/features/disease-analysis/components/recommendations-list';
 import { ReportFeedback } from '@/features/disease-analysis/components/report-feedback';
@@ -22,6 +23,7 @@ import { ResultActions } from '@/features/disease-analysis/components/result-act
 import { ResultHero } from '@/features/disease-analysis/components/result-hero';
 import { SeverityBadge } from '@/features/disease-analysis/components/severity-badge';
 import { useReport, useReprocessReport } from '@/features/disease-analysis/hooks/use-report';
+import { getExpertReview } from '@/features/disease-analysis/mocks/expert-review.mock';
 import { palette } from '@/theme/colors';
 import { AnimatedView, Text, View } from '@/tw';
 import { timeAgo } from '@/utils/severity';
@@ -180,7 +182,11 @@ export default function ReportDetailScreen() {
                 )}
               </AnimatedView>
 
-              <AnimatedView entering={FadeInDown.delay(260).duration(400)}>
+              <AnimatedView entering={FadeInDown.delay(240).duration(400)}>
+                <ExpertReviewCard review={getExpertReview(report)} />
+              </AnimatedView>
+
+              <AnimatedView entering={FadeInDown.delay(280).duration(400)}>
                 <ResultActions
                   report={report}
                   onUploadAnother={() => router.replace('/report')}
@@ -188,7 +194,7 @@ export default function ReportDetailScreen() {
                 />
               </AnimatedView>
 
-              <AnimatedView entering={FadeInDown.delay(300).duration(400)}>
+              <AnimatedView entering={FadeInDown.delay(320).duration(400)}>
                 <ReportFeedback />
               </AnimatedView>
 

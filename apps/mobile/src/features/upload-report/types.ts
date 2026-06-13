@@ -145,3 +145,28 @@ export interface Report {
   createdAt: string;
   updatedAt: string;
 }
+
+/**
+ * Professional / agronomist review of a report. Demo-only — generated
+ * client-side (see features/disease-analysis/mocks/expert-review.mock.ts),
+ * never persisted or fetched. Not part of the backend `Report` shape.
+ */
+export type ExpertReviewStatus = 'PENDING' | 'APPROVED' | 'NEEDS_REVISION' | 'REJECTED';
+
+export interface ExpertReviewer {
+  /** Display name, e.g. "Dr. Anil Kanade". */
+  name: string;
+  /** Role + institution, e.g. "Agronomist, KVK Pune". */
+  credential: string;
+}
+
+export interface ExpertReview {
+  status: ExpertReviewStatus;
+  expert: ExpertReviewer;
+  /** Free-text guidance paragraph. Empty string while PENDING. */
+  adviceNote: string;
+  /** Recommended action bullets. Empty array while PENDING. */
+  tips: string[];
+  /** ISO timestamp; null while PENDING. */
+  reviewedAt: string | null;
+}
