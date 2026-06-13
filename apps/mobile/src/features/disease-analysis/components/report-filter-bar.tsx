@@ -1,8 +1,10 @@
-import { Search, X } from 'lucide-react-native';
-import { ScrollView, TextInput } from 'react-native';
+import { ChevronDown, Search, SlidersHorizontal, X } from 'lucide-react-native';
+import { useRef } from 'react';
+import { TextInput } from 'react-native';
+import type { BottomSheetModal } from '@gorhom/bottom-sheet';
 
-import { Chip } from '@/components/ui/chip';
 import { PressableScale } from '@/components/ui/pressable-scale';
+import { ReportFilterSheet } from '@/features/disease-analysis/components/report-filter-sheet';
 import type {
   ReportFilter,
   SeverityFilter,
@@ -10,34 +12,41 @@ import type {
 } from '@/features/disease-analysis/utils/filter-reports';
 import { useTheme } from '@/hooks/use-theme';
 import { palette } from '@/theme/colors';
-import { View } from '@/tw';
+import { Text, View } from '@/tw';
+import { cn } from '@/utils/cn';
 
 interface ReportFilterBarProps {
   value: ReportFilter;
   onChange: (next: ReportFilter) => void;
+  /** Count shown on the sheet's apply button. */
+  matchingCount: number;
 }
 
-const SEVERITY_OPTIONS: { key: SeverityFilter; label: string }[] = [
-  { key: 'all', label: 'All' },
-  { key: 'LOW', label: 'Low' },
-  { key: 'MEDIUM', label: 'Medium' },
-  { key: 'HIGH', label: 'High' },
-];
+const SEVERITY_LABELS: Record<SeverityFilter, string> = {
+  all: 'Severity',
+  LOW: 'Low',
+  MEDIUM: 'Medium',
+  HIGH: 'High',
+};
 
-const STATUS_OPTIONS: { key: StatusFilter; label: string }[] = [
-  { key: 'all', label: 'Any status' },
-  { key: 'analyzed', label: 'Analyzed' },
-  { key: 'processing', label: 'Processing' },
-  { key: 'failed', label: 'Failed' },
-];
+const STATUS_LABELS: Record<StatusFilter, string> = {
+  all: 'Status',
+  analyzed: 'Analyzed',
+  processing: 'Processing',
+  failed: 'Failed',
+};
 
 /**
- * Search + severity + status filters for the reports history screen. Purely
- * controlled — owns no state. Filtering itself happens client-side in the
- * screen via filterReports().
+ * Search + filter triggers for the reports history screen. Purely controlled —
+ * owns no filter state. The severity/status options live in a bottom sheet
+ * (ReportFilterSheet) opened by the trigger buttons, keeping the bar compact.
+ * Filtering itself happens client-side in the screen via filterReports().
  */
-export function ReportFilterBar({ value, onChange }: ReportFilterBarProps) {
+export function ReportFilterBar({ value, onChange, matchingCount }: ReportFilterBarProps) {
   const theme = useTheme();
+  const sheetRef = useRef<BottomSheetModal>(null);
+
+  const openSheet = () => sheetRef.current?.present();
 
   return (
     <View className="gap-2.5">
@@ -67,37 +76,76 @@ export function ReportFilterBar({ value, onChange }: ReportFilterBarProps) {
         ) : null}
       </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 8, paddingRight: 8 }}
-      >
-        {SEVERITY_OPTIONS.map((opt) => (
-          <Chip
-            key={`sev-${opt.key}`}
-            label={opt.label}
-            active={value.severity === opt.key}
-            tone="brand"
-            onPress={() => onChange({ ...value, severity: opt.key })}
-          />
-        ))}
-      </ScrollView>
+      <View className="flex-row gap-2">
+        <FilterTrigger
+          label={SEVERITY_LABELS[value.severity]}
+          active={value.severity !== 'all'}
+          onPress={openSheet}
+          leftSlot={
+            <SlidersHorizontal
+              size={14}
+              color={value.severity !== 'all' ? '#fff' : palette.brand[600]}
+              strokeWidth={2.2}
+            />
+          }
+        />
+        <FilterTrigger
+          label={STATUS_LABELS[value.status]}
+          active={value.status !== 'all'}
+          onPress={openSheet}
+        />
+      </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ gap: 8, paddingRight: 8 }}
-      >
-        {STATUS_OPTIONS.map((opt) => (
-          <Chip
-            key={`status-${opt.key}`}
-            label={opt.label}
-            active={value.status === opt.key}
-            tone="neutral"
-            onPress={() => onChange({ ...value, status: opt.key })}
-          />
-        ))}
-      </ScrollView>
+      <ReportFilterSheet
+        ref={sheetRef}
+        value={value}
+        onChange={onChange}
+        matchingCount={matchingCount}
+      />
     </View>
+  );
+}
+
+interface FilterTriggerProps {
+  label: string;
+  active: boolean;
+  onPress: () => void;
+  leftSlot?: React.ReactNode;
+}
+
+function FilterTrigger({ label, active, onPress, leftSlot }: FilterTriggerProps) {
+  const theme = useTheme();
+  return (
+    <PressableScale
+      accessibilityRole="button"
+      accessibilityLabel={`Filter by ${label}`}
+      onPress={onPress}
+      pressedScale={0.97}
+      haptic="selection"
+      className="flex-1"
+    >
+      <View
+        className={cn(
+          'flex-row items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5',
+          active ? 'border-brand-600 bg-brand-600' : 'border-border bg-surface',
+        )}
+      >
+        {leftSlot}
+        <Text
+          className={cn(
+            'text-[13px] font-bold',
+            active ? 'text-white' : 'text-text',
+          )}
+          numberOfLines={1}
+        >
+          {label}
+        </Text>
+        <ChevronDown
+          size={14}
+          color={active ? '#fff' : theme.textMuted}
+          strokeWidth={2.2}
+        />
+      </View>
+    </PressableScale>
   );
 }

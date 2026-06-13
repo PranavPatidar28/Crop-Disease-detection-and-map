@@ -71,7 +71,13 @@ export default function ReportsScreen() {
                 : 'Your crop scans show up here'}
             </Text>
           </View>
-          {reports.length > 0 ? <ReportFilterBar value={filter} onChange={setFilter} /> : null}
+          {reports.length > 0 ? (
+            <ReportFilterBar
+              value={filter}
+              onChange={setFilter}
+              matchingCount={filtered.length}
+            />
+          ) : null}
         </View>
 
         <ScrollView
