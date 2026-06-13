@@ -7,6 +7,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { AppConfigModule } from './config/config.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { CloudinaryModule } from './modules/cloudinary/cloudinary.module';
+import { DiseasesModule } from './modules/diseases/diseases.module';
 import { HealthModule } from './modules/health/health.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { OutbreakModule } from './modules/outbreak/outbreak.module';
@@ -42,6 +43,7 @@ import { UsersModule } from './modules/users/users.module';
     UsersModule,
     AuthModule,
     CloudinaryModule,
+    DiseasesModule,
     ReportsModule,
     OutbreakModule,
     PlotsModule,
