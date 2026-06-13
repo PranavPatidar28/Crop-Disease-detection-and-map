@@ -19,7 +19,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev --name init",
     "prisma:studio": "prisma studio",
-    "seed:demo": "ts-node -r tsconfig-paths/register src/scripts/seed-demo.ts"
+    "seed:demo": "ts-node -r tsconfig-paths/register src/scripts/seed-demo.ts",
+    "upload:crop-images": "ts-node -r tsconfig-paths/register src/scripts/upload-crop-images.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.15",
