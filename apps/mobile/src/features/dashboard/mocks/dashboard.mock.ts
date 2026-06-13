@@ -160,6 +160,9 @@ export const mockAlerts: Alert[] = [
 
 export const mockDashboard: DashboardData = {
   summary: {
+    // Offline fallback counts only — padded above the visible mock rows so the
+    // dashboard looks realistic when the backend is unreachable. Overridden by
+    // live data in dashboard.api.ts when the backend responds.
     activeOutbreaks: mockOutbreaks.length + 2,
     highSeverityZones: mockOutbreaks.filter((o) => o.severity === 'high').length + 1,
     reportsThisWeek: 47,
