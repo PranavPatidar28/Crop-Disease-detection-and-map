@@ -5,8 +5,9 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { EmptyState } from '@/components/feedback';
+import { BackButton } from '@/components/ui/back-button';
 import { Loader } from '@/components/ui/loader';
-import { PressableScale } from '@/components/ui/pressable-scale';
+import { TextButton } from '@/components/ui/text-button';
 import {
   DayLabel,
   type NotificationFilterValue,
@@ -22,6 +23,7 @@ import type { Notification, NotificationType } from '@/features/notifications/ap
 import { useNotificationsStore } from '@/features/notifications/store/notifications.store';
 import { groupByDay } from '@/features/notifications/utils/group-by-day';
 import { useTheme } from '@/hooks/use-theme';
+import { usePreferencesStore } from '@/store/preferences.store';
 import { Text, View } from '@/tw';
 
 export default function NotificationsScreen() {
@@ -42,6 +44,7 @@ export default function NotificationsScreen() {
   const markAllRead = useMarkAllRead();
 
   const unreadCount = useNotificationsStore((s) => s.unreadCount);
+  const alertRadiusKm = usePreferencesStore((s) => s.alertRadiusKm);
 
   const items = useMemo<Notification[]>(
     () => query.data?.pages.flatMap((p) => p.items) ?? [],
@@ -65,6 +68,9 @@ export default function NotificationsScreen() {
     <View className="flex-1 bg-bg">
       <SafeAreaView edges={['top']} style={{ flex: 1 }}>
         <View className="px-4 pt-2">
+          <View className="mb-2 flex-row items-center gap-3">
+            <BackButton onPress={() => router.back()} />
+          </View>
           <View className="flex-row items-end justify-between gap-3">
             <View className="flex-1">
               <Text className="text-3xl font-extrabold tracking-tight text-text">Alerts</Text>
@@ -73,15 +79,12 @@ export default function NotificationsScreen() {
               </Text>
             </View>
             {unreadCount > 0 ? (
-              <PressableScale
-                accessibilityRole="button"
-                onPress={() => markAllRead.mutate()}
+              <TextButton
+                label="Mark all read"
+                size="sm"
                 disabled={markAllRead.isPending}
-                haptic="selection"
-                pressedScale={0.94}
-              >
-                <Text className="text-xs font-bold text-brand-700">Mark all read</Text>
-              </PressableScale>
+                onPress={() => markAllRead.mutate()}
+              />
             ) : null}
           </View>
           <View className="mt-3">
@@ -93,12 +96,22 @@ export default function NotificationsScreen() {
           <View className="flex-1 items-center justify-center">
             <Loader size={40} />
           </View>
+        ) : query.isError ? (
+          <View className="flex-1 items-center justify-center">
+            <EmptyState
+              emoji="📡"
+              title="Couldn't load alerts"
+              description="Check your connection and try again."
+              actionLabel="Retry"
+              onAction={() => query.refetch()}
+            />
+          </View>
         ) : items.length === 0 ? (
           <View className="flex-1 items-center justify-center">
             <EmptyState
               emoji="🌾"
               title="All clear in your area"
-              description="We'll alert you when nearby outbreaks need attention."
+              description={`We'll alert you when outbreaks within ${alertRadiusKm} km need attention.`}
               actionLabel="Adjust alert radius"
               onAction={() => router.push('/profile')}
             />

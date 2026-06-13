@@ -29,6 +29,11 @@ export function useRealtimeNotifications(options: UseRealtimeNotificationsOption
   const markAllRead = useNotificationsStore((s) => s.markAllRead);
   const remove = useNotificationsStore((s) => s.remove);
   const qc = useQueryClient();
+  // Depend on the stable callback, not the `options` wrapper object. The
+  // provider passes a fresh `{ onNotification }` literal each render, so keying
+  // the effect on `options` re-subscribed all four listeners on every banner
+  // push/dismiss, churning subscriptions and opening windows where events miss.
+  const onNotification = options.onNotification;
 
   useEffect(() => {
     if (!socket) return undefined;
@@ -36,7 +41,7 @@ export function useRealtimeNotifications(options: UseRealtimeNotificationsOption
     const onCreated = (payload: NotificationCreatedPayload) => {
       if (!payload?.notification) return;
       void upsert(payload.notification);
-      options.onNotification?.(payload.notification);
+      onNotification?.(payload.notification);
       void qc.invalidateQueries({ queryKey: ['notifications', 'unread-count'] });
     };
     const onRead = (payload: NotificationIdPayload) => {
@@ -60,5 +65,5 @@ export function useRealtimeNotifications(options: UseRealtimeNotificationsOption
       socket.off('notification.read-all', onReadAll);
       socket.off('notification.deleted', onDeleted);
     };
-  }, [socket, upsert, markRead, markAllRead, remove, qc, options]);
+  }, [socket, upsert, markRead, markAllRead, remove, qc, onNotification]);
 }
