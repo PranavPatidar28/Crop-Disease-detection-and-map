@@ -1,6 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Camera } from 'lucide-react-native';
+import { StyleSheet } from 'react-native';
 
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { Text, View } from '@/tw';
@@ -27,7 +28,7 @@ export function QuickUploadCTA() {
         colors={[palette.brand[500], palette.brand[600]]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={{ position: 'absolute', inset: 0 }}
+        style={StyleSheet.absoluteFill}
       />
       <View className="flex-row items-center justify-between gap-3 px-5 py-4">
         <View className="flex-1 gap-0.5">

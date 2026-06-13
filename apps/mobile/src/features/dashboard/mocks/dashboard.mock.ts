@@ -150,8 +150,8 @@ export const mockAlerts: Alert[] = [
   },
   {
     id: 'al-4',
-    title: 'Late blight trending down',
-    description: 'Fewer reports vs last week in your region. Keep monitoring.',
+    title: 'Wheat stripe rust trending down',
+    description: 'Fewer reports vs last week near Vidisha. Keep monitoring.',
     severity: 'low',
     unread: false,
     createdAt: minutesAgo(720),

@@ -5,6 +5,7 @@ import { Chip } from '@/components/ui/chip';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { SectionLabel } from '@/components/ui/section-label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { usePreferencesStore } from '@/store/preferences.store';
 import { Text, View } from '@/tw';
 
 import type { DashboardSummary } from '../types';
@@ -15,10 +16,13 @@ interface OutbreakSummaryProps {
 }
 
 /**
- * The Home hero card. Big number = active outbreaks today within 5km, with
- * a stable/rising/falling pill, a "+N new" pill, and a context line.
+ * The Home hero card. Big number = active outbreaks today within the user's
+ * configured alert radius, with a stable/rising/falling pill, a "+N new" pill,
+ * and a context line.
  */
 export function OutbreakSummary({ summary, loading }: OutbreakSummaryProps) {
+  const alertRadiusKm = usePreferencesStore((s) => s.alertRadiusKm);
+
   if (loading || !summary) {
     return <Skeleton height={140} rounded="xl" />;
   }
@@ -39,7 +43,7 @@ export function OutbreakSummary({ summary, loading }: OutbreakSummaryProps) {
       haptic="selection"
     >
       <Card variant="glow" padding="lg">
-        <SectionLabel>Today · 5 km radius</SectionLabel>
+        <SectionLabel>{`Today · ${alertRadiusKm} km radius`}</SectionLabel>
         <View className="mt-2 flex-row items-end justify-between">
           <Text
             className="font-extrabold text-brand-900"
