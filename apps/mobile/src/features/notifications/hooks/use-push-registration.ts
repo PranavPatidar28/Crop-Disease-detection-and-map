@@ -36,6 +36,11 @@ export function usePushRegistration(): void {
   useEffect(() => {
     if (!isAuthenticated) return undefined;
     let cancelled = false;
+    // Hoisted to effect scope so the effect's own cleanup can remove it. Keeping
+    // the subscription inside the async IIFE (and returning cleanup from there)
+    // never wired it to the effect — every login/logout cycle stacked another
+    // live token listener that called registerPushToken forever.
+    let sub: Notifications.Subscription | undefined;
 
     void (async () => {
       try {
@@ -56,7 +61,8 @@ export function usePushRegistration(): void {
 
         await notificationsApi.registerPushToken(token.data, platformFromOS());
 
-        const sub = Notifications.addPushTokenListener(async (next) => {
+        if (cancelled) return;
+        sub = Notifications.addPushTokenListener(async (next) => {
           if (next?.data) {
             try {
               await notificationsApi.registerPushToken(next.data, platformFromOS());
@@ -65,16 +71,14 @@ export function usePushRegistration(): void {
             }
           }
         });
-
-        return () => sub.remove();
       } catch {
         /* ignore — push isn't critical, in-app + WS still work */
       }
-      return undefined;
     })();
 
     return () => {
       cancelled = true;
+      sub?.remove();
     };
   }, [isAuthenticated]);
 }

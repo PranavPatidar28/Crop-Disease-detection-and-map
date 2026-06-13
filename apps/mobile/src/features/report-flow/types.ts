@@ -1,24 +1,20 @@
-import type { Severity } from '@/features/upload-report/types';
+import type { ReportAdvisory, Severity } from '@/features/upload-report/types';
 
-export type FlowStep = 'capture' | 'analyzing' | 'result' | 'submitted';
+export type FlowStep = 'capture' | 'analyzing' | 'retake' | 'result' | 'submitted';
 
 export type AnalysisEngine = 'cloud' | 'on-device' | 'manual';
 
 export interface AnalysisResult {
   engine: AnalysisEngine;
-  /** Diagnosed disease (e.g., "Tomato leaf curl"). May be null in manual mode. */
+  /** Diagnosed disease display name. Null in manual mode. */
   disease: string | null;
-  /** 0..1 confidence from the engine. Null in manual mode. */
+  /** 0-100 confidence. Null in manual mode. */
   confidence: number | null;
   severity: Severity | null;
-  /** Treatment / action recommendations rendered as a numbered list. */
-  recommendations: string[];
-  /** Optional alternate candidates when confidence is low (<0.6). */
-  candidates?: { disease: string; confidence: number }[];
-  /** Free text from the engine (e.g., "Spreading", "Localized"). */
-  status?: 'spreading' | 'localized' | 'contained';
-  /** Set by the user via "Edit details". When true, badge becomes "Edited by you". */
-  edited?: boolean;
+  /** Detected crop (HF or on-device). Used to pre-fill / correct cropType. */
+  detectedCrop?: string;
+  /** Full farmer-facing advisory when the engine supplies one (HF). */
+  advisory?: ReportAdvisory;
 }
 
 export interface CapturedImage {
@@ -33,17 +29,22 @@ export interface FlowLocation {
   accuracy?: number | null;
 }
 
+export interface UploadedImage {
+  imageUrl: string;
+  imagePublicId: string;
+}
+
 export interface FlowState {
   step: FlowStep;
   image: CapturedImage | null;
+  /** Cloudinary asset, set after the post-capture upload. */
+  uploaded: UploadedImage | null;
+  /** Detected/corrected crop shown on the result screen. */
   cropType: string | null;
   notes: string;
   location: FlowLocation | null;
   result: AnalysisResult | null;
-  /** When true, the report is submitted publicly to the outbreak map. */
-  shareToMap: boolean;
-  /** Diagnostic info on submission. */
+  /** Guidance shown on the forced-retake screen (online HF only). */
+  retakeGuidance: string | null;
   submittedReportId: string | null;
 }
-
-export const LOW_CONFIDENCE_THRESHOLD = 0.6;

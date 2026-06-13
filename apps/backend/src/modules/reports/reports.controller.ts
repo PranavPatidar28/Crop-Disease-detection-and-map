@@ -26,6 +26,12 @@ export class ReportsController {
     return this.reports.findNearby(query);
   }
 
+  // Must precede `@Get(':id')` so the literal `count` segment isn't captured as an id.
+  @Get('count')
+  count(@CurrentUser() user: User) {
+    return this.reports.countForUser(user.id);
+  }
+
   @Get(':id')
   findOne(@CurrentUser() user: User, @Param('id') id: string) {
     return this.reports.findById(user.id, id);

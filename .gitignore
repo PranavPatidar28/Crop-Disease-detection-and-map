@@ -66,3 +66,6 @@ apps/mobile/expo-env.d.ts
 
 # OS
 .DS_Store
+
+# Git worktrees
+.worktrees/

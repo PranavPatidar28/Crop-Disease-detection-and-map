@@ -1,10 +1,11 @@
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import { Camera as CameraIcon, Image as ImageIcon, X } from 'lucide-react-native';
-import { Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BottomActionBar } from '@/components/layout/bottom-action-bar';
 import { Button } from '@/components/ui/button';
+import { IconButton } from '@/components/ui/icon-button';
 import { palette } from '@/theme/colors';
 import { Text, View } from '@/tw';
 
@@ -49,19 +50,16 @@ export function CaptureFallbackScreen({ onCaptured, onCancel }: Props) {
 
   return (
     <View className="flex-1 bg-bg">
-      <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1 }}>
+      <SafeAreaView edges={['top']} style={{ flex: 1 }}>
         <View className="flex-row items-center justify-between px-4 py-2">
-          <Pressable
-            accessibilityRole="button"
+          <IconButton
             accessibilityLabel="Close"
+            icon={<X size={18} color={palette.brand[700]} strokeWidth={2.2} />}
             onPress={() => {
               onCancel();
               router.back();
             }}
-            className="h-10 w-10 items-center justify-center rounded-full border border-border bg-surface"
-          >
-            <X size={18} color={palette.brand[700]} strokeWidth={2.2} />
-          </Pressable>
+          />
           <Text className="text-xs font-bold uppercase tracking-[1.4px] text-brand-700">
             Step 1 of 4
           </Text>
@@ -78,7 +76,7 @@ export function CaptureFallbackScreen({ onCaptured, onCancel }: Props) {
           </Text>
         </View>
 
-        <View className="gap-2 px-4 pb-4">
+        <BottomActionBar divider={false}>
           <Button
             label="Take a photo"
             variant="gradient"
@@ -93,7 +91,7 @@ export function CaptureFallbackScreen({ onCaptured, onCancel }: Props) {
             leftSlot={<ImageIcon size={18} color={palette.brand[700]} strokeWidth={2.2} />}
             onPress={() => void launch('library')}
           />
-        </View>
+        </BottomActionBar>
       </SafeAreaView>
     </View>
   );

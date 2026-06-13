@@ -3,9 +3,10 @@ import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Check, X } from 'lucide-react-native';
 import { forwardRef, useEffect, useRef, useState } from 'react';
-import { Platform, Pressable } from 'react-native';
+import { Platform } from 'react-native';
 import MapView, { Marker, type Region } from 'react-native-maps';
 
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { useTheme } from '@/hooks/use-theme';
 import { palette } from '@/theme/colors';
 import { Text, View } from '@/tw';
@@ -72,14 +73,16 @@ export const MapPickerSheet = forwardRef<BottomSheetModal, MapPickerSheetProps>(
                 Drag the pin to mark your crop&apos;s exact location.
               </Text>
             </View>
-            <Pressable
+            <PressableScale
               accessibilityRole="button"
               accessibilityLabel="Close"
               onPress={dismiss}
+              haptic="selection"
+              pressedScale={0.9}
               className="h-9 w-9 items-center justify-center rounded-full bg-surface"
             >
               <X size={18} color={theme.text} strokeWidth={2} />
-            </Pressable>
+            </PressableScale>
           </View>
 
           <View className="mx-5 flex-1 overflow-hidden rounded-2xl border border-border bg-surface">
@@ -118,16 +121,14 @@ export const MapPickerSheet = forwardRef<BottomSheetModal, MapPickerSheetProps>(
           ) : null}
 
           <View className="px-5 pb-6 pt-3">
-            <Pressable
+            <PressableScale
               accessibilityRole="button"
               accessibilityLabel="Use this location"
               onPress={handleConfirm}
               disabled={!pin}
-              style={({ pressed }) => ({
-                opacity: !pin ? 0.5 : pressed ? 0.92 : 1,
-                borderRadius: 16,
-                overflow: 'hidden',
-              })}
+              haptic="light"
+              pressedScale={0.97}
+              style={{ borderRadius: 16, overflow: 'hidden', opacity: pin ? 1 : 0.5 }}
             >
               <LinearGradient
                 colors={[palette.brand[500], palette.brand[600]]}
@@ -139,7 +140,7 @@ export const MapPickerSheet = forwardRef<BottomSheetModal, MapPickerSheetProps>(
                   <Text className="text-sm font-semibold text-white">Use this location</Text>
                 </View>
               </LinearGradient>
-            </Pressable>
+            </PressableScale>
             {Platform.OS === 'android' ? (
               <Text className="mt-2 text-center text-[11px] text-text-subtle">
                 Map uses Google Maps · location data stays on your device

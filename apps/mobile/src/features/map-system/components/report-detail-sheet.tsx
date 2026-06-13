@@ -3,11 +3,11 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { ChevronRight, Clock, MapPin, X } from 'lucide-react-native';
 import { forwardRef } from 'react';
-import { Pressable } from 'react-native';
 
-import { ConfidenceRing } from '@/features/disease-analysis/components/confidence-ring';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { RecommendationsList } from '@/features/disease-analysis/components/recommendations-list';
 import { SeverityBadge } from '@/features/disease-analysis/components/severity-badge';
+import { SheetHero } from '@/features/map-system/components/sheet-hero';
 import type { Report } from '@/features/upload-report/types';
 import { useTheme } from '@/hooks/use-theme';
 import { palette } from '@/theme/colors';
@@ -61,55 +61,35 @@ export const ReportDetailSheet = forwardRef<BottomSheetModal, ReportDetailSheetP
           <BottomSheetScrollView
             contentContainerStyle={{ padding: 20, paddingBottom: 60, gap: 16 }}
           >
-            <View className="flex-row items-start justify-between">
-              <View className="flex-1 gap-1">
-                <Text className="text-[11px] font-medium uppercase tracking-wider text-text-subtle">
-                  {report.cropType}
-                </Text>
-                <Text className="text-2xl font-bold text-text" numberOfLines={2}>
-                  {report.disease ?? 'Unknown'}
-                </Text>
-                <View className="mt-1 flex-row items-center gap-2">
-                  <SeverityBadge severity={report.severity} size="sm" />
-                </View>
+            <View className="flex-row items-start justify-between gap-3">
+              <View className="flex-1">
+                <SheetHero
+                  eyebrow={report.cropType}
+                  title={report.disease ?? 'Unknown'}
+                  metric={report.confidence != null ? `${Math.round(report.confidence)}%` : '—'}
+                  metricCaption="confidence"
+                  badge={<SeverityBadge severity={report.severity} size="sm" />}
+                />
               </View>
-              <Pressable
+              <PressableScale
                 accessibilityRole="button"
+                accessibilityLabel="Close"
                 onPress={dismiss}
+                haptic="selection"
+                pressedScale={0.9}
                 className="h-9 w-9 items-center justify-center rounded-full bg-surface"
               >
                 <X size={18} color={theme.text} strokeWidth={2} />
-              </Pressable>
+              </PressableScale>
             </View>
 
-            <View className="flex-row items-center gap-4 rounded-2xl border border-border bg-surface p-3">
+            <View className="rounded-2xl border border-border bg-surface p-3">
               <Image
                 source={{ uri: report.imageUrl }}
-                style={{ width: 80, height: 80, borderRadius: 12 }}
+                style={{ width: '100%', height: 180, borderRadius: 12 }}
                 contentFit="cover"
                 transition={200}
               />
-              <View className="flex-1 gap-2">
-                {report.confidence != null ? (
-                  <View className="flex-row items-center gap-2">
-                    <ConfidenceRing
-                      value={report.confidence}
-                      severity={report.severity}
-                      size={64}
-                      strokeWidth={6}
-                      label=""
-                    />
-                    <View className="flex-1 gap-0.5">
-                      <Text className="text-[11px] font-medium uppercase tracking-wider text-text-subtle">
-                        Confidence
-                      </Text>
-                      <Text className="text-base font-bold text-text">
-                        {Math.round(report.confidence)}%
-                      </Text>
-                    </View>
-                  </View>
-                ) : null}
-              </View>
             </View>
 
             <View className="flex-row gap-2">
@@ -139,14 +119,15 @@ export const ReportDetailSheet = forwardRef<BottomSheetModal, ReportDetailSheetP
               <RecommendationsList items={report.recommendations} />
             </View>
 
-            <Pressable
+            <PressableScale
               accessibilityRole="button"
               accessibilityLabel="Open full report"
               onPress={() => {
                 dismiss();
                 router.push({ pathname: '/reports/[id]', params: { id: report.id } });
               }}
-              style={({ pressed }) => ({ opacity: pressed ? 0.92 : 1 })}
+              haptic="light"
+              pressedScale={0.97}
             >
               <View
                 className="h-12 flex-row items-center justify-center gap-2 rounded-2xl"
@@ -155,7 +136,7 @@ export const ReportDetailSheet = forwardRef<BottomSheetModal, ReportDetailSheetP
                 <Text className="text-sm font-semibold text-white">Open full report</Text>
                 <ChevronRight size={18} color="#fff" strokeWidth={2.2} />
               </View>
-            </Pressable>
+            </PressableScale>
           </BottomSheetScrollView>
         )}
       </BottomSheetModal>

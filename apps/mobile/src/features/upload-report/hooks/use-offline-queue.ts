@@ -31,6 +31,7 @@ export function useOfflineQueue(enabled: boolean): void {
   const setError = useSyncStatusStore((s) => s.setError);
 
   const drainingRef = useRef(false);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Mirror queue depth into sync-status so badges / banners can read one place.
   useEffect(() => {
@@ -41,6 +42,31 @@ export function useOfflineQueue(enabled: boolean): void {
     if (!enabled || !isHydrated) return;
 
     let cancelled = false;
+
+    // Schedules a re-drain at the soonest backed-off item's nextAttemptAt.
+    // Without this, a backed-off item only wakes on an enqueue or a reconnect,
+    // so the exponential schedule stalls while the app stays open and online.
+    const scheduleNextRetry = () => {
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current);
+        retryTimerRef.current = null;
+      }
+      const now = Date.now();
+      const waiting = useOfflineQueueStore
+        .getState()
+        .items.filter(
+          (i) =>
+            i.status !== 'failed' &&
+            i.nextAttemptAt != null &&
+            i.nextAttemptAt > now,
+        );
+      if (waiting.length === 0) return;
+      const soonest = Math.min(...waiting.map((i) => i.nextAttemptAt as number));
+      const delay = Math.max(0, soonest - now);
+      retryTimerRef.current = setTimeout(() => {
+        if (!cancelled) void drain();
+      }, delay);
+    };
 
     const drain = async () => {
       if (drainingRef.current) return;
@@ -74,6 +100,8 @@ export function useOfflineQueue(enabled: boolean): void {
         if (anySucceeded && !anyFailed) markSynced();
         else if (anyFailed) setError(lastError ?? 'Sync failed');
         else setPhase('idle');
+        // Re-arm the wake-up timer for any items still cooling down.
+        if (!cancelled) scheduleNextRetry();
       }
     };
 
@@ -85,6 +113,10 @@ export function useOfflineQueue(enabled: boolean): void {
     return () => {
       cancelled = true;
       sub();
+      if (retryTimerRef.current) {
+        clearTimeout(retryTimerRef.current);
+        retryTimerRef.current = null;
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, isHydrated, items.length]);
@@ -99,29 +131,53 @@ async function processItem(
   await update(item.id, { status: 'uploading' });
 
   try {
-    const sig = await cloudinaryApi.getSignature();
-    const uploaded = await cloudinaryApi.uploadImage(item.draft.localImageUri, sig);
+    // Reuse a previously-uploaded asset if a prior attempt got past Cloudinary
+    // but failed on the server POST. Otherwise each retry would upload a brand-
+    // new copy, leaking up to MAX_QUEUE_ATTEMPTS orphaned assets per item.
+    let imageUrl = item.uploadedImageUrl;
+    let imagePublicId = item.uploadedPublicId;
 
-    const created = await reportsApi.create({
+    if (!imageUrl || !imagePublicId) {
+      const sig = await cloudinaryApi.getSignature();
+      const uploaded = await cloudinaryApi.uploadImage(item.draft.localImageUri, sig);
+      imageUrl = uploaded.secure_url;
+      imagePublicId = uploaded.public_id;
+      // Persist immediately so a server-POST failure below doesn't re-upload.
+      await update(item.id, {
+        uploadedImageUrl: imageUrl,
+        uploadedPublicId: imagePublicId,
+      });
+    }
+
+    await reportsApi.create({
       clientId: item.draft.clientId,
       cropType: item.draft.cropTypeName,
-      imageUrl: uploaded.secure_url,
-      imagePublicId: uploaded.public_id,
+      imageUrl,
+      imagePublicId,
       notes: item.draft.notes,
       latitude: item.draft.location.latitude,
       longitude: item.draft.location.longitude,
+      // Provisional on-device/manual diagnosis captured while offline. The
+      // backend stores it and re-runs HF to upgrade (engine !== 'cloud').
+      disease: item.draft.diagnosis?.disease,
+      confidence: item.draft.diagnosis?.confidence,
+      severity: item.draft.diagnosis?.severity,
+      advisory: item.draft.diagnosis?.advisory,
+      engine: item.draft.diagnosis?.engine,
     });
 
     deleteLocalFile(item.draft.localImageUri);
     await remove(item.id);
     await queryClient.invalidateQueries({ queryKey: ['reports'] });
     await queryClient.invalidateQueries({ queryKey: ['dashboard'] });
-    void created;
     return { ok: true };
   } catch (err) {
     const attempts = item.attempts + 1;
     const reachedCap = attempts >= MAX_QUEUE_ATTEMPTS;
     const error = (err as Error).message ?? 'Unknown error';
+    // Once an item is permanently failed it will never drain again, so free its
+    // persistent local copy now rather than leaking it in documentDirectory.
+    if (reachedCap) deleteLocalFile(item.draft.localImageUri);
     await update(item.id, {
       status: reachedCap ? 'failed' : 'pending',
       attempts,

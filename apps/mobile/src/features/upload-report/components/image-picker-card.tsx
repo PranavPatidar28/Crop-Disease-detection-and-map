@@ -114,13 +114,13 @@ export function ImagePickerCard({
           <PickerButton
             label="Camera"
             description="Take a photo"
-            icon={<Camera size={22} color={palette.brand[300]} strokeWidth={2.2} />}
+            icon={<Camera size={22} color={palette.brand[600]} strokeWidth={2.2} />}
             onPress={onPickCamera}
           />
           <PickerButton
             label="Gallery"
             description="Pick a photo"
-            icon={<ImagePlus size={22} color={palette.brand[300]} strokeWidth={2.2} />}
+            icon={<ImagePlus size={22} color={palette.brand[600]} strokeWidth={2.2} />}
             onPress={onPickGallery}
           />
         </View>

@@ -1,8 +1,8 @@
 import { BottomSheetFlatList, BottomSheetModal, BottomSheetTextInput } from '@gorhom/bottom-sheet';
 import { Search, X } from 'lucide-react-native';
 import { forwardRef, useCallback, useMemo, useState } from 'react';
-import { Pressable } from 'react-native';
 
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { CROPS, type Crop } from '@/constants/crops';
 import { useTheme } from '@/hooks/use-theme';
 import { Text, View } from '@/tw';
@@ -44,17 +44,19 @@ export const CropPickerSheet = forwardRef<BottomSheetModal, CropPickerSheetProps
         <View className="flex-1 px-5 pt-2">
           <View className="flex-row items-center justify-between pb-3">
             <Text className="text-xl font-bold text-text">Choose crop</Text>
-            <Pressable
+            <PressableScale
               accessibilityRole="button"
               accessibilityLabel="Close"
               onPress={() => {
                 // @ts-expect-error: ref provided
                 ref?.current?.dismiss();
               }}
+              haptic="selection"
+              pressedScale={0.9}
               className="h-9 w-9 items-center justify-center rounded-full bg-surface"
             >
               <X size={18} color={theme.text} strokeWidth={2} />
-            </Pressable>
+            </PressableScale>
           </View>
 
           <View className="mb-3 flex-row items-center gap-2 rounded-2xl border border-border bg-surface px-3">
@@ -76,11 +78,12 @@ export const CropPickerSheet = forwardRef<BottomSheetModal, CropPickerSheetProps
             renderItem={({ item }) => {
               const isSelected = item.id === selectedId;
               return (
-                <Pressable
+                <PressableScale
                   accessibilityRole="button"
                   accessibilityLabel={item.name}
                   onPress={() => handleSelect(item)}
-                  style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
+                  haptic="selection"
+                  pressedScale={0.98}
                 >
                   <View
                     className={`flex-row items-center gap-3 rounded-2xl border px-3 py-3 ${
@@ -102,7 +105,7 @@ export const CropPickerSheet = forwardRef<BottomSheetModal, CropPickerSheetProps
                       <View className="h-2.5 w-2.5 rounded-full bg-brand-500" />
                     ) : null}
                   </View>
-                </Pressable>
+                </PressableScale>
               );
             }}
             ListEmptyComponent={

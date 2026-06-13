@@ -1,5 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { type ReactNode } from 'react';
+import { StyleSheet } from 'react-native';
 
 import { Button } from '@/components/ui/button';
 import { Text, View } from '@/tw';
@@ -38,7 +39,7 @@ export function EmptyState({
           colors={[`${palette.brand[400]}33`, 'transparent']}
           start={{ x: 0.2, y: 0.2 }}
           end={{ x: 0.9, y: 0.9 }}
-          style={{ position: 'absolute', inset: 0 }}
+          style={StyleSheet.absoluteFill}
         />
         {icon ?? <Text className="text-3xl">{emoji ?? '🌾'}</Text>}
       </View>

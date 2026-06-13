@@ -3,10 +3,11 @@ import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { AlertTriangle, Bell, Camera, Info, X } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
-import { Platform, Pressable } from 'react-native';
+import { Platform } from 'react-native';
 import Animated, { FadeInUp, FadeOutUp } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { useTheme } from '@/hooks/use-theme';
 import { Text, View } from '@/tw';
 import { severityVisuals } from '@/utils/severity';
@@ -55,11 +56,12 @@ export function InAppBanner({ notification: n, onDismiss }: InAppBannerProps) {
 
   return (
     <Animated.View entering={FadeInUp.duration(280)} exiting={FadeOutUp.duration(220)}>
-      <Pressable
+      <PressableScale
         accessibilityRole="button"
         accessibilityLabel={n.title}
         onPress={handlePress}
-        style={({ pressed }) => ({ opacity: pressed ? 0.92 : 1 })}
+        haptic="none"
+        pressedScale={0.98}
       >
         <GlassView
           glassEffectStyle="regular"
@@ -92,18 +94,20 @@ export function InAppBanner({ notification: n, onDismiss }: InAppBannerProps) {
                 {n.body}
               </Text>
             </View>
-            <Pressable
+            <PressableScale
               accessibilityRole="button"
               accessibilityLabel="Dismiss"
               onPress={() => onDismiss(n.id)}
+              haptic="selection"
+              pressedScale={0.9}
               hitSlop={8}
               className="h-7 w-7 items-center justify-center rounded-full bg-surface"
             >
               <X size={14} color={theme.textMuted} strokeWidth={2} />
-            </Pressable>
+            </PressableScale>
           </View>
         </GlassView>
-      </Pressable>
+      </PressableScale>
     </Animated.View>
   );
 }

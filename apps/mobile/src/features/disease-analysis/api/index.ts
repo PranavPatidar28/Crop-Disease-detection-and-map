@@ -1,2 +1,2 @@
 export * from './disease.api';
-export * from './analyze-image';
+export * from './analyze.api';

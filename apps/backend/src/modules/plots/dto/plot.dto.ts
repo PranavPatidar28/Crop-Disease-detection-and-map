@@ -1,4 +1,5 @@
 import {
+  ArrayMaxSize,
   IsArray,
   IsBoolean,
   IsLatitude,
@@ -6,7 +7,9 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  Max,
   MaxLength,
+  Min,
   MinLength,
 } from 'class-validator';
 
@@ -24,11 +27,15 @@ export class CreatePlotDto {
 
   @IsOptional()
   @IsArray()
+  @ArrayMaxSize(20)
   @IsString({ each: true })
+  @MaxLength(40, { each: true })
   cropTypes?: string[];
 
   @IsOptional()
   @IsNumber()
+  @Min(0)
+  @Max(100000)
   areaAcres?: number;
 }
 
@@ -49,11 +56,15 @@ export class UpdatePlotDto {
 
   @IsOptional()
   @IsArray()
+  @ArrayMaxSize(20)
   @IsString({ each: true })
+  @MaxLength(40, { each: true })
   cropTypes?: string[];
 
   @IsOptional()
   @IsNumber()
+  @Min(0)
+  @Max(100000)
   areaAcres?: number;
 
   @IsOptional()

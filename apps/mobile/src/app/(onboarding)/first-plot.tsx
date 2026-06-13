@@ -2,9 +2,10 @@ import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import { router } from 'expo-router';
 import { Layers } from 'lucide-react-native';
 import { useRef } from 'react';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BottomActionBar } from '@/components/layout/bottom-action-bar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { SectionLabel } from '@/components/ui/section-label';
@@ -12,7 +13,7 @@ import { onboardingStorage } from '@/features/plots/onboarding-storage';
 import { PlotFormSheet } from '@/features/plots/components/plot-form-sheet';
 import { MapPickerSheet } from '@/features/upload-report/components/map-picker-sheet';
 import { palette } from '@/theme/colors';
-import { Text, View } from '@/tw';
+import { AnimatedView, Text, View } from '@/tw';
 
 export default function OnboardingFirstPlotScreen() {
   const formRef = useRef<BottomSheetModal>(null);
@@ -25,13 +26,13 @@ export default function OnboardingFirstPlotScreen() {
 
   return (
     <View className="flex-1 bg-bg">
-      <SafeAreaView style={{ flex: 1 }}>
+      <SafeAreaView edges={['top']} style={{ flex: 1 }}>
         <View className="px-4 pt-3">
           <SectionLabel>Step 2 of 2</SectionLabel>
         </View>
 
         <View className="flex-1 justify-center gap-4 px-4">
-          <Animated.View entering={FadeInDown.duration(400)} className="gap-2">
+          <AnimatedView entering={FadeInDown.duration(400)} className="gap-2">
             <Text className="text-3xl font-extrabold tracking-tight text-text">
               Add your first plot
             </Text>
@@ -39,9 +40,9 @@ export default function OnboardingFirstPlotScreen() {
               We&apos;ll alert you when a disease outbreak is detected near it. You can add more
               plots anytime from your profile.
             </Text>
-          </Animated.View>
+          </AnimatedView>
 
-          <Animated.View entering={FadeInDown.delay(100).duration(400)}>
+          <AnimatedView entering={FadeInDown.delay(100).duration(400)}>
             <Card padding="md">
               <View className="flex-row items-center gap-3">
                 <View className="h-12 w-12 items-center justify-center rounded-xl bg-brand-50">
@@ -55,10 +56,10 @@ export default function OnboardingFirstPlotScreen() {
                 </View>
               </View>
             </Card>
-          </Animated.View>
+          </AnimatedView>
         </View>
 
-        <View className="gap-2 px-4 pb-6">
+        <BottomActionBar divider={false}>
           <Button
             label="Add a plot"
             variant="gradient"
@@ -66,7 +67,7 @@ export default function OnboardingFirstPlotScreen() {
             onPress={() => formRef.current?.present()}
           />
           <Button label="I'll do this later" variant="ghost" size="md" onPress={finish} />
-        </View>
+        </BottomActionBar>
       </SafeAreaView>
 
       <PlotFormSheet

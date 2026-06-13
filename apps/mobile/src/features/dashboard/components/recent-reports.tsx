@@ -1,4 +1,5 @@
-import { router } from 'expo-router';
+import { Image } from 'expo-image';
+import { router, type Href } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native';
 import { Pressable } from 'react-native';
 
@@ -48,7 +49,7 @@ export function RecentReports({ reports, loading }: RecentReportsProps) {
         <Text className="text-base font-bold tracking-tight text-text">
           Latest in your area
         </Text>
-        <Pressable accessibilityRole="button" onPress={() => router.push('/notifications')}>
+        <Pressable accessibilityRole="button" onPress={() => router.push('/reports' as Href)}>
           <Text className="text-xs font-bold text-brand-700">View all</Text>
         </Pressable>
       </View>
@@ -70,8 +71,20 @@ export function RecentReports({ reports, loading }: RecentReportsProps) {
                   i > 0 ? 'border-t border-border' : ''
                 }`}
               >
-                <View className="h-10 w-10 items-center justify-center rounded-xl bg-brand-50">
-                  <Text className="text-lg">🌿</Text>
+                <View className="h-11 w-11 items-center justify-center overflow-hidden rounded-xl bg-brand-50">
+                  {r.imageUrl ? (
+                    <Image
+                      source={{ uri: r.imageUrl }}
+                      style={{ width: '100%', height: '100%' }}
+                      contentFit="cover"
+                      transition={200}
+                      cachePolicy="memory-disk"
+                      recyclingKey={r.id}
+                      placeholder={{ blurhash: 'L9F$kBM{IUM{ofWBWBay9F%MofRj' }}
+                    />
+                  ) : (
+                    <Text className="text-lg">🌿</Text>
+                  )}
                 </View>
                 <View className="flex-1 gap-0.5">
                   <Text className="text-sm font-bold text-text" numberOfLines={1}>

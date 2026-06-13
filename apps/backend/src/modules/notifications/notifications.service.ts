@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { type Notification, type NotificationType, Prisma } from '@prisma/client';
 
 import { PrismaService } from '@/modules/prisma/prisma.service';
@@ -64,7 +64,8 @@ export class NotificationsService {
   async markRead(userId: string, id: string): Promise<Notification> {
     const notification = await this.prisma.notification.findUnique({ where: { id } });
     if (!notification || notification.userId !== userId) {
-      throw new Error('Not found or forbidden');
+      // 404 (not 500) and doesn't leak whether the row exists for another user.
+      throw new NotFoundException('Notification not found');
     }
     if (notification.read) return notification;
 
@@ -88,7 +89,7 @@ export class NotificationsService {
   async remove(userId: string, id: string): Promise<{ ok: true }> {
     const notification = await this.prisma.notification.findUnique({ where: { id } });
     if (!notification || notification.userId !== userId) {
-      throw new Error('Not found or forbidden');
+      throw new NotFoundException('Notification not found');
     }
     await this.prisma.notification.delete({ where: { id } });
     this.realtime.notificationDeleted(userId, id);
@@ -103,7 +104,11 @@ export class NotificationsService {
     if (userIds.length === 0) return [];
 
     const dataPayload = template.data as Prisma.InputJsonValue;
-    await this.prisma.notification.createMany({
+    // createManyAndReturn gives us exactly the rows we just inserted (with IDs +
+    // timestamps). The previous title/body re-read was unsound: templates with
+    // constant copy (e.g. "Outbreak escalated") collide with historical rows, so
+    // `take: userIds.length` could duplicate one recipient and drop another.
+    const created = await this.prisma.notification.createManyAndReturn({
       data: userIds.map((userId) => ({
         userId,
         type: template.type,
@@ -114,21 +119,13 @@ export class NotificationsService {
       })),
     });
 
-    // Re-read to get IDs + timestamps. Done in a loop so we have one row per user
-    // (createMany doesn't return rows in some Postgres versions).
-    const created = await this.prisma.notification.findMany({
-      where: {
-        userId: { in: userIds },
-        title: template.title,
-        body: template.body,
-      },
-      orderBy: { createdAt: 'desc' },
-      take: userIds.length,
-    });
-
     for (const notification of created) {
       this.realtime.notificationCreated(notification.userId, notification);
-      void this.push.sendToUser(notification.userId, notification);
+      void this.push
+        .sendToUser(notification.userId, notification)
+        .catch((err: unknown) =>
+          this.logger.warn(`Push dispatch failed for user=${notification.userId}: ${String(err)}`),
+        );
     }
 
     this.logger.log(

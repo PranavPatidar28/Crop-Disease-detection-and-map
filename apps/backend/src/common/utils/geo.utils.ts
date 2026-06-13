@@ -17,15 +17,20 @@ export interface BoundingBox {
   maxLng: number;
 }
 
-/** Approximate bbox around a center point — sufficient for SQL pre-filtering. */
+/**
+ * Approximate bbox around a center point — sufficient for SQL pre-filtering.
+ * Latitude is clamped to [-90, 90]. Longitude is clamped to [-180, 180]; near
+ * the antimeridian the clamped box is intentionally conservative (it won't wrap),
+ * so callers should always refine with `haversineKm` (which we already do).
+ */
 export function boundingBox(lat: number, lng: number, radiusKm: number): BoundingBox {
   const dLat = radiusKm / KM_PER_DEG_LAT;
   const dLng = radiusKm / Math.max(0.01, kmPerDegLng(lat));
   return {
-    minLat: lat - dLat,
-    maxLat: lat + dLat,
-    minLng: lng - dLng,
-    maxLng: lng + dLng,
+    minLat: Math.max(-90, lat - dLat),
+    maxLat: Math.min(90, lat + dLat),
+    minLng: Math.max(-180, lng - dLng),
+    maxLng: Math.min(180, lng + dLng),
   };
 }
 

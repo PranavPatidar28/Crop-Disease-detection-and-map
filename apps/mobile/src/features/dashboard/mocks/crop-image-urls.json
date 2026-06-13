@@ -1,0 +1,10 @@
+{
+  "soyabean/yellow_mosaic": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336255/crop-disease/demo-seed/soyabean/yellow_mosaic-0.jpg",
+  "wheat/stripe_rust": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336302/crop-disease/demo-seed/wheat/stripe_rust-0.jpg",
+  "tomato/late_blight": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336283/crop-disease/demo-seed/tomato/late_blight-0.jpg",
+  "maize/common_rust": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336213/crop-disease/demo-seed/maize/common_rust-0.jpg",
+  "cotton/curl_virus": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336193/crop-disease/demo-seed/cotton/curl_virus-0.jpg",
+  "chilli/bacterial_spot": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336185/crop-disease/demo-seed/chilli/bacterial_spot-0.jpg",
+  "maize/healthy": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336218/crop-disease/demo-seed/maize/healthy-0.jpg",
+  "wheat/healthy": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336298/crop-disease/demo-seed/wheat/healthy-0.jpg"
+}

@@ -10,6 +10,7 @@ import {
   RecentReports,
 } from '@/features/dashboard/components';
 import { useDashboard } from '@/features/dashboard/hooks';
+import { useUnreadCount } from '@/features/notifications/hooks/use-notifications';
 import { useTheme } from '@/hooks/use-theme';
 import { useAuthStore } from '@/store/auth.store';
 import { View } from '@/tw';
@@ -17,6 +18,7 @@ import { View } from '@/tw';
 export default function HomeScreen() {
   const user = useAuthStore((s) => s.user);
   const theme = useTheme();
+  const unreadCount = useUnreadCount();
   const { data, isPending, isRefetching, refetch } = useDashboard();
 
   return (
@@ -40,7 +42,12 @@ export default function HomeScreen() {
           }
         >
           <Animated.View entering={FadeInDown.duration(400)}>
-            <GreetingHeader user={user} onPressAvatar={() => router.push('/profile')} />
+            <GreetingHeader
+              user={user}
+              unreadCount={unreadCount}
+              onPressAvatar={() => router.push('/profile')}
+              onPressBell={() => router.push('/notifications')}
+            />
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(80).duration(400)}>

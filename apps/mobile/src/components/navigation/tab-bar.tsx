@@ -1,13 +1,13 @@
 import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs';
 import * as Haptics from 'expo-haptics';
+import { router } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useEffect } from 'react';
+import { StyleSheet } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { PressableScale } from '@/components/ui/pressable-scale';
-import { NotificationBadge } from '@/features/notifications/components/notification-badge';
-import { useUnreadCount } from '@/features/notifications/hooks/use-notifications';
 import { useTheme } from '@/hooks/use-theme';
 import { palette } from '@/theme/colors';
 import { Text, View } from '@/tw';
@@ -17,23 +17,64 @@ import { TabBarIcon, type TabIconName } from './tab-bar-icon';
 const ROUTE_TO_ICON: Record<string, TabIconName> = {
   index: 'house',
   map: 'map',
-  upload: 'plus',
-  notifications: 'bell',
+  reports: 'reports',
   profile: 'user',
 };
 
 const ROUTE_TO_LABEL: Record<string, string> = {
   index: 'Home',
   map: 'Map',
-  upload: 'Report',
-  notifications: 'Alerts',
+  reports: 'Reports',
   profile: 'Profile',
 };
 
 export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const unreadCount = useUnreadCount();
+
+  const renderTab = (route: BottomTabBarProps['state']['routes'][number], index: number) => {
+    const { options } = descriptors[route.key];
+    const isFocused = state.index === index;
+    const iconName = ROUTE_TO_ICON[route.name] ?? 'house';
+    const label = ROUTE_TO_LABEL[route.name] ?? route.name;
+
+    const onPress = () => {
+      const event = navigation.emit({
+        type: 'tabPress',
+        target: route.key,
+        canPreventDefault: true,
+      });
+      if (!isFocused && !event.defaultPrevented) {
+        navigation.navigate(route.name, route.params);
+      }
+    };
+
+    const onLongPress = () => {
+      navigation.emit({ type: 'tabLongPress', target: route.key });
+    };
+
+    const tint = isFocused ? theme.primary : theme.textSubtle;
+
+    return (
+      <RegularTab
+        key={route.key}
+        accessibilityLabel={options.tabBarAccessibilityLabel ?? label}
+        isFocused={isFocused}
+        iconName={iconName}
+        label={label}
+        tint={tint}
+        onPress={onPress}
+        onLongPress={onLongPress}
+        badge={null}
+      />
+    );
+  };
+
+  // Split the real tabs around a standalone center FAB:
+  // [index, map] [FAB] [reports, profile].
+  const midpoint = Math.ceil(state.routes.length / 2);
+  const leftTabs = state.routes.slice(0, midpoint);
+  const rightTabs = state.routes.slice(midpoint);
 
   return (
     <View
@@ -55,59 +96,12 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           elevation: 8,
         }}
       >
-        {state.routes.map((route, index) => {
-          const { options } = descriptors[route.key];
-          const isFocused = state.index === index;
-          const iconName = ROUTE_TO_ICON[route.name] ?? 'house';
-          const label = ROUTE_TO_LABEL[route.name] ?? route.name;
-          const isFab = iconName === 'plus';
-
-          const onPress = () => {
-            const event = navigation.emit({
-              type: 'tabPress',
-              target: route.key,
-              canPreventDefault: true,
-            });
-            if (!isFocused && !event.defaultPrevented) {
-              navigation.navigate(route.name, route.params);
-            }
-          };
-
-          const onLongPress = () => {
-            navigation.emit({ type: 'tabLongPress', target: route.key });
-          };
-
-          if (isFab) {
-            return (
-              <FabTab
-                key={route.key}
-                label={options.tabBarAccessibilityLabel ?? label}
-                onPress={onPress}
-                onLongPress={onLongPress}
-              />
-            );
-          }
-
-          const tint = isFocused ? theme.primary : theme.textSubtle;
-
-          return (
-            <RegularTab
-              key={route.key}
-              accessibilityLabel={options.tabBarAccessibilityLabel ?? label}
-              isFocused={isFocused}
-              iconName={iconName}
-              label={label}
-              tint={tint}
-              onPress={onPress}
-              onLongPress={onLongPress}
-              badge={
-                iconName === 'bell' && unreadCount > 0 ? (
-                  <NotificationBadge count={unreadCount} size="sm" />
-                ) : null
-              }
-            />
-          );
-        })}
+        {leftTabs.map((route) => renderTab(route, state.routes.indexOf(route)))}
+        <FabTab
+          label="New report"
+          onPress={() => router.push('/report')}
+        />
+        {rightTabs.map((route) => renderTab(route, state.routes.indexOf(route)))}
       </View>
     </View>
   );
@@ -159,7 +153,8 @@ function RegularTab({
         <Animated.View
           pointerEvents="none"
           style={[
-            { position: 'absolute', inset: 0, borderRadius: 8, overflow: 'hidden' },
+            StyleSheet.absoluteFill,
+            { borderRadius: 8, overflow: 'hidden' },
             iconBgStyle,
           ]}
         >
@@ -167,7 +162,7 @@ function RegularTab({
             colors={[`${palette.brand[500]}26`, `${palette.brand[600]}26`]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={{ position: 'absolute', inset: 0 }}
+            style={StyleSheet.absoluteFill}
           />
         </Animated.View>
         <View>
@@ -191,15 +186,14 @@ function RegularTab({
 interface FabTabProps {
   label: string;
   onPress: () => void;
-  onLongPress: () => void;
 }
 
 /**
- * The center "Report" raised FAB. Sits ~16px above the bar with a brand-tinted
- * shadow, gradient background, and a 3px white ring so it visually separates
- * from the bar.
+ * The center "Report" raised FAB. No longer a tab — it's a standalone action
+ * that opens the full-screen report flow. Sits ~16px above the bar with a
+ * brand-tinted shadow, gradient background, and a 3px white ring.
  */
-function FabTab({ label, onPress, onLongPress }: FabTabProps) {
+function FabTab({ label, onPress }: FabTabProps) {
   return (
     <PressableScale
       accessibilityRole="button"
@@ -208,7 +202,6 @@ function FabTab({ label, onPress, onLongPress }: FabTabProps) {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => undefined);
         onPress();
       }}
-      onLongPress={onLongPress}
       haptic="none"
       pressedScale={0.92}
       className="items-center"
@@ -228,7 +221,7 @@ function FabTab({ label, onPress, onLongPress }: FabTabProps) {
           colors={[palette.brand[500], palette.brand[600]]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={{ position: 'absolute', inset: 0 }}
+          style={StyleSheet.absoluteFill}
         />
         <TabBarIcon name="plus" focused color="#ffffff" size={26} />
       </View>

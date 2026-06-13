@@ -1,11 +1,12 @@
 import { BottomSheetBackdrop, BottomSheetModal, BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Check, X } from 'lucide-react-native';
 import { forwardRef, useMemo } from 'react';
-import { Pressable } from 'react-native';
 
+import { Button } from '@/components/ui/button';
+import { Chip } from '@/components/ui/chip';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { CROPS } from '@/constants/crops';
 import { useTheme } from '@/hooks/use-theme';
-import { palette } from '@/theme/colors';
 import { Text, View } from '@/tw';
 import type { Severity } from '@/features/upload-report/types';
 
@@ -75,13 +76,16 @@ export const MapFilterSheet = forwardRef<BottomSheetModal, MapFilterSheetProps>(
       >
         <View className="flex-row items-center justify-between px-5 pb-3 pt-1">
           <Text className="text-xl font-bold text-text">Filters</Text>
-          <Pressable
+          <PressableScale
             accessibilityRole="button"
+            accessibilityLabel="Close"
             onPress={dismiss}
+            haptic="selection"
+            pressedScale={0.9}
             className="h-9 w-9 items-center justify-center rounded-full bg-surface"
           >
             <X size={18} color={theme.text} strokeWidth={2} />
-          </Pressable>
+          </PressableScale>
         </View>
 
         <BottomSheetScrollView contentContainerStyle={{ padding: 20, gap: 24, paddingBottom: 100 }}>
@@ -91,7 +95,7 @@ export const MapFilterSheet = forwardRef<BottomSheetModal, MapFilterSheetProps>(
                 <Chip
                   key={w.id}
                   label={w.label}
-                  selected={window === w.id}
+                  active={window === w.id}
                   onPress={() => setWindow(w.id)}
                 />
               ))}
@@ -104,7 +108,7 @@ export const MapFilterSheet = forwardRef<BottomSheetModal, MapFilterSheetProps>(
                 <Chip
                   key={s}
                   label={s.charAt(0) + s.slice(1).toLowerCase()}
-                  selected={severities.includes(s)}
+                  active={severities.includes(s)}
                   onPress={() => {
                     if (severities.includes(s)) {
                       setSeverities(severities.filter((x) => x !== s));
@@ -123,7 +127,7 @@ export const MapFilterSheet = forwardRef<BottomSheetModal, MapFilterSheetProps>(
                 <Chip
                   key={crop.id}
                   label={`${crop.emoji} ${crop.name}`}
-                  selected={crops.includes(crop.name)}
+                  active={crops.includes(crop.name)}
                   onPress={() => {
                     if (crops.includes(crop.name)) {
                       setCrops(crops.filter((x) => x !== crop.name));
@@ -143,7 +147,7 @@ export const MapFilterSheet = forwardRef<BottomSheetModal, MapFilterSheetProps>(
                   <Chip
                     key={d}
                     label={d}
-                    selected={diseases.includes(d)}
+                    active={diseases.includes(d)}
                     onPress={() => {
                       if (diseases.includes(d)) {
                         setDiseases(diseases.filter((x) => x !== d));
@@ -161,12 +165,12 @@ export const MapFilterSheet = forwardRef<BottomSheetModal, MapFilterSheetProps>(
             <View className="flex-row flex-wrap gap-2">
               <Chip
                 label="Active only"
-                selected={!showResolved}
+                active={!showResolved}
                 onPress={() => setShowResolved(false)}
               />
               <Chip
                 label="Show resolved"
-                selected={showResolved}
+                active={showResolved}
                 onPress={() => setShowResolved(true)}
               />
             </View>
@@ -174,30 +178,18 @@ export const MapFilterSheet = forwardRef<BottomSheetModal, MapFilterSheetProps>(
         </BottomSheetScrollView>
 
         <View className="flex-row gap-2 border-t border-border bg-surface-elevated px-5 py-4">
-          <Pressable
-            accessibilityRole="button"
-            onPress={reset}
-            style={({ pressed }) => ({ flex: 1, opacity: pressed ? 0.7 : 1 })}
-          >
-            <View className="h-12 items-center justify-center rounded-2xl bg-surface">
-              <Text className="text-sm font-semibold text-text">Reset</Text>
-            </View>
-          </Pressable>
-          <Pressable
-            accessibilityRole="button"
-            onPress={dismiss}
-            style={({ pressed }) => ({ flex: 2, opacity: pressed ? 0.92 : 1 })}
-          >
-            <View
-              className="h-12 flex-row items-center justify-center gap-2 rounded-2xl"
-              style={{ backgroundColor: palette.brand[600] }}
-            >
-              <Check size={16} color="#fff" strokeWidth={2.4} />
-              <Text className="text-sm font-semibold text-white">
-                Show {matchingCount} {matchingCount === 1 ? 'report' : 'reports'}
-              </Text>
-            </View>
-          </Pressable>
+          <View className="flex-1">
+            <Button label="Reset" variant="solid" size="md" onPress={reset} />
+          </View>
+          <View className="flex-[2]">
+            <Button
+              label={`Show ${matchingCount} ${matchingCount === 1 ? 'report' : 'reports'}`}
+              variant="gradient"
+              size="md"
+              onPress={dismiss}
+              leftSlot={<Check size={16} color="#fff" strokeWidth={2.4} />}
+            />
+          </View>
         </View>
       </BottomSheetModal>
     );
@@ -212,37 +204,5 @@ function Section({ label, children }: { label: string; children: React.ReactNode
       </Text>
       {children}
     </View>
-  );
-}
-
-function Chip({
-  label,
-  selected,
-  onPress,
-}: {
-  label: string;
-  selected: boolean;
-  onPress: () => void;
-}) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
-    >
-      <View
-        className={`rounded-full border px-3 py-2 ${
-          selected
-            ? 'border-brand-600 bg-brand-50'
-            : 'border-border bg-surface'
-        }`}
-      >
-        <Text
-          className={`text-xs font-semibold ${selected ? 'text-brand-700' : 'text-text-muted'}`}
-        >
-          {label}
-        </Text>
-      </View>
-    </Pressable>
   );
 }

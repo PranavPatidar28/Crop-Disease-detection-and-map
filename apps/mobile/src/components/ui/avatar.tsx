@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { StyleSheet } from 'react-native';
 
 import { Text, View } from '@/tw';
 import { palette } from '@/theme/colors';
@@ -51,7 +52,7 @@ export function Avatar({ name, fallback, size = 'md', verified, className }: Ava
         colors={[palette.brand[400], palette.brand[600]]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={{ position: 'absolute', inset: 0 }}
+        style={StyleSheet.absoluteFill}
       />
       <Text className={cn('font-bold text-white', textClass[size])}>
         {getInitials(name, fallback)}

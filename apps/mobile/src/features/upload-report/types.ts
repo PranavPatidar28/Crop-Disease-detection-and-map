@@ -10,6 +10,21 @@ export type UploadState =
 export type Severity = 'LOW' | 'MEDIUM' | 'HIGH';
 export type ProcessingStatus = 'PENDING' | 'PROCESSING' | 'SUCCESS' | 'FAILED';
 
+/** Engine that produced a diagnosis. */
+export type DiagnosisEngine = 'cloud' | 'on-device' | 'manual';
+
+/**
+ * Pre-computed diagnosis attached to a report on create. `cloud` is trusted and
+ * stored as SUCCESS; `on-device`/`manual` are provisional and upgraded by HF.
+ */
+export interface DiagnosisPayload {
+  disease?: string;
+  confidence?: number; // 0-100
+  severity?: Severity;
+  advisory?: ReportAdvisory;
+  engine: DiagnosisEngine;
+}
+
 export interface PickedImage {
   uri: string;
   width: number;
@@ -32,6 +47,8 @@ export interface ReportDraft {
   localImageUri: string;
   /** Idempotency key sent to the backend. Same key on retry → same Report row. */
   clientId: string;
+  /** Provisional on-device/manual diagnosis to forward when the report syncs. */
+  diagnosis?: DiagnosisPayload;
 }
 
 export interface QueueItem {
@@ -42,6 +59,66 @@ export interface QueueItem {
   lastError?: string;
   createdAt: string;
   nextAttemptAt?: number;
+  /** Set once the Cloudinary upload succeeds, so a later server-POST retry can
+   *  reuse the asset instead of uploading a fresh (orphaned) copy each attempt. */
+  uploadedImageUrl?: string;
+  uploadedPublicId?: string;
+}
+
+/** One ranked alternative prediction (top-3 or possible-other). */
+export interface AdvisoryPrediction {
+  rank: number;
+  label: string;
+  crop: string;
+  disease: string;
+  /** 0-100 */
+  confidence: number;
+  /** High | Medium | Low (only on possible-other items). */
+  confidenceBadge?: string;
+}
+
+/**
+ * Rich farmer-facing advisory captured from the AI provider's RAG pipeline.
+ * Null when the provider only returned the flat diagnosis fields.
+ * Mirrors the backend `AnalysisAdvisory` shape persisted on the report.
+ */
+export interface ReportAdvisory {
+  cropName: string | null;
+  primaryDiagnosis: {
+    label: string | null;
+    crop: string | null;
+    disease: string | null;
+    displayName: string;
+    isHealthy: boolean;
+    confidence: number;
+    confidenceBadge: string;
+  };
+  top3Predictions: AdvisoryPrediction[];
+  possibleOtherDiseases: AdvisoryPrediction[];
+  severity: {
+    level: string;
+    confidence: number;
+    decision: string;
+    basis: string;
+  };
+  urgency: string;
+  symptomsToConfirm: string[];
+  whatToDoNow: string[];
+  preventionTips: string[];
+  whenToCallExpert: string;
+  retakeImageGuidance: string | null;
+  rag: {
+    status: string;
+    source: string;
+    summary: string;
+    symptomsToCheck: string[];
+    immediateActions: string[];
+    precautions: string[];
+    prevention: string[];
+    similarDiseases: string[];
+    expertAdvice: string;
+    safetyNote: string;
+  };
 }
 
 export interface Report {
@@ -59,6 +136,8 @@ export interface Report {
   confidence: number | null;
   severity: Severity | null;
   recommendations: string[];
+  /** Full rich advisory, when the provider supplies one (e.g. HF RAG). */
+  advisory: ReportAdvisory | null;
   processingStatus: ProcessingStatus;
   aiError: string | null;
   processedAt: string | null;

@@ -45,29 +45,47 @@ export class PlotsService {
   }
 
   async create(userId: string, dto: CreatePlotDto): Promise<Plot> {
-    const activeCount = await this.prisma.plot.count({
-      where: { userId, active: true },
-    });
-    if (activeCount >= this.maxPlotsPerUser) {
-      throw new BadRequestException(
-        `Plot limit reached (${this.maxPlotsPerUser}). Remove an existing plot to add a new one.`,
-      );
-    }
-
-    return this.prisma.plot.create({
-      data: {
-        userId,
-        name: dto.name,
-        latitude: dto.latitude,
-        longitude: dto.longitude,
-        cropTypes: dto.cropTypes ?? [],
-        areaAcres: dto.areaAcres ?? null,
+    // Serializable transaction so two concurrent creates can't both pass the
+    // count check and exceed PLOT_MAX_PER_USER.
+    return this.prisma.$transaction(
+      async (tx) => {
+        const activeCount = await tx.plot.count({ where: { userId, active: true } });
+        if (activeCount >= this.maxPlotsPerUser) {
+          throw new BadRequestException(
+            `Plot limit reached (${this.maxPlotsPerUser}). Remove an existing plot to add a new one.`,
+          );
+        }
+        return tx.plot.create({
+          data: {
+            userId,
+            name: dto.name,
+            latitude: dto.latitude,
+            longitude: dto.longitude,
+            cropTypes: dto.cropTypes ?? [],
+            areaAcres: dto.areaAcres ?? null,
+          },
+        });
       },
-    });
+      { isolationLevel: 'Serializable' },
+    );
   }
 
   async update(userId: string, id: string, dto: UpdatePlotDto): Promise<Plot> {
-    await this.findById(userId, id);
+    const existing = await this.findById(userId, id);
+
+    // Reactivating a soft-deleted plot must respect the active-plot cap —
+    // otherwise a user could soft-delete plots and PATCH active:true to exceed it.
+    if (dto.active === true && !existing.active) {
+      const activeCount = await this.prisma.plot.count({
+        where: { userId, active: true },
+      });
+      if (activeCount >= this.maxPlotsPerUser) {
+        throw new BadRequestException(
+          `Plot limit reached (${this.maxPlotsPerUser}). Remove an existing plot to reactivate this one.`,
+        );
+      }
+    }
+
     return this.prisma.plot.update({
       where: { id },
       data: { ...dto },

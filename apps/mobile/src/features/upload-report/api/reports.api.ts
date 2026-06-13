@@ -1,7 +1,7 @@
 import { apiClient } from '@/services/api/client';
 import type { ApiResponse } from '@/types/api';
 
-import type { Report } from '../types';
+import type { DiagnosisEngine, Report, ReportAdvisory, Severity } from '../types';
 
 interface CreateReportPayload {
   /** Optional idempotency key. Same key + same user = no duplicate. */
@@ -12,12 +12,12 @@ interface CreateReportPayload {
   notes?: string;
   latitude: number;
   longitude: number;
-  /** Optional pre-diagnosed disease (from the report-flow's cloud/on-device AI). */
-  diseaseHint?: string;
-  /** Optional pre-diagnosed severity. */
-  severityHint?: 'LOW' | 'MEDIUM' | 'HIGH';
-  /** When false, the report is created privately and not added to the public outbreak map. */
-  shareToMap?: boolean;
+  /** Pre-computed diagnosis (capture→review flow). */
+  disease?: string;
+  confidence?: number;
+  severity?: Severity;
+  advisory?: ReportAdvisory;
+  engine?: DiagnosisEngine;
 }
 
 interface ListReportsParams {
@@ -41,6 +41,11 @@ export const reportsApi = {
     const { data } = await apiClient.get<ApiResponse<ListReportsResponse>>('/reports', {
       params,
     });
+    return data.data;
+  },
+
+  async count(): Promise<number> {
+    const { data } = await apiClient.get<ApiResponse<number>>('/reports/count');
     return data.data;
   },
 

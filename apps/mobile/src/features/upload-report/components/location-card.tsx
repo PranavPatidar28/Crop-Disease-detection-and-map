@@ -1,7 +1,8 @@
 import { GlassView } from 'expo-glass-effect';
 import { MapPin, Navigation } from 'lucide-react-native';
-import { Platform, Pressable } from 'react-native';
+import { Platform } from 'react-native';
 
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { useTheme } from '@/hooks/use-theme';
 import { palette } from '@/theme/colors';
 import { Text, View } from '@/tw';
@@ -50,7 +51,7 @@ export function LocationCard({
       >
         <View className="flex-row items-center gap-3">
           <View className="h-12 w-12 items-center justify-center rounded-2xl bg-brand-500/15">
-            <MapPin size={22} color={palette.brand[300]} strokeWidth={2.2} />
+            <MapPin size={22} color={palette.brand[600]} strokeWidth={2.2} />
           </View>
           <View className="flex-1 gap-0.5">
             <Text className="text-[11px] font-medium uppercase tracking-wider text-text-subtle">
@@ -69,29 +70,35 @@ export function LocationCard({
         </View>
 
         <View className="flex-row gap-2">
-          <Pressable
+          <PressableScale
             accessibilityRole="button"
+            accessibilityLabel="Use my GPS"
             onPress={onRefresh}
             disabled={isLoading}
-            style={({ pressed }) => ({ flex: 1, opacity: isLoading ? 0.5 : pressed ? 0.85 : 1 })}
+            haptic="selection"
+            pressedScale={0.97}
+            className="flex-1"
           >
-            <View className="flex-row items-center justify-center gap-1.5 rounded-xl bg-surface py-2.5">
+            <View className={`flex-row items-center justify-center gap-1.5 rounded-xl border border-border bg-surface py-2.5 ${isLoading ? 'opacity-50' : ''}`}>
               <Navigation size={14} color={theme.text} strokeWidth={2.2} />
               <Text className="text-xs font-semibold text-text">
                 {isLoading ? 'Locating…' : 'Use my GPS'}
               </Text>
             </View>
-          </Pressable>
-          <Pressable
+          </PressableScale>
+          <PressableScale
             accessibilityRole="button"
+            accessibilityLabel="Adjust on map"
             onPress={onAdjust}
-            style={({ pressed }) => ({ flex: 1, opacity: pressed ? 0.85 : 1 })}
+            haptic="selection"
+            pressedScale={0.97}
+            className="flex-1"
           >
-            <View className="flex-row items-center justify-center gap-1.5 rounded-xl border border-brand-500/40 bg-brand-500/10 py-2.5">
-              <MapPin size={14} color={palette.brand[300]} strokeWidth={2.2} />
-              <Text className="text-xs font-semibold text-brand-300">Adjust on map</Text>
+            <View className="flex-row items-center justify-center gap-1.5 rounded-xl border border-brand-200 bg-brand-50 py-2.5">
+              <MapPin size={14} color={palette.brand[600]} strokeWidth={2.2} />
+              <Text className="text-xs font-semibold text-brand-700">Adjust on map</Text>
             </View>
-          </Pressable>
+          </PressableScale>
         </View>
       </View>
     </GlassView>

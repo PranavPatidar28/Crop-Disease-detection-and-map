@@ -7,3 +7,5 @@ export * from './map-marker';
 export * from './map-search-bar';
 export * from './report-detail-sheet';
 export * from './reports-in-view-sheet';
+export * from './surface-card';
+export * from './tracking-marker';

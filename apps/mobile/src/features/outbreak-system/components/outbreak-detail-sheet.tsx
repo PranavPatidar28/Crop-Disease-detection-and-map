@@ -3,22 +3,14 @@ import {
   BottomSheetModal,
   BottomSheetScrollView,
 } from '@gorhom/bottom-sheet';
-import { GlassView } from 'expo-glass-effect';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import {
-  Activity,
-  ChevronRight,
-  Clock,
-  MapPin,
-  Sparkles,
-  TrendingUp,
-  X,
-} from 'lucide-react-native';
+import { ChevronRight, Sparkles, X } from 'lucide-react-native';
 import { forwardRef } from 'react';
-import { ActivityIndicator, Platform, Pressable } from 'react-native';
+import { ActivityIndicator, Platform } from 'react-native';
 import MapView, { Circle, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { useTheme } from '@/hooks/use-theme';
 import { palette } from '@/theme/colors';
 import { Text, View } from '@/tw';
@@ -29,6 +21,9 @@ import { timeAgo } from '@/utils/severity';
 import { useOutbreak } from '../hooks/use-outbreaks';
 
 import { SeverityIndicator } from './severity-indicator';
+
+import { SheetHero } from '@/features/map-system/components/sheet-hero';
+import { SheetStatCard } from '@/features/map-system/components/sheet-stat-card';
 
 interface OutbreakDetailSheetProps {
   outbreak: OutbreakZone | null;
@@ -50,8 +45,15 @@ export const OutbreakDetailSheet = forwardRef<BottomSheetModal, OutbreakDetailSh
       <BottomSheetModal
         ref={ref}
         snapPoints={['45%', '92%']}
-        backgroundStyle={{ backgroundColor: theme.surfaceElevated }}
-        handleIndicatorStyle={{ backgroundColor: theme.borderStrong }}
+        backgroundStyle={{
+          backgroundColor: '#ffffff',
+          borderTopLeftRadius: 24,
+          borderTopRightRadius: 24,
+          borderWidth: 1,
+          borderColor: '#efeae0',
+          borderBottomWidth: 0,
+        }}
+        handleIndicatorStyle={{ backgroundColor: '#e8e4dc', width: 36 }}
         backdropComponent={(props) => (
           <BottomSheetBackdrop
             {...props}
@@ -65,67 +67,33 @@ export const OutbreakDetailSheet = forwardRef<BottomSheetModal, OutbreakDetailSh
           <BottomSheetScrollView
             contentContainerStyle={{ padding: 20, paddingBottom: 60, gap: 16 }}
           >
-            <View className="flex-row items-start justify-between">
-              <View className="flex-1 gap-1">
-                <View className="flex-row items-center gap-2">
-                  <Text className="text-[11px] font-medium uppercase tracking-wider text-text-subtle">
-                    Outbreak
-                  </Text>
-                  {!outbreak.active ? (
-                    <View className="rounded-full bg-text-subtle/15 px-2 py-0.5">
-                      <Text className="text-[10px] font-semibold uppercase tracking-wider text-text-subtle">
-                        Resolved
-                      </Text>
-                    </View>
-                  ) : null}
-                </View>
-                <Text className="text-2xl font-bold text-text" numberOfLines={2}>
-                  {outbreak.disease}
-                </Text>
-                <View className="mt-1 flex-row items-center gap-2">
-                  <SeverityIndicator severity={outbreak.severity} variant="expanded" />
-                </View>
+            <View className="flex-row items-start justify-between gap-3">
+              <View className="flex-1">
+                <SheetHero
+                  eyebrow={outbreak.active ? 'Active outbreak' : 'Resolved outbreak'}
+                  title={outbreak.disease}
+                  metric={`${outbreak.reportCount}`}
+                  metricCaption="reports in this zone"
+                  badge={<SeverityIndicator severity={outbreak.severity} variant="expanded" />}
+                />
               </View>
-              <Pressable
+              <PressableScale
                 accessibilityRole="button"
+                accessibilityLabel="Close"
                 onPress={dismiss}
+                haptic="selection"
+                pressedScale={0.9}
                 className="h-9 w-9 items-center justify-center rounded-full bg-surface"
               >
                 <X size={18} color={theme.text} strokeWidth={2} />
-              </Pressable>
+              </PressableScale>
             </View>
 
-            {/* Stats grid */}
-            <GlassView
-              glassEffectStyle="regular"
-              tintColor={
-                Platform.OS === 'ios' ? `${theme.surfaceElevated}AA` : theme.surfaceElevated
-              }
-              style={{ borderRadius: 24, overflow: 'hidden' }}
-            >
-              <View className="flex-row flex-wrap rounded-3xl border border-border">
-                <Stat
-                  icon={<Activity size={14} color={theme.textMuted} strokeWidth={2.2} />}
-                  label="Reports"
-                  value={`${outbreak.reportCount}`}
-                />
-                <Stat
-                  icon={<TrendingUp size={14} color={theme.textMuted} strokeWidth={2.2} />}
-                  label="High severity"
-                  value={`${outbreak.highCount}`}
-                />
-                <Stat
-                  icon={<MapPin size={14} color={theme.textMuted} strokeWidth={2.2} />}
-                  label="Radius"
-                  value={`${(outbreak.radius / 1000).toFixed(1)} km`}
-                />
-                <Stat
-                  icon={<Clock size={14} color={theme.textMuted} strokeWidth={2.2} />}
-                  label="Last report"
-                  value={timeAgo(outbreak.lastSeenAt)}
-                />
-              </View>
-            </GlassView>
+            <View className="flex-row gap-2">
+              <SheetStatCard value={`${outbreak.highCount}`} label="High severity" tone="danger" />
+              <SheetStatCard value={`${(outbreak.radius / 1000).toFixed(1)} km`} label="Radius" />
+              <SheetStatCard value={timeAgo(outbreak.lastSeenAt)} label="Last report" />
+            </View>
 
             {/* Affected crops */}
             {cropList.length > 0 ? (
@@ -198,8 +166,10 @@ export const OutbreakDetailSheet = forwardRef<BottomSheetModal, OutbreakDetailSh
               ) : (
                 <View className="gap-2">
                   {data.contributingReports.slice(0, 8).map((report) => (
-                    <Pressable
+                    <PressableScale
                       key={report.id}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${report.cropType} report`}
                       onPress={() => {
                         dismiss();
                         router.push({
@@ -207,7 +177,8 @@ export const OutbreakDetailSheet = forwardRef<BottomSheetModal, OutbreakDetailSh
                           params: { id: report.id },
                         });
                       }}
-                      style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
+                      haptic="selection"
+                      pressedScale={0.98}
                     >
                       <View className="flex-row items-center gap-3 rounded-2xl border border-border bg-surface p-2">
                         <Image
@@ -226,7 +197,7 @@ export const OutbreakDetailSheet = forwardRef<BottomSheetModal, OutbreakDetailSh
                         </View>
                         <ChevronRight size={16} color={theme.textSubtle} strokeWidth={2} />
                       </View>
-                    </Pressable>
+                    </PressableScale>
                   ))}
                 </View>
               )}
@@ -247,7 +218,7 @@ export const OutbreakDetailSheet = forwardRef<BottomSheetModal, OutbreakDetailSh
                         <View className="mt-0.5 h-8 w-8 items-center justify-center rounded-2xl bg-brand-500/15">
                           <Sparkles
                             size={14}
-                            color={palette.brand[300]}
+                            color={palette.brand[600]}
                             strokeWidth={2.2}
                           />
                         </View>
@@ -264,29 +235,3 @@ export const OutbreakDetailSheet = forwardRef<BottomSheetModal, OutbreakDetailSh
   },
 );
 
-function Stat({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <View
-      style={{
-        width: '50%',
-        padding: 14,
-      }}
-    >
-      <View className="flex-row items-center gap-1.5">
-        {icon}
-        <Text className="text-[10px] font-medium uppercase tracking-wider text-text-subtle">
-          {label}
-        </Text>
-      </View>
-      <Text className="mt-1 text-base font-bold text-text">{value}</Text>
-    </View>
-  );
-}
