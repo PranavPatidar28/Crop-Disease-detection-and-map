@@ -3,6 +3,7 @@ import { ScrollView } from 'react-native';
 import { Chip } from '@/components/ui/chip';
 import { useMapFiltersStore } from '@/features/map-system/store/map-filters.store';
 import type { Severity } from '@/features/upload-report/types';
+import { lightColors } from '@/theme/colors';
 import { View } from '@/tw';
 
 const SEVERITY_OPTIONS: { value: Severity; label: string }[] = [
@@ -65,7 +66,7 @@ export function MapFilterChips() {
         );
       })}
       <View
-        style={{ width: 1, alignSelf: 'stretch', backgroundColor: '#efeae0', marginHorizontal: 4 }}
+        style={{ width: 1, alignSelf: 'stretch', backgroundColor: lightColors.border, marginHorizontal: 4 }}
       />
       {WINDOW_OPTIONS.map((opt) => (
         <Chip

@@ -3,8 +3,8 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { ChevronRight, Clock, MapPin, X } from 'lucide-react-native';
 import { forwardRef } from 'react';
-import { Pressable } from 'react-native';
 
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { RecommendationsList } from '@/features/disease-analysis/components/recommendations-list';
 import { SeverityBadge } from '@/features/disease-analysis/components/severity-badge';
 import { SheetHero } from '@/features/map-system/components/sheet-hero';
@@ -71,13 +71,16 @@ export const ReportDetailSheet = forwardRef<BottomSheetModal, ReportDetailSheetP
                   badge={<SeverityBadge severity={report.severity} size="sm" />}
                 />
               </View>
-              <Pressable
+              <PressableScale
                 accessibilityRole="button"
+                accessibilityLabel="Close"
                 onPress={dismiss}
+                haptic="selection"
+                pressedScale={0.9}
                 className="h-9 w-9 items-center justify-center rounded-full bg-surface"
               >
                 <X size={18} color={theme.text} strokeWidth={2} />
-              </Pressable>
+              </PressableScale>
             </View>
 
             <View className="rounded-2xl border border-border bg-surface p-3">
@@ -116,14 +119,15 @@ export const ReportDetailSheet = forwardRef<BottomSheetModal, ReportDetailSheetP
               <RecommendationsList items={report.recommendations} />
             </View>
 
-            <Pressable
+            <PressableScale
               accessibilityRole="button"
               accessibilityLabel="Open full report"
               onPress={() => {
                 dismiss();
                 router.push({ pathname: '/reports/[id]', params: { id: report.id } });
               }}
-              style={({ pressed }) => ({ opacity: pressed ? 0.92 : 1 })}
+              haptic="light"
+              pressedScale={0.97}
             >
               <View
                 className="h-12 flex-row items-center justify-center gap-2 rounded-2xl"
@@ -132,7 +136,7 @@ export const ReportDetailSheet = forwardRef<BottomSheetModal, ReportDetailSheetP
                 <Text className="text-sm font-semibold text-white">Open full report</Text>
                 <ChevronRight size={18} color="#fff" strokeWidth={2.2} />
               </View>
-            </Pressable>
+            </PressableScale>
           </BottomSheetScrollView>
         )}
       </BottomSheetModal>

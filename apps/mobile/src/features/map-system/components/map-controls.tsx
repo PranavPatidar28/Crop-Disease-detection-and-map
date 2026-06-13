@@ -1,10 +1,9 @@
-import { GlassView } from 'expo-glass-effect';
-import { Layers, Locate, SlidersHorizontal } from 'lucide-react-native';
-import { Platform } from 'react-native';
+import { Layers, List, Locate, SlidersHorizontal } from 'lucide-react-native';
 
 import { PressableScale } from '@/components/ui/pressable-scale';
+import { SurfaceCard } from '@/features/map-system/components/surface-card';
 import { View } from '@/tw';
-import { palette } from '@/theme/colors';
+import { lightColors, palette } from '@/theme/colors';
 
 interface MapControlsProps {
   layerMode: 'markers' | 'heatmap' | 'both';
@@ -12,6 +11,7 @@ interface MapControlsProps {
   onLocate: () => void;
   onLayerToggle: () => void;
   onFilter: () => void;
+  onList: () => void;
 }
 
 const CapsuleBtn = ({
@@ -51,12 +51,12 @@ const CapsuleBtn = ({
 );
 
 const Divider = () => (
-  <View style={{ height: 1, marginHorizontal: 8, backgroundColor: 'rgba(40,46,38,0.10)' }} />
+  <View style={{ height: 1, marginHorizontal: 8, backgroundColor: lightColors.border }} />
 );
 
 /**
- * Single floating glass capsule: locate, layer-toggle, filter. The filter
- * affordance lives here only (the search bar no longer duplicates it).
+ * Single floating control capsule: locate, layer-toggle, filter, list. The
+ * filter affordance lives here only (the search bar no longer duplicates it).
  */
 export function MapControls({
   layerMode,
@@ -64,23 +64,11 @@ export function MapControls({
   onLocate,
   onLayerToggle,
   onFilter,
+  onList,
 }: MapControlsProps) {
   const layerActive = layerMode !== 'markers';
   return (
-    <GlassView
-      glassEffectStyle="regular"
-      tintColor={Platform.OS === 'ios' ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.92)'}
-      style={{
-        borderRadius: 20,
-        overflow: 'hidden',
-        padding: 4,
-        shadowColor: '#282e26',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.14,
-        shadowRadius: 16,
-        elevation: 6,
-      }}
-    >
+    <SurfaceCard radius={20} padding={4}>
       <CapsuleBtn onPress={onLocate} accessibilityLabel="Center on me">
         <Locate size={18} color={palette.brand[700]} strokeWidth={2.2} />
       </CapsuleBtn>
@@ -100,6 +88,10 @@ export function MapControls({
           strokeWidth={2.2}
         />
       </CapsuleBtn>
-    </GlassView>
+      <Divider />
+      <CapsuleBtn onPress={onList} accessibilityLabel="List reports in view">
+        <List size={18} color={palette.brand[700]} strokeWidth={2.2} />
+      </CapsuleBtn>
+    </SurfaceCard>
   );
 }

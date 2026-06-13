@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { StyleSheet } from 'react-native';
 
 import { palette } from '@/theme/colors';
 import { Text, View } from '@/tw';
@@ -111,7 +112,7 @@ export function MapCluster({ count, highCount }: MapClusterProps) {
         colors={gradientColors}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={{ position: 'absolute', inset: 0 }}
+        style={StyleSheet.absoluteFill}
       />
       <Text style={{ fontSize, fontWeight: '700', color: '#ffffff' }}>
         {count >= 1000 ? `${Math.round(count / 100) / 10}k` : count}

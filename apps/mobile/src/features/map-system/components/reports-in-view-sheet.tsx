@@ -1,11 +1,17 @@
-import BottomSheet, { BottomSheetFlatList, BottomSheetView } from '@gorhom/bottom-sheet';
+import {
+  BottomSheetFlatList,
+  BottomSheetModal,
+  BottomSheetView,
+} from '@gorhom/bottom-sheet';
+import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { ChevronRight } from 'lucide-react-native';
-import { forwardRef, useMemo } from 'react';
+import { ArrowUpDown, ChevronRight } from 'lucide-react-native';
+import { forwardRef, useMemo, useState } from 'react';
 import { Pressable } from 'react-native';
 
 import { EmptyState } from '@/components/feedback';
 import { Chip } from '@/components/ui/chip';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { palette } from '@/theme/colors';
 import { Text, View } from '@/tw';
 import type { Report } from '@/features/upload-report/types';
@@ -21,23 +27,42 @@ const SEVERITY_TONE: Record<string, 'success' | 'warning' | 'danger'> = {
   HIGH: 'danger',
 };
 
+const SEVERITY_RANK: Record<string, number> = { HIGH: 3, MEDIUM: 2, LOW: 1 };
+
+type SortMode = 'newest' | 'severity';
+
 /**
- * Persistent bottom sheet listing the reports currently visible on the map.
- * Snap points: 25%, 60%, 92%. Closing isn't allowed — it's a list view, not
- * a modal.
+ * On-demand modal listing the reports currently visible on the map. Opened via
+ * the list button in the map controls (`ref.current?.present()`); dismissed by
+ * swiping down or tapping the backdrop. Snap points: 60%, 92%.
  */
-export const ReportsInViewSheet = forwardRef<BottomSheet, Props>(function ReportsInViewSheet(
+export const ReportsInViewSheet = forwardRef<BottomSheetModal, Props>(function ReportsInViewSheet(
   { reports },
   ref,
 ) {
-  const snapPoints = useMemo(() => ['25%', '60%', '92%'], []);
+  const snapPoints = useMemo(() => ['60%', '92%'], []);
+  const [sort, setSort] = useState<SortMode>('newest');
+
+  const sorted = useMemo(() => {
+    const copy = [...reports];
+    if (sort === 'severity') {
+      copy.sort(
+        (a, b) =>
+          (SEVERITY_RANK[b.severity ?? ''] ?? 0) - (SEVERITY_RANK[a.severity ?? ''] ?? 0) ||
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+      );
+    } else {
+      copy.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    }
+    return copy;
+  }, [reports, sort]);
 
   return (
-    <BottomSheet
+    <BottomSheetModal
       ref={ref}
       index={0}
       snapPoints={snapPoints}
-      enablePanDownToClose={false}
+      enablePanDownToClose
       backgroundStyle={{
         backgroundColor: '#ffffff',
         borderTopLeftRadius: 24,
@@ -53,7 +78,20 @@ export const ReportsInViewSheet = forwardRef<BottomSheet, Props>(function Report
           <Text className="text-base font-bold tracking-tight text-text">
             {reports.length} reports in view
           </Text>
-          <Text className="text-xs text-text-subtle">Sort: newest</Text>
+          <PressableScale
+            accessibilityRole="button"
+            accessibilityLabel={`Sort by ${sort === 'newest' ? 'severity' : 'newest'}`}
+            haptic="selection"
+            pressedScale={0.95}
+            onPress={() => setSort((s) => (s === 'newest' ? 'severity' : 'newest'))}
+          >
+            <View className="flex-row items-center gap-1 rounded-full border border-border bg-surface px-2.5 py-1">
+              <ArrowUpDown size={12} color={palette.brand[700]} strokeWidth={2.4} />
+              <Text className="text-xs font-bold text-brand-700">
+                {sort === 'newest' ? 'Newest' : 'Severity'}
+              </Text>
+            </View>
+          </PressableScale>
         </View>
       </BottomSheetView>
 
@@ -65,7 +103,7 @@ export const ReportsInViewSheet = forwardRef<BottomSheet, Props>(function Report
         />
       ) : (
         <BottomSheetFlatList
-          data={reports}
+          data={sorted}
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 32 }}
           ItemSeparatorComponent={() => <View className="h-2" />}
@@ -75,8 +113,20 @@ export const ReportsInViewSheet = forwardRef<BottomSheet, Props>(function Report
               onPress={() => router.push({ pathname: '/reports/[id]', params: { id: item.id } })}
             >
               <View className="flex-row items-center gap-3 rounded-xl border border-border bg-surface px-3 py-3">
-                <View className="h-10 w-10 items-center justify-center rounded-xl bg-brand-50">
-                  <Text className="text-lg">🌿</Text>
+                <View className="h-10 w-10 items-center justify-center overflow-hidden rounded-xl bg-brand-50">
+                  {item.imageUrl ? (
+                    <Image
+                      source={{ uri: item.imageUrl }}
+                      style={{ width: '100%', height: '100%' }}
+                      contentFit="cover"
+                      transition={200}
+                      cachePolicy="memory-disk"
+                      recyclingKey={item.id}
+                      placeholder={{ blurhash: 'L9F$kBM{IUM{ofWBWBay9F%MofRj' }}
+                    />
+                  ) : (
+                    <Text className="text-lg">🌿</Text>
+                  )}
                 </View>
                 <View className="flex-1 gap-0.5">
                   <Text className="text-sm font-bold text-text" numberOfLines={1}>
@@ -96,6 +146,6 @@ export const ReportsInViewSheet = forwardRef<BottomSheet, Props>(function Report
           )}
         />
       )}
-    </BottomSheet>
+    </BottomSheetModal>
   );
 });
