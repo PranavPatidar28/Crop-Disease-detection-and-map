@@ -1,8 +1,6 @@
-import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Modal, Pressable, useWindowDimensions, type View as RNView } from 'react-native';
 import Animated, {
-  FadeIn,
-  FadeOut,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
@@ -67,6 +65,7 @@ export function Dropdown<T = string>({
 }: DropdownProps<T>) {
   const window = useWindowDimensions();
   const anchorRef = useRef<RNView>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [open, setOpen] = useState(false);
   const [rect, setRect] = useState<AnchorRect | null>(null);
   const progress = useSharedValue(0);
@@ -93,7 +92,8 @@ export function Dropdown<T = string>({
     // Fade the panel out, then unmount the Modal after the close duration.
     // eslint-disable-next-line react-hooks/immutability -- reanimated shared value is mutable on purpose
     progress.value = withTiming(0, { duration: 110 });
-    setTimeout(() => setOpen(false), 110);
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    closeTimer.current = setTimeout(() => setOpen(false), 110);
   }, [progress]);
 
   const openPopover = useCallback(() => {
@@ -105,6 +105,7 @@ export function Dropdown<T = string>({
     }
     anchorRef.current?.measureInWindow((x, y, w, h) => {
       if (w === 0 && h === 0) return; // trigger not laid out / unmounted
+      if (closeTimer.current) clearTimeout(closeTimer.current);
       const next = computeAnchorRect({
         trigger: { x, y, width: w, height: h },
         window: { width: window.width, height: window.height },
@@ -143,6 +144,13 @@ export function Dropdown<T = string>({
     opacity: progress.value,
     transform: [{ scale: 0.96 + progress.value * 0.04 }],
   }));
+
+  useEffect(
+    () => () => {
+      if (closeTimer.current) clearTimeout(closeTimer.current);
+    },
+    [],
+  );
 
   const displayText = selectedOption?.label ?? placeholder;
   const hasValue = !!selectedOption;
@@ -185,12 +193,10 @@ export function Dropdown<T = string>({
         visible={open}
         onRequestClose={close}
       >
-        <Animated.View
-          entering={FadeIn.duration(120)}
-          exiting={FadeOut.duration(110)}
-          style={{ flex: 1 }}
-        >
+        <View style={{ flex: 1 }}>
           <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Close menu"
             accessibilityViewIsModal
             style={{ flex: 1 }}
             onPress={close}
@@ -234,7 +240,7 @@ export function Dropdown<T = string>({
               </Animated.View>
             ) : null}
           </Pressable>
-        </Animated.View>
+        </View>
       </Modal>
     </>
   );
