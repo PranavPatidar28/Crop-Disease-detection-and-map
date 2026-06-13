@@ -1,8 +1,8 @@
 # Project Progress — Crop Disease Report Mapping System
 
-> **Last updated:** 2026-05-29
-> **Current version:** v11 — On-device AI (offline TFLite)
-> **Status:** ✅ 11 versions complete. Offline crop-disease inference now runs fully on-device as a cloud fallback. Requires a native dev build (not Expo Go).
+> **Last updated:** 2026-06-10
+> **Current version:** v11 — On-device AI (offline TFLite) + audit & hardening pass
+> **Status:** ✅ 11 versions complete. Offline crop-disease inference runs fully on-device as a cloud fallback (requires a native dev build, not Expo Go). A full core-feature audit (2026-06-10) fixed ~25 correctness / security / resource-leak bugs across both apps — see "Resolved in audit & hardening pass" below. One operational follow-up remains: `pnpm --filter backend exec prisma migrate deploy` to apply migration `20260609000000_add_outbreak_contributed`.
 
 This is the living source of truth for what's done, what's partial, what's missing, and where the technical debt lives. Update at the end of every version (see "Update protocol" at the bottom).
 
@@ -655,6 +655,53 @@ Replaced the v9 `offline-ai` placeholder with a real on-device crop-disease clas
 
 ## Tech debt and rough edges
 
+### Resolved in audit & hardening pass (2026-06-10)
+
+A read-only audit of all core features (dispatched as 5 parallel domain agents over backend auth/security/realtime, reports/AI/outbreak, notifications/plots, and the mobile upload/offline + map/realtime stacks) surfaced ~50 findings. The actionable correctness / security / resource-leak bugs were fixed across three batches. **Rate-limiting was deliberately deferred** (dev build only).
+
+**Boolean-coercion bugs (same `Boolean("false") === true` trap in 3 places)**
+- `env.schema.ts` — `DEMO_MODE=false` actually turned demo mode **on** (`z.coerce.boolean()`). Now parses the literal via `z.enum(['true','false']).transform(...)`. Production safety control (severe-disease bias, faster mock AI) restored.
+- `list-outbreaks-query.dto.ts` — `?active=false` coerced to `true`, so resolved zones were unqueryable. Replaced `@Type(() => Boolean)` with an explicit `@Transform`.
+- `list-notifications-query.dto.ts` — `?unreadOnly=false` silently forced unread-only. Same fix.
+
+**Backend correctness / security**
+- `all-exceptions.filter.ts` — stopped leaking raw internal error messages (Prisma queries, connection details) to clients on non-HTTP 5xx; logs server-side, returns the generic envelope.
+- `reports.service.ts` — `POST /reports` idempotency had a concurrent-retry race: two simultaneous same-`clientId` POSTs both passed `findUnique` then collided on the unique constraint (500). Now catches P2002 and returns the existing row. Only schedules AI for freshly-PENDING rows.
+- `reports.service.ts` `findNearby` — the public map feed returned full report rows. Added a map-safe `select` projection that strips `notes`, `userId`, `imagePublicId`, and `aiError`. PII no longer leaked to other farmers.
+- `realtime.service.ts` — `report.created` broadcast the full Prisma row (notes, userId) to every socket. Now emits the same map-safe projection as `/reports/nearby` (consistent privacy across HTTP + WS).
+- `reports.processor.ts` — **sweeper was a no-op**: on boot it reset crashed `PROCESSING` rows to `PENDING` but never re-ran them. Now re-schedules each reset row. Also wrapped `run()` in a try/catch that best-effort persists `FAILED` on any unexpected throw (e.g. a Prisma write failing) so a report can't get stuck in `PROCESSING` forever.
+- `outbreak.processor.ts` — **concurrent zone double-creation**: two same-disease SUCCESS reports processed concurrently could both create overlapping zones (or race on `reportCount`). Added an in-process per-disease async mutex (`runExclusive`); documented swap to a Postgres advisory lock when scaling past one instance.
+- `outbreak.processor.ts` — **reprocess double-counting**: reprocessing an already-SUCCESS report re-ran outbreak detection and counted it into the zone twice, skewing escalation. Added a new `Report.outbreakContributed` flag (schema + migration `20260609000000_add_outbreak_contributed`, with a backfill of existing SUCCESS rows); `handleNewReport` now bails if already contributed and stamps the flag after attach/create.
+- `outbreak.processor.ts` `deactivateStaleZones` — could false-resolve a zone that got fresh activity between the `findMany` and the per-zone `update`. Replaced with a guarded conditional `updateMany` (`active: true, lastSeenAt < cutoff`); skips the false `outbreak.resolved` event when the row no longer matches.
+- `notifications.service.ts` `createForUsers` — the post-`createMany` re-read matched rows by `title`+`body` only, so templates with constant copy (e.g. "Outbreak escalated") collided with historical rows and could double-notify one user while dropping another. Replaced with `createManyAndReturn` (Prisma 5.22). Also added a `.catch` on the fire-and-forget push.
+- `notifications.service.ts` — `markRead`/`remove` threw a bare `Error` (→ HTTP 500) on ownership failure; now `NotFoundException` (404, no existence leak).
+- `push-token.service.ts` — **`revoke()` with an empty token would `deleteMany({token: undefined})` and wipe ALL of a user's tokens**; now guarded + a validated `RevokePushTokenDto`. `register()` had a findUnique→create TOCTOU race; now an atomic `upsert`. Added `@MaxLength(512)` on token DTOs.
+- `plots.service.ts` — `create` count-then-create race could exceed `PLOT_MAX_PER_USER`; now a `Serializable` transaction with the check inside. Reactivating a soft-deleted plot (`PATCH active:true`) bypassed the cap; now re-checks. `plot.dto.ts` bounded: `cropTypes` ≤ 20 entries / 40 chars each, `areaAcres` 0–100000.
+
+**Mobile correctness / leaks**
+- `services/socket/index.ts` — `getSocket()` keyed reuse on `socket.connected`, so it tore down and rebuilt the socket (losing every feature listener) whenever socket.io was mid-reconnect. Now reuses while the token is unchanged and lets socket.io handle reconnects.
+- `live-reports.store.ts` — `setMany`/`setOutbreaks` **replaced** the store, so every 30s poll / region change wiped socket-delivered live reports + zones (markers flickering out). Now merges (cap still trims oldest). `clear()` now cancels the debounced persist timer so it can't resurrect cleared data.
+- `use-push-registration.ts` — the token-rotation listener's cleanup was returned from an inner async IIFE and never wired to the effect, leaking a listener per auth cycle. Hoisted to effect scope.
+- `use-realtime-notifications.ts` — effect depended on a fresh `options` object literal, re-subscribing all 4 socket listeners on every banner push/dismiss. Now depends on the stable `onNotification` callback.
+- `use-report.ts` — a permanently-erroring report (404/403) polled every 3s forever; now stops on query error.
+- `use-offline-queue.ts` + `offline-queue.store.ts` — (1) Cloudinary-success-then-server-POST-failure re-uploaded a fresh asset each retry (up to 5 orphans/item); now persists `uploadedImageUrl`/`uploadedPublicId` on `QueueItem` and reuses. (2) Hydration race could silently drop a report queued during boot; `hydrate()` now merges in-memory items by id. (3) Backed-off items only woke on enqueue/reconnect; added a wake-up timer to the soonest `nextAttemptAt`. (4) Permanently-failed / cleared items leaked their persistent local copy; now `deleteLocalFile` on cap and in `clearFailed()`.
+- `use-report-flow.ts` — no cancellation, so a slow cloud/on-device call could dispatch a stale diagnosis after the user re-captured or reset. Added a monotonic run-token (bumped on every capture + on reset) that no-ops stale dispatches.
+- `app/(app)/map.tsx` — `onRegionChangeComplete` fired a network request and rebuilt the supercluster index on every micro-pan. Added a 450ms `useDebouncedValue(region)` driving the nearby query + clustering (camera stays instant), and memoized the visible-outbreak-zone list so a live report upsert no longer rebuilds every `OutbreakZoneLayer`.
+
+**Low-priority polish (audit follow-up)**
+- `geo.utils.ts` `boundingBox` — clamps lat to [-90, 90] and lng to [-180, 180] so a wide-radius query near the poles / antimeridian no longer produces an out-of-range SQL filter (haversine still refines).
+- `map-system/utils/cluster.ts` — `getClusters` now clamps the bbox to valid WGS84 ranges before handing it to supercluster; added `zoomToLongitudeDelta(zoom)`.
+- `app/(app)/map.tsx` — cluster-tap zoom now derives the target delta from the cluster's expansion zoom via `zoomToLongitudeDelta` (preserving aspect ratio) instead of a hardcoded `2^(zoom-6)` factor that over/undershot at different scales.
+- `outbreak.service.ts` — list cache key is now `JSON.stringify(...)` instead of a `|`-delimited string, so a disease name containing `|` can't collide with a different filter combination.
+- `ai.service.ts` — the single retry on TIMEOUT / UPSTREAM_ERROR now waits 500ms + up to 500ms jitter instead of firing instantly, so a struggling upstream isn't hammered the moment it times out.
+
+**Verification:** backend + mobile both pass `typecheck` and `lint` clean after every batch. Prisma client regenerated for the new field.
+
+**Operational follow-up:** apply the new migration before running the backend against Neon:
+```bash
+pnpm --filter backend exec prisma migrate deploy
+```
+
 ### Resolved in v11
 - v9 "`features/offline-ai/` placeholder stub" → replaced with a real bundled TFLite classifier (139 classes) wired into the report-flow engine chain as the cloud fallback.
 - Roadmap "v12+ — On-device AI: wire `offlineAiClient` to a real TFLite/ONNX model" → shipped in v11 (model bundled in-binary, not fetch-on-first-launch).
@@ -715,7 +762,7 @@ Replaced the v9 `offline-ai` placeholder with a real on-device crop-disease clas
 | Dashboard outbreaks / trends / alerts still mocked | medium | `recentReports` is real now; the rest needs aggregation endpoints (likely `/dashboard/summary`, `/dashboard/trends`). Hits in v7+. |
 | Cloudinary signature ratelimiting | medium | `POST /uploads/signature` is unmetered and protected only by JWT. Add `@nestjs/throttler` before public release. |
 | `/reports/nearby` is unmetered too | medium | Map will spam this on every pan. Add throttler + per-IP rate limit before public release. Also applies to `/outbreaks` polling. |
-| `/reports/nearby` returns ALL users' reports | medium | This is intentional for the map, but means we expose other farmers' raw notes globally. v8+ should consider redacting `notes` from non-owner consumers, or scoping to district. Same applies to `/outbreaks/:id`'s contributingReports. |
+| `/reports/nearby` returns ALL users' reports | resolved | ✅ Resolved (audit 2026-06-10): `notes`, `userId`, `imagePublicId`, `aiError` are stripped from the nearby feed, the `report.created` socket broadcast, AND `/outbreaks/:id`'s contributingReports (shared `NearbyReport` projection). No raw farmer PII leaks to non-owner consumers. |
 | No Cloudinary deletion path | medium | `CloudinaryService.destroy` exists but isn't called. `DELETE /reports/:id` doesn't exist yet. |
 | Reports `imageUrl` not validated server-side | medium | Should verify it matches our Cloudinary cloud + folder. |
 | No push notifications | medium | `expo-notifications` not wired. v7 deliverable. |
@@ -729,7 +776,7 @@ Replaced the v9 `offline-ai` placeholder with a real on-device crop-disease clas
 | `useMe` stale on cold boot | low | Trust the cached user; never re-validate. Add `useMe()` invocation in `_layout` after hydrate. |
 | No git hooks | low | Skipped for hackathon velocity. |
 | No Docker / CI / EAS config | low | Backend is 12-factor. EAS Build is needed before TestFlight + before `react-native-maps` works on Android. |
-| No tests | medium | No unit, integration, or E2E tests. At minimum: `MockAiClient` determinism, `ReportsProcessor` happy + failure paths, dashboard hook smoke, Detox auth + upload + result flow. |
+| No tests | low | ✅ Partially resolved (2026-06-10): unit tests now run in both apps via Turborepo (`pnpm test`). **Backend** — Jest + ts-jest, 48 tests / 6 suites: `geo.utils` (haversine / clamped bbox / rollingCentroid), `env.schema` (incl. the `DEMO_MODE` coercion regression), the `active` + `unreadOnly` DTO boolean transforms, plot DTO bounds, `MockAiClient` determinism. **Mobile** — Jest + babel-jest (inline `configFile:false` config, scoped to pure utils to avoid the jest-expo / RN 0.85 / TS 6 surface), 26 tests / 4 suites: `haversine` + `formatDistanceKm`, `cluster` (incl. the `zoomToLongitudeDelta` expansion-zoom fix + edge-region bbox clamping), `severityVisuals` / `timeAgo`, `formatters`. Test files are excluded from the build `tsconfig` (like the backend's `*.spec.ts`). Still missing: `ReportsProcessor` / `OutbreakProcessor` integration tests, fanout geo-matching, and mobile component/hook + Detox E2E (needs a RN test environment). |
 | Glass effect platform parity | low | iOS-26+ premium. Android falls back to a solid tint. Acceptable. |
 | Health endpoint isn't monitored | low | Fine for demo. |
 | Recommendations are plain strings | low | When multilingual support is needed, switch to `{ id, key, params? }` so a translation table can resolve them client-side. v5 wires the storage as `String[]`, easy to migrate. |
@@ -744,7 +791,7 @@ Replaced the v9 `offline-ai` placeholder with a real on-device crop-disease clas
 - **`features/notifications/`** — has a mock list but no read-state persistence; "unread" is static seed data.
 - **Dashboard partial-real** — `recentReports` is real, but outbreaks / trends / alerts / summary still come from mocks. Need backend aggregation endpoints.
 - **Apps/backend `users` module** — has `UsersService` with `findById/findByPhone` only. No DTOs, controller, or update logic. Profile editing API is needed before the onboarding screen.
-- **`useCreateReport` post-Cloudinary failure** — when Cloudinary succeeds but our server's `POST /reports` fails, the queue retries the full pipeline → orphan asset on Cloudinary. Track `imagePublicId` on the queue item so the drainer can skip the upload step on retry.
+- **`useCreateReport` post-Cloudinary failure** — ✅ resolved (audit 2026-06-10): `QueueItem` now persists `uploadedImageUrl`/`uploadedPublicId` after a successful Cloudinary upload, so a server-POST retry reuses the existing asset instead of leaking an orphan per attempt.
 - **Android Google Maps key** — required for `react-native-maps` and the upload `MapPickerSheet`. v6's map tab is iOS-only until this is configured.
 - **`UploadSuccess` component** — no longer used by the upload flow but left in `features/upload-report/components/` for reference. Remove or replace with a "Report submitted" toast in a future cleanup pass.
 - **`FastApiAiClient` not exercised** — the contract is implemented (POSTs `{ image_url, crop_type, notes }` to `/predict`) but it has not been validated against a real model yet. Validate request/response shapes once the FastAPI service comes online.
