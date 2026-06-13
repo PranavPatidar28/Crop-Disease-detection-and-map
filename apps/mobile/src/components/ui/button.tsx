@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { forwardRef } from 'react';
-import { ActivityIndicator } from 'react-native';
+import { ActivityIndicator, StyleSheet } from 'react-native';
 
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { Text, View } from '@/tw';
@@ -125,7 +125,7 @@ export const Button = forwardRef<React.ComponentRef<typeof PressableScale>, Butt
             colors={[palette.brand[500], palette.brand[600]]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={{ position: 'absolute', inset: 0 }}
+            style={StyleSheet.absoluteFill}
           />
           {inner}
         </PressableScale>

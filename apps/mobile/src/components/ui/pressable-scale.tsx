@@ -1,11 +1,13 @@
 import * as Haptics from 'expo-haptics';
 import { forwardRef, useCallback, type ReactNode } from 'react';
-import { Pressable, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
+import { type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
+
+import { Pressable } from '@/tw';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 

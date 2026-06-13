@@ -1,5 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { type ReactNode } from 'react';
+import { StyleSheet } from 'react-native';
 
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { Text, View } from '@/tw';
@@ -60,10 +61,10 @@ export function Chip({ label, active = false, tone = 'neutral', onPress, leftSlo
             colors={[palette.brand[500], palette.brand[600]]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={{ position: 'absolute', inset: 0 }}
+            style={[StyleSheet.absoluteFill, styles.gradient]}
           />
           {leftSlot}
-          <Text className={labelClass}>{label}</Text>
+          <Text className={cn(labelClass, 'z-10')}>{label}</Text>
         </View>
       </PressableScale>
     );
