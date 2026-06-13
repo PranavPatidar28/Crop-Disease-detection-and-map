@@ -3,7 +3,7 @@ import { Search, X } from 'lucide-react-native';
 import { forwardRef, useCallback, useMemo, useState } from 'react';
 
 import { PressableScale } from '@/components/ui/pressable-scale';
-import { CROPS, type Crop } from '@/constants/crops';
+import { CROPS, CROP_NAME_HI, cropDisplayName, type Crop } from '@/constants/crops';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/i18n';
 import { Text, View } from '@/tw';
@@ -16,14 +16,17 @@ interface CropPickerSheetProps {
 export const CropPickerSheet = forwardRef<BottomSheetModal, CropPickerSheetProps>(
   function CropPickerSheet({ selectedId, onSelect }, ref) {
     const theme = useTheme();
-    const { t } = useTranslation();
+    const { t, language } = useTranslation();
     const [query, setQuery] = useState('');
 
     const filtered = useMemo(() => {
       const q = query.trim().toLowerCase();
       if (!q) return CROPS;
       return CROPS.filter(
-        (c) => c.name.toLowerCase().includes(q) || c.category.includes(q),
+        (c) =>
+          c.name.toLowerCase().includes(q) ||
+          c.category.includes(q) ||
+          (CROP_NAME_HI[c.id]?.toLowerCase().includes(q) ?? false),
       );
     }, [query]);
 
@@ -82,7 +85,7 @@ export const CropPickerSheet = forwardRef<BottomSheetModal, CropPickerSheetProps
               return (
                 <PressableScale
                   accessibilityRole="button"
-                  accessibilityLabel={item.name}
+                  accessibilityLabel={cropDisplayName(item, language)}
                   onPress={() => handleSelect(item)}
                   haptic="selection"
                   pressedScale={0.98}
@@ -98,7 +101,7 @@ export const CropPickerSheet = forwardRef<BottomSheetModal, CropPickerSheetProps
                       <Text className="text-xl">{item.emoji}</Text>
                     </View>
                     <View className="flex-1 gap-0.5">
-                      <Text className="text-base font-semibold text-text">{item.name}</Text>
+                      <Text className="text-base font-semibold text-text">{cropDisplayName(item, language)}</Text>
                       <Text className="text-[11px] uppercase tracking-wider text-text-subtle">
                         {item.category}
                       </Text>

@@ -12,10 +12,11 @@ import MapView, { Circle, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { useTheme } from '@/hooks/use-theme';
+import { useTranslation } from '@/i18n';
 import { palette } from '@/theme/colors';
 import { Text, View } from '@/tw';
 import type { OutbreakZone } from '@/features/map-system/types';
-import { CROP_BY_NAME } from '@/constants/crops';
+import { CROP_BY_NAME, cropDisplayName } from '@/constants/crops';
 import { timeAgo } from '@/utils/severity';
 
 import { useOutbreak } from '../hooks/use-outbreaks';
@@ -32,6 +33,7 @@ interface OutbreakDetailSheetProps {
 export const OutbreakDetailSheet = forwardRef<BottomSheetModal, OutbreakDetailSheetProps>(
   function OutbreakDetailSheet({ outbreak }, ref) {
     const theme = useTheme();
+    const { language } = useTranslation();
     const { data, isPending } = useOutbreak(outbreak?.id ?? null);
 
     const dismiss = () => {
@@ -110,7 +112,9 @@ export const OutbreakDetailSheet = forwardRef<BottomSheetModal, OutbreakDetailSh
                         className="flex-row items-center gap-1.5 rounded-full border border-border bg-surface px-3 py-1.5"
                       >
                         {known ? <Text className="text-base">{known.emoji}</Text> : null}
-                        <Text className="text-xs font-semibold text-text">{crop}</Text>
+                        <Text className="text-xs font-semibold text-text">
+                          {known ? cropDisplayName(known, language) : crop}
+                        </Text>
                       </View>
                     );
                   })}

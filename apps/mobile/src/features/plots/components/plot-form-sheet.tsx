@@ -11,9 +11,10 @@ import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { IconButton } from '@/components/ui/icon-button';
 import { PressableScale } from '@/components/ui/pressable-scale';
-import { CROPS } from '@/constants/crops';
+import { CROPS, cropDisplayName } from '@/constants/crops';
 import { useCurrentLocation } from '@/features/upload-report/hooks/use-current-location';
 import { useTheme } from '@/hooks/use-theme';
+import { useTranslation } from '@/i18n';
 import { palette } from '@/theme/colors';
 import { Text, View } from '@/tw';
 
@@ -31,6 +32,7 @@ interface PlotFormSheetProps {
 export const PlotFormSheet = forwardRef<BottomSheetModal, PlotFormSheetProps>(
   function PlotFormSheet({ plot, onSaved, onDeleted, onOpenMapPicker }, ref) {
     const theme = useTheme();
+    const { language } = useTranslation();
     const isEdit = !!plot;
     const [name, setName] = useState(plot?.name ?? '');
     const [coords, setCoords] = useState<{ lat: number; lng: number } | null>(
@@ -228,7 +230,7 @@ export const PlotFormSheet = forwardRef<BottomSheetModal, PlotFormSheetProps>(
               {CROPS.map((c) => (
                 <Chip
                   key={c.id}
-                  label={`${c.emoji} ${c.name}`}
+                  label={`${c.emoji} ${cropDisplayName(c, language)}`}
                   active={crops.includes(c.name)}
                   onPress={() => toggleCrop(c.name)}
                 />
