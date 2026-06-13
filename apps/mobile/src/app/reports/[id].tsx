@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { MoreHorizontal, RefreshCw } from 'lucide-react-native';
-import { ActionSheetIOS, Alert, Platform, Share, ScrollView } from 'react-native';
+import { MoreHorizontal, RefreshCw, Share2 } from 'lucide-react-native';
+import { Share, ScrollView } from 'react-native';
 import { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -8,6 +8,7 @@ import { BackButton } from '@/components/ui/back-button';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
+import { Dropdown, type DropdownOption } from '@/components/ui/dropdown';
 import { IconButton } from '@/components/ui/icon-button';
 import { Loader } from '@/components/ui/loader';
 import { SectionLabel } from '@/components/ui/section-label';
@@ -52,33 +53,20 @@ export default function ReportDetailScreen() {
     }
   };
 
-  const openMenu = () => {
-    if (!report) return;
-    const canReprocess = report.processingStatus !== 'PROCESSING' && !reprocess.isPending;
-    const labels = ['Share report'];
-    if (canReprocess) labels.push('Re-run analysis');
-    labels.push('Cancel');
-    const cancelIndex = labels.length - 1;
+  type MenuAction = 'share' | 'rerun';
 
-    const run = (i: number) => {
-      if (labels[i] === 'Share report') void shareReport();
-      else if (labels[i] === 'Re-run analysis') reprocess.mutate();
-    };
+  const canReprocess = !!report && report.processingStatus !== 'PROCESSING' && !reprocess.isPending;
 
-    if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions(
-        { options: labels, cancelButtonIndex: cancelIndex },
-        run,
-      );
-    } else {
-      Alert.alert('Report options', undefined, [
-        { text: 'Share report', onPress: () => void shareReport() },
-        ...(canReprocess
-          ? [{ text: 'Re-run analysis', onPress: () => reprocess.mutate() }]
-          : []),
-        { text: 'Cancel', style: 'cancel' as const },
-      ]);
-    }
+  const menuItems: DropdownOption<MenuAction>[] = [
+    { value: 'share', label: 'Share report', icon: Share2 },
+    ...(canReprocess
+      ? [{ value: 'rerun' as const, label: 'Re-run analysis', icon: RefreshCw }]
+      : []),
+  ];
+
+  const handleMenuAction = (action: MenuAction) => {
+    if (action === 'share') void shareReport();
+    else if (action === 'rerun') reprocess.mutate();
   };
 
   return (
@@ -87,10 +75,18 @@ export default function ReportDetailScreen() {
         <View className="flex-row items-center justify-between px-4 py-2">
           <BackButton onPress={() => router.back()} />
           <Text className="text-base font-bold text-text">Report</Text>
-          <IconButton
-            accessibilityLabel="More options"
-            icon={<MoreHorizontal size={18} color={palette.brand[700]} strokeWidth={2.2} />}
-            onPress={openMenu}
+          <Dropdown
+            mode="menu"
+            align="end"
+            items={menuItems}
+            onSelect={handleMenuAction}
+            disabled={!report}
+            trigger={
+              <IconButton
+                accessibilityLabel="More options"
+                icon={<MoreHorizontal size={18} color={palette.brand[700]} strokeWidth={2.2} />}
+              />
+            }
           />
         </View>
 
