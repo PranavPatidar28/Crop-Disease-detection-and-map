@@ -32,9 +32,12 @@ interface PersistedShape {
 function trimToCap(byId: Record<string, Report>, cap: number): Record<string, Report> {
   const ids = Object.keys(byId);
   if (ids.length <= cap) return byId;
+
+  // ⚡ Bolt: Fast string comparison on ISO dates avoids expensive Date instantiations in tight loops
   const sorted = ids
     .map((id) => byId[id]!)
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    .sort((a, b) => (b.createdAt < a.createdAt ? -1 : b.createdAt > a.createdAt ? 1 : 0));
+
   const kept = sorted.slice(0, cap);
   const next: Record<string, Report> = {};
   for (const r of kept) next[r.id] = r;
