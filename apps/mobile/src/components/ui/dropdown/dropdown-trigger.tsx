@@ -22,7 +22,6 @@ interface DropdownTriggerProps {
   expanded: boolean;
   disabled?: boolean;
   error?: string;
-  className?: string;
   testID?: string;
   onPress: () => void;
 }
@@ -36,7 +35,6 @@ export function DropdownTrigger({
   expanded,
   disabled,
   error,
-  className,
   testID,
   onPress,
 }: DropdownTriggerProps) {
@@ -54,7 +52,6 @@ export function DropdownTrigger({
         haptic="selection"
         pressedScale={0.97}
         testID={testID}
-        className={cn('flex-1', className)}
       >
         <View
           className={cn(
@@ -94,7 +91,7 @@ export function DropdownTrigger({
       haptic="selection"
       pressedScale={0.98}
       testID={testID}
-      className={cn('gap-1.5', className)}
+      className="gap-1.5"
     >
       {label ? (
         <Text className="text-xs font-bold uppercase tracking-[1.4px] text-text-subtle">

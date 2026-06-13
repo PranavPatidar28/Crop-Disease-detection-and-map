@@ -158,7 +158,7 @@ export function Dropdown<T = string>({
 
   return (
     <>
-      <View ref={anchorRef} collapsable={false} className={trigger ? className : undefined}>
+      <View ref={anchorRef} collapsable={false} className={className}>
         {trigger ? (
           <Pressable
             accessibilityRole="button"
@@ -179,7 +179,6 @@ export function Dropdown<T = string>({
             expanded={open}
             disabled={disabled}
             error={error}
-            className={className}
             testID={testID}
             onPress={openPopover}
           />

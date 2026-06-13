@@ -87,6 +87,7 @@ export function ReportFilterBar({ value, onChange }: ReportFilterBarProps) {
         <Dropdown
           triggerVariant="pill"
           align="start"
+          className="flex-1"
           value={value.severity === 'all' ? null : value.severity}
           items={SEVERITY_OPTIONS}
           onSelect={(severity) => onChange({ ...value, severity })}
@@ -95,6 +96,7 @@ export function ReportFilterBar({ value, onChange }: ReportFilterBarProps) {
         <Dropdown
           triggerVariant="pill"
           align="end"
+          className="flex-1"
           value={value.status === 'all' ? null : value.status}
           items={STATUS_OPTIONS}
           onSelect={(status) => onChange({ ...value, status })}
