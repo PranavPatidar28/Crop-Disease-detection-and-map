@@ -21,8 +21,7 @@ const labelFor = (severity: Severity | null): string => {
 
 /**
  * Reusable severity badge. Used in lists, sheets, dashboard.
- * v7-introduced primitive; standalone (does not animate by itself — pair with
- * `HotspotAnimation` when emphasis is wanted).
+ * v7-introduced primitive; standalone (does not animate by itself).
  */
 export function SeverityIndicator({
   severity,

@@ -7,9 +7,10 @@ import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { ChevronRight, Sparkles, X } from 'lucide-react-native';
 import { forwardRef } from 'react';
-import { ActivityIndicator, Platform, Pressable } from 'react-native';
+import { ActivityIndicator, Platform } from 'react-native';
 import MapView, { Circle, Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { useTheme } from '@/hooks/use-theme';
 import { palette } from '@/theme/colors';
 import { Text, View } from '@/tw';
@@ -76,13 +77,16 @@ export const OutbreakDetailSheet = forwardRef<BottomSheetModal, OutbreakDetailSh
                   badge={<SeverityIndicator severity={outbreak.severity} variant="expanded" />}
                 />
               </View>
-              <Pressable
+              <PressableScale
                 accessibilityRole="button"
+                accessibilityLabel="Close"
                 onPress={dismiss}
+                haptic="selection"
+                pressedScale={0.9}
                 className="h-9 w-9 items-center justify-center rounded-full bg-surface"
               >
                 <X size={18} color={theme.text} strokeWidth={2} />
-              </Pressable>
+              </PressableScale>
             </View>
 
             <View className="flex-row gap-2">
@@ -162,8 +166,10 @@ export const OutbreakDetailSheet = forwardRef<BottomSheetModal, OutbreakDetailSh
               ) : (
                 <View className="gap-2">
                   {data.contributingReports.slice(0, 8).map((report) => (
-                    <Pressable
+                    <PressableScale
                       key={report.id}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${report.cropType} report`}
                       onPress={() => {
                         dismiss();
                         router.push({
@@ -171,7 +177,8 @@ export const OutbreakDetailSheet = forwardRef<BottomSheetModal, OutbreakDetailSh
                           params: { id: report.id },
                         });
                       }}
-                      style={({ pressed }) => ({ opacity: pressed ? 0.85 : 1 })}
+                      haptic="selection"
+                      pressedScale={0.98}
                     >
                       <View className="flex-row items-center gap-3 rounded-2xl border border-border bg-surface p-2">
                         <Image
@@ -190,7 +197,7 @@ export const OutbreakDetailSheet = forwardRef<BottomSheetModal, OutbreakDetailSh
                         </View>
                         <ChevronRight size={16} color={theme.textSubtle} strokeWidth={2} />
                       </View>
-                    </Pressable>
+                    </PressableScale>
                   ))}
                 </View>
               )}
@@ -211,7 +218,7 @@ export const OutbreakDetailSheet = forwardRef<BottomSheetModal, OutbreakDetailSh
                         <View className="mt-0.5 h-8 w-8 items-center justify-center rounded-2xl bg-brand-500/15">
                           <Sparkles
                             size={14}
-                            color={palette.brand[300]}
+                            color={palette.brand[600]}
                             strokeWidth={2.2}
                           />
                         </View>

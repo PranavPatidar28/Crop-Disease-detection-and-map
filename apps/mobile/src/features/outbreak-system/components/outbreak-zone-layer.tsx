@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { Circle, Marker } from 'react-native-maps';
+import { Circle } from 'react-native-maps';
 
+import { TrackingMarker } from '@/features/map-system/components';
 import type { OutbreakZone } from '@/features/map-system/types';
 import { mapSeverityFill, zoneGlowSteps } from '@/features/map-system/utils/marker-colors';
 import { Text, View } from '@/tw';
@@ -19,32 +19,20 @@ function alphaHex(opacity: number): string {
 }
 
 /**
- * Outbreak zone: a radial-gradient glow (approximated by stacked stepped-opacity
- * Circles, since react-native-maps Circle has no gradient fill), a faint solid
- * boundary ring at the true radius, and a center teardrop hub with a report
- * count badge. Tapping the hub opens the detail sheet.
+ * Outbreak zone: a radial-gradient glow (approximated by 3 stacked
+ * stepped-opacity Circles, since react-native-maps Circle has no gradient
+ * fill), a faint solid boundary ring at the true radius, and a center teardrop
+ * hub with a report-count badge. Tapping the hub opens the detail sheet.
  *
- * The hub is a static bitmap (no animation): everything sits inside a padded
- * box so nothing is clipped on the Android marker raster. `tracksViewChanges`
- * is held true briefly to capture layout, then disabled for performance.
+ * The hub uses `TrackingMarker` so the custom view is captured into the native
+ * bitmap reliably on Android (and re-captured whenever the content changes),
+ * without leaving view-tracking on forever.
  */
 export function OutbreakZoneLayer({ zone, onPress }: OutbreakZoneLayerProps) {
   const fill = mapSeverityFill(zone.severity);
   const dimmed = !zone.active;
   const steps = zoneGlowSteps(zone.severity);
   const dimFactor = dimmed ? 0.45 : 1;
-
-  const [tracksChanges, setTracksChanges] = useState(true);
-  const contentKey = `${zone.disease}|${zone.reportCount}|${zone.severity}|${zone.active}`;
-  const [prevKey, setPrevKey] = useState(contentKey);
-  if (prevKey !== contentKey) {
-    setPrevKey(contentKey);
-    setTracksChanges(true);
-  }
-  useEffect(() => {
-    const t = setTimeout(() => setTracksChanges(false), 600);
-    return () => clearTimeout(t);
-  }, [contentKey]);
 
   return (
     <>
@@ -72,10 +60,10 @@ export function OutbreakZoneLayer({ zone, onPress }: OutbreakZoneLayerProps) {
       />
 
       {/* Center hub teardrop with count badge */}
-      <Marker
+      <TrackingMarker
+        contentKey={`${zone.disease}|${zone.reportCount}|${zone.severity}|${zone.active}`}
         coordinate={{ latitude: zone.latitude, longitude: zone.longitude }}
         anchor={{ x: 0.5, y: 1 }}
-        tracksViewChanges={tracksChanges}
         onPress={() => onPress?.(zone)}
       >
         <View style={{ paddingTop: 8, paddingHorizontal: 10, paddingBottom: 12, alignItems: 'center' }}>
@@ -137,7 +125,7 @@ export function OutbreakZoneLayer({ zone, onPress }: OutbreakZoneLayerProps) {
             </View>
           </View>
         </View>
-      </Marker>
+      </TrackingMarker>
     </>
   );
 }
