@@ -17,8 +17,40 @@ export interface PaginatedReports {
   nextCursor: string | null;
 }
 
+/**
+ * Coerce an untrusted `advisory.whatToDoNow` value into a clean `string[]` for
+ * the Prisma `String[]` column. `advisory` is only `@IsObject`-validated, so a
+ * client could send `whatToDoNow` as a non-array or an array with non-string
+ * members — passing that straight to Prisma would throw at runtime.
+ */
+function toStringArray(value: unknown): string[] {
+  return Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
+}
+
+/**
+ * Map-safe projection of a Report. `/reports/nearby` returns ALL users' reports
+ * (it's the public outbreak map), so we must NOT leak per-farmer PII: `notes`
+ * (free text), `userId`, `imagePublicId`, and `aiError` are deliberately omitted.
+ */
+export type NearbyReport = Pick<
+  Report,
+  | 'id'
+  | 'cropType'
+  | 'imageUrl'
+  | 'latitude'
+  | 'longitude'
+  | 'disease'
+  | 'confidence'
+  | 'severity'
+  | 'recommendations'
+  | 'processingStatus'
+  | 'processedAt'
+  | 'createdAt'
+  | 'updatedAt'
+>;
+
 export interface NearbyReportsResult {
-  items: Report[];
+  items: NearbyReport[];
   count: number;
   center: { lat: number; lng: number };
   radiusKm: number;
@@ -42,23 +74,62 @@ export class ReportsService {
       if (existing) return existing;
     }
 
-    const report = await this.prisma.report.create({
-      data: {
-        userId,
-        clientId: dto.clientId ?? null,
-        cropType: dto.cropType,
-        imageUrl: dto.imageUrl,
-        imagePublicId: dto.imagePublicId,
-        notes: dto.notes ?? null,
-        latitude: dto.latitude,
-        longitude: dto.longitude,
-        processingStatus: ProcessingStatus.PENDING,
-      },
-    });
+    // A trusted cloud diagnosis (already run through HF on the client's behalf
+    // via /diseases/analyze) is stored as SUCCESS immediately. on-device/manual
+    // diagnoses are provisional: store what we have but leave PENDING so the
+    // processor upgrades them via HF.
+    const isCloudSuccess = dto.engine === 'cloud' && !!dto.disease && !!dto.severity;
 
-    // Fire-and-forget AI processing. Returns immediately so the HTTP request
-    // doesn't block on a 25s upstream call.
-    this.processor.schedule(report);
+    const report = await this.prisma.report
+      .create({
+        data: {
+          userId,
+          clientId: dto.clientId ?? null,
+          cropType: dto.cropType,
+          imageUrl: dto.imageUrl,
+          imagePublicId: dto.imagePublicId,
+          notes: dto.notes ?? null,
+          latitude: dto.latitude,
+          longitude: dto.longitude,
+          disease: dto.disease ?? null,
+          confidence: dto.confidence ?? null,
+          severity: dto.severity ?? null,
+          recommendations: isCloudSuccess ? toStringArray(dto.advisory?.whatToDoNow) : [],
+          // The double-cast is sound: `advisory` comes from a parsed JSON
+          // request body, so its values are inherently JSON-serializable.
+          advisory: dto.advisory
+            ? (dto.advisory as unknown as Prisma.InputJsonValue)
+            : Prisma.JsonNull,
+          processingStatus: isCloudSuccess ? ProcessingStatus.SUCCESS : ProcessingStatus.PENDING,
+          processedAt: isCloudSuccess ? new Date() : null,
+        },
+      })
+      .catch(async (err: unknown) => {
+        // Concurrent offline-queue retries with the same (userId, clientId) can
+        // both pass the findUnique check above and race into create(). The loser
+        // hits the @@unique constraint (P2002) — return the row the winner wrote
+        // instead of surfacing a 500.
+        if (
+          dto.clientId &&
+          err instanceof Prisma.PrismaClientKnownRequestError &&
+          err.code === 'P2002'
+        ) {
+          const existing = await this.prisma.report.findUnique({
+            where: { userId_clientId: { userId, clientId: dto.clientId } },
+          });
+          if (existing) return existing;
+        }
+        throw err;
+      });
+
+    // Cloud diagnosis: skip HF (already done) but still fan out to outbreak /
+    // realtime / notifications. Provisional/pending: schedule the processor,
+    // which runs HF (upgrading on-device/manual) then fans out.
+    if (report.processingStatus === ProcessingStatus.SUCCESS) {
+      this.processor.handleClientDiagnosis(report);
+    } else if (report.processingStatus === ProcessingStatus.PENDING) {
+      this.processor.schedule(report);
+    }
 
     return report;
   }
@@ -80,6 +151,11 @@ export class ReportsService {
     }
 
     return { items, nextCursor };
+  }
+
+  /** Total number of reports submitted by a user. Index-backed via `@@index([userId, createdAt])`. */
+  async countForUser(userId: string): Promise<number> {
+    return this.prisma.report.count({ where: { userId } });
   }
 
   async findById(userId: string, id: string): Promise<Report> {
@@ -130,6 +206,23 @@ export class ReportsService {
       where,
       orderBy: { createdAt: 'desc' },
       take: Math.min(query.limit * 3, 1500),
+      // Map-safe projection only — never expose other farmers' notes, userId,
+      // imagePublicId, or aiError on the public nearby feed.
+      select: {
+        id: true,
+        cropType: true,
+        imageUrl: true,
+        latitude: true,
+        longitude: true,
+        disease: true,
+        confidence: true,
+        severity: true,
+        recommendations: true,
+        processingStatus: true,
+        processedAt: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     });
 
     const items = candidates
