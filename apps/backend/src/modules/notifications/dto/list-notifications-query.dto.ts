@@ -1,5 +1,5 @@
 import { NotificationType } from '@prisma/client';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { IsBoolean, IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class ListNotificationsQueryDto {
@@ -14,8 +14,10 @@ export class ListNotificationsQueryDto {
   @IsString()
   cursor?: string;
 
+  // NOTE: do NOT use @Type(() => Boolean) — it runs Boolean(value), so the
+  // query string "false" coerces to `true` and silently forces unread-only.
   @IsOptional()
-  @Type(() => Boolean)
+  @Transform(({ value }) => value === true || value === 'true')
   @IsBoolean()
   unreadOnly?: boolean;
 
