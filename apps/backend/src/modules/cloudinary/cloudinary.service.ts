@@ -61,6 +61,15 @@ export class CloudinaryService {
 
   /** Best-effort delete; logs and swallows errors so report deletion isn't blocked. */
   async destroy(publicId: string): Promise<void> {
+    // Bound the blast radius: only assets inside the configured upload folder
+    // can be deleted via this path, so the public DELETE route can't remove
+    // arbitrary Cloudinary assets. (No per-user ownership check — out of scope.)
+    const folder = this.config.get('CLOUDINARY_UPLOAD_FOLDER', { infer: true });
+    if (!publicId.startsWith(`${folder}/`)) {
+      this.logger.warn(`Refusing to destroy "${publicId}": outside upload folder "${folder}"`);
+      return;
+    }
+
     try {
       await cloudinary.uploader.destroy(publicId);
     } catch (err) {
