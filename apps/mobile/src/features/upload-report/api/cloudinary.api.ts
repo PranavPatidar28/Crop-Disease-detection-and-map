@@ -63,4 +63,16 @@ export const cloudinaryApi = {
 
     return data;
   },
+
+  /**
+   * Best-effort delete of an uploaded asset (used on forced retake / abandon).
+   * The publicId can contain slashes, so it's URL-encoded into the path.
+   */
+  async deleteAsset(publicId: string): Promise<void> {
+    try {
+      await apiClient.delete(`/uploads/${encodeURIComponent(publicId)}`);
+    } catch {
+      // best-effort cleanup; an orphaned asset is non-user-facing
+    }
+  },
 };

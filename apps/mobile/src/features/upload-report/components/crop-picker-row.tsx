@@ -39,7 +39,7 @@ export function CropPickerRow({ cropId, onPress, error }: CropPickerRowProps) {
             {crop ? (
               <Text className="text-2xl">{crop.emoji}</Text>
             ) : (
-              <Leaf size={22} color={palette.brand[300]} strokeWidth={2.2} />
+              <Leaf size={22} color={palette.brand[600]} strokeWidth={2.2} />
             )}
           </View>
 

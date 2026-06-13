@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
 
 import type { QueueItem } from '../types';
+import { deleteLocalFile } from '../utils/file-storage';
 
 const STORAGE_KEY = 'upload.queue.v1';
 
@@ -31,15 +32,23 @@ export const useOfflineQueueStore = create<OfflineQueueState>((set, get) => ({
     if (get().isHydrated) return;
     try {
       const raw = await AsyncStorage.getItem(STORAGE_KEY);
-      const items = raw ? (JSON.parse(raw) as QueueItem[]) : [];
+      const stored = raw ? (JSON.parse(raw) as QueueItem[]) : [];
       // Reset any items stuck in `uploading` from a previous app session.
-      const cleaned = items.map((it) =>
+      const cleaned = stored.map((it) =>
         it.status === 'uploading' ? { ...it, status: 'pending' as const } : it,
       );
-      set({ items: cleaned, isHydrated: true });
-      if (cleaned.length !== items.length) await persist(cleaned);
+      // An enqueue() can land during the await above. Merge those in-memory
+      // items (by id) rather than overwriting them, or we'd silently drop a
+      // report the user just queued while offline at boot.
+      const pending = get().items;
+      const byId = new Map<string, QueueItem>();
+      for (const it of cleaned) byId.set(it.id, it);
+      for (const it of pending) byId.set(it.id, it);
+      const merged = Array.from(byId.values());
+      set({ items: merged, isHydrated: true });
+      if (merged.length !== stored.length) await persist(merged);
     } catch {
-      set({ items: [], isHydrated: true });
+      set({ items: get().items, isHydrated: true });
     }
   },
 
@@ -62,6 +71,9 @@ export const useOfflineQueueStore = create<OfflineQueueState>((set, get) => ({
   },
 
   async clearFailed() {
+    const failed = get().items.filter((it) => it.status === 'failed');
+    // Free the persistent local copies of the items we're dropping.
+    for (const it of failed) deleteLocalFile(it.draft.localImageUri);
     const next = get().items.filter((it) => it.status !== 'failed');
     set({ items: next });
     await persist(next);
