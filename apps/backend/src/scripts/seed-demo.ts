@@ -352,9 +352,10 @@ async function seed(): Promise<void> {
   }
   logger.info(`✓ Reports: ${created} created, ${updated} updated`);
 
-  // Notifications for the primary user. Idempotent: clear seed-* and re-insert.
+  // Notifications for the primary user. Idempotent: clear all of this user's
+  // notifications and re-insert so re-running never accumulates duplicates.
   await prisma.notification.deleteMany({
-    where: { userId: userA.id, title: { contains: 'outbreak nearby' } },
+    where: { userId: userA.id },
   });
   for (let i = 0; i < NOTIFICATION_TEMPLATES.length; i += 1) {
     const t = NOTIFICATION_TEMPLATES[i]!;
