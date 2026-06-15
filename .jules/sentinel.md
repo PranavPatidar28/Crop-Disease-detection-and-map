@@ -1,0 +1,4 @@
+## 2024-05-15 - Prevent Information Leakage in AllExceptionsFilter
+**Vulnerability:** The NestJS `AllExceptionsFilter` was inadvertently leaking internal stack traces/messages. For any generic `Error` object (non-`HttpException`), it was assigning `message = exception.message;` and `error = exception.name;` directly to the client's API response. This exposes internal codebase implementation details to a malicious actor.
+**Learning:** This occurred because developers wanted to view error details for debugging but unintentionally leaked them to end-users instead of just logging them to stdout.
+**Prevention:** Always log sensitive error information strictly to internal logging mechanisms (like Pino) and provide a sanitized, generic error message (e.g. "Internal server error") to the end-user API response.
