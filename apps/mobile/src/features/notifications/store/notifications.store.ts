@@ -28,9 +28,11 @@ interface PersistedShape {
 function trim(byId: Record<string, Notification>): Record<string, Notification> {
   const ids = Object.keys(byId);
   if (ids.length <= CAP) return byId;
+  // ⚡ Bolt: Use direct ISO string comparison instead of `new Date()`.
+  // Avoids repeated object allocation and speeds up the sort operation.
   const sorted = ids
     .map((id) => byId[id]!)
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    .sort((a, b) => (b.createdAt < a.createdAt ? -1 : b.createdAt > a.createdAt ? 1 : 0));
   const next: Record<string, Notification> = {};
   for (const n of sorted.slice(0, CAP)) next[n.id] = n;
   return next;

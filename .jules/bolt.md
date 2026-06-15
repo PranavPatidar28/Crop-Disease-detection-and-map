@@ -1,0 +1,3 @@
+## 2024-06-15 - Optimize ISO string comparisons in JS loops
+**Learning:** Instantiating `new Date(isoString)` inside large iteration loops (like filtering map markers or sorting thousands of cached items) adds significant object allocation and parsing overhead that can drop UI frames. Because Prisma uses standard ISO 8601 formatting (YYYY-MM-DDTHH:mm:ss.sssZ), these dates are naturally strictly lexicographically comparable as simple strings.
+**Action:** When filtering or sorting data with ISO 8601 date strings, convert the target cutoff once outside the loop into an ISO string, and use simple `>` or `<` string comparison operators instead of instantiating Date objects on every item.
