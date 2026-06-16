@@ -1,0 +1,3 @@
+## 2024-03-21 - Lexicographical ISO Date Comparisons
+**Learning:** Instantiating `new Date(isoString)` inside frontend loops (e.g., `filter`, `sort`, `reduce`) to compare backend/Prisma ISO 8601 timestamps causes significant performance bottlenecks due to object allocation and parsing overhead.
+**Action:** When filtering or sorting large arrays of objects by ISO 8601 strings, pre-compute the reference date (e.g., `cutoffIso`) outside the loop and use direct string comparison (e.g., `a.createdAt < cutoffIso` or `a.createdAt > b.createdAt ? -1 : 1`). ISO 8601 strings are strictly lexicographically sortable.
