@@ -34,7 +34,8 @@ function trimToCap(byId: Record<string, Report>, cap: number): Record<string, Re
   if (ids.length <= cap) return byId;
   const sorted = ids
     .map((id) => byId[id]!)
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    // ⚡ Bolt: Use lexicographical comparison of ISO strings instead of parsing Dates inside loop
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0));
   const kept = sorted.slice(0, cap);
   const next: Record<string, Report> = {};
   for (const r of kept) next[r.id] = r;
