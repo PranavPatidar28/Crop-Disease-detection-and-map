@@ -1,0 +1,3 @@
+## 2026-06-18 - ISO 8601 String Comparison vs Date Parsing
+**Learning:** Instantiating `new Date(isoString).getTime()` inside high-frequency `sort` or `filter` loops creates unnecessary memory allocations and is significantly slower than string comparison. Prisma's `createdAt` and `updatedAt` properties are returned as ISO 8601 strings, which are lexicographically sortable by design.
+**Action:** When filtering or sorting large arrays of items with ISO 8601 date strings on the frontend, use direct string comparison (e.g., `a.createdAt > b.createdAt`) instead of wrapping them in `new Date()`. This avoids ephemeral memory allocations and increases client-side performance, especially crucial for large datasets like live reports or notifications on low-end mobile devices.
