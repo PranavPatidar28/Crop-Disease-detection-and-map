@@ -34,7 +34,9 @@ function trimToCap(byId: Record<string, Report>, cap: number): Record<string, Re
   if (ids.length <= cap) return byId;
   const sorted = ids
     .map((id) => byId[id]!)
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    // ⚡ Bolt Optimization: Use basic operators for ISO 8601 string dates instead of parsing to Date or localeCompare
+    // Impact: Eliminates O(N log N) Date instantiations when cache trimming occurs, and avoids localeCompare overhead
+    .sort((a, b) => (b.createdAt < a.createdAt ? -1 : b.createdAt > a.createdAt ? 1 : 0));
   const kept = sorted.slice(0, cap);
   const next: Record<string, Report> = {};
   for (const r of kept) next[r.id] = r;

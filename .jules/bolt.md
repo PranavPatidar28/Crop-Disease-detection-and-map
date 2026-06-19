@@ -1,0 +1,3 @@
+## 2024-05-18 - Optimize ISO 8601 Date Filtering and Sorting
+**Learning:** Instantiating `Date` objects (e.g., `new Date(r.createdAt)`) inside filter or sort loops for large lists of records causes unnecessary memory allocation, GC pressure, and blocking of the JS thread. ISO 8601 strings sort lexicographically, so parsing them to dates or timestamps is redundant.
+**Action:** When filtering or sorting by date using ISO 8601 strings, use direct string comparison (e.g., `<`, `>`) instead of parsing strings into Date objects or using `localeCompare()`, especially in loops traversing hundreds or thousands of records. Using raw comparison operators is faster than `localeCompare` which has Unicode collation overhead.

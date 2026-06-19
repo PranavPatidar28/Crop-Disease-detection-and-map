@@ -137,8 +137,13 @@ export default function MapScreen() {
             60 *
             1000;
 
+    // ⚡ Bolt Optimization: Pre-compute the ISO string for comparison
+    // Impact: Avoids instantiating `new Date()` O(N) times inside the filter loop.
+    const cutoffIso = filters.window !== 'all' ? new Date(cutoff).toISOString() : '';
+
     return all.filter((r) => {
-      if (filters.window !== 'all' && new Date(r.createdAt).getTime() < cutoff) return false;
+      // ⚡ Bolt Optimization: Use direct string comparison for ISO 8601 strings
+      if (filters.window !== 'all' && r.createdAt < cutoffIso) return false;
       if (filters.severities.length > 0 && (!r.severity || !filters.severities.includes(r.severity))) {
         return false;
       }
