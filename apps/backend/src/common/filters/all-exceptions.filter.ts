@@ -41,8 +41,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
         error = obj.error ?? exception.name;
       }
     } else if (exception instanceof Error) {
-      message = exception.message;
-      error = exception.name;
+      // 🛡️ Security: Don't leak stack traces or internal errors to the client
+      // The original error is logged, but we send a generic message to the client
       this.logger.error(`Unhandled exception: ${exception.message}`, exception.stack);
     } else {
       this.logger.error('Unknown exception', JSON.stringify(exception));
