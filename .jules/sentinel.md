@@ -1,0 +1,4 @@
+## 2024-05-15 - Missing Rate Limiting on Authentication Endpoints
+**Vulnerability:** The application's `/auth/send-otp` and `/auth/verify-otp` endpoints were lacking rate limiting protection, making them susceptible to brute-force attacks, SMS spamming/bombing, and potential denial-of-service (DoS) attacks.
+**Learning:** We need to be careful when applying rate limiting globally via `APP_GUARD` in a NestJS application using WebSockets (`@nestjs/websockets` / `@nestjs/platform-socket.io`), as it can inadvertently block or break WebSocket connections.
+**Prevention:** Apply the `ThrottlerGuard` explicitly at the controller level (e.g., `@UseGuards(ThrottlerGuard)` on `AuthController`) rather than globally, and use `@Throttle` decorators with specific limits (like 3/min for send OTP, 5/min for verify OTP) on sensitive endpoints.
