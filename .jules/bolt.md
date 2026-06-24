@@ -1,0 +1,3 @@
+## 2025-02-20 - Fast ISO String Comparisons
+**Learning:** Comparing massive lists of records with dates (like grouping notifications or filtering reports) is slow if `new Date()` or `getTime()` is called on every iteration. Since the backend returns timestamps in ISO 8601 format, lexicographical string comparisons (`a.createdAt > b.createdAt`) achieve the exact same result but dramatically improve execution speed by skipping date parsing.
+**Action:** Always prefer direct lexicographical string comparisons using standard operators (`<`, `>`, `===`) when filtering or sorting large lists of ISO 8601 strings, pre-computing string cutoffs outside of iteration blocks.
