@@ -128,7 +128,7 @@ export default function MapScreen() {
     const all = Object.values(reportsById);
     // eslint-disable-next-line react-hooks/purity -- Date.now inside useMemo is fine; recomputes when filters change.
     const sinceMs = Date.now();
-    const cutoff =
+    const cutoffMs =
       filters.window === 'all'
         ? 0
         : sinceMs -
@@ -136,9 +136,11 @@ export default function MapScreen() {
             60 *
             60 *
             1000;
+    // ⚡ Bolt: Fast ISO 8601 string comparison avoids expensive Date parsing in tight loops
+    const cutoffIso = filters.window === 'all' ? '' : new Date(cutoffMs).toISOString();
 
     return all.filter((r) => {
-      if (filters.window !== 'all' && new Date(r.createdAt).getTime() < cutoff) return false;
+      if (filters.window !== 'all' && r.createdAt < cutoffIso) return false;
       if (filters.severities.length > 0 && (!r.severity || !filters.severities.includes(r.severity))) {
         return false;
       }

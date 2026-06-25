@@ -1,0 +1,3 @@
+## 2025-02-28 - Fast Date Sorting and Filtering in Arrays
+**Learning:** ISO 8601 strings returned by the backend can be compared lexicographically (using `<` and `>`) without converting them to Date objects. Using `new Date(string).getTime()` inside tight loops (like `array.sort()` or `array.filter()`) introduces significant CPU overhead and memory allocation for transient Date instances.
+**Action:** When filtering or sorting large lists of records by date on the frontend (e.g. notifications or reports), avoid instantiating `new Date()` inside loops. Compute the cutoff threshold as an ISO 8601 string *before* the loop, and use simple string comparison to dramatically improve performance.
