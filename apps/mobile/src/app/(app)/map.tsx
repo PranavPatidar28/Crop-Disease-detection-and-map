@@ -126,19 +126,11 @@ export default function MapScreen() {
   // that the server doesn't accept yet, plus live updates from sockets).
   const filteredReports = useMemo(() => {
     const all = Object.values(reportsById);
-    // eslint-disable-next-line react-hooks/purity -- Date.now inside useMemo is fine; recomputes when filters change.
-    const sinceMs = Date.now();
-    const cutoff =
-      filters.window === 'all'
-        ? 0
-        : sinceMs -
-          (filters.window === '24h' ? 24 : filters.window === '7d' ? 7 * 24 : 30 * 24) *
-            60 *
-            60 *
-            1000;
+    // ⚡ Bolt: Use ISO string comparison instead of `new Date()` inside loop
+    const cutoffIso = windowToSinceIso(filters.window);
 
     return all.filter((r) => {
-      if (filters.window !== 'all' && new Date(r.createdAt).getTime() < cutoff) return false;
+      if (cutoffIso && r.createdAt < cutoffIso) return false;
       if (filters.severities.length > 0 && (!r.severity || !filters.severities.includes(r.severity))) {
         return false;
       }

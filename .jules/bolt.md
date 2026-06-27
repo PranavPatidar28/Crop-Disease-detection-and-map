@@ -1,0 +1,3 @@
+## 2024-06-27 - Lexicographical ISO 8601 Timestamp Comparisons
+**Learning:** Instantiating `new Date()` or using `localeCompare` inside hot loops (like filtering or sorting thousands of map markers or notifications) introduces significant performance overhead and blocks the main thread on mobile. Since Prisma and the backend use standard ISO 8601 timestamp strings, they naturally sort lexicographically.
+**Action:** Use direct string comparison operators (`<`, `>`, `===`) on ISO 8601 strings rather than converting them to Date objects or using `localeCompare` when filtering or sorting large arrays of data.

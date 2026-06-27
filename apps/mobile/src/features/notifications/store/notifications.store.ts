@@ -30,7 +30,8 @@ function trim(byId: Record<string, Notification>): Record<string, Notification> 
   if (ids.length <= CAP) return byId;
   const sorted = ids
     .map((id) => byId[id]!)
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    // ⚡ Bolt: Use direct string comparison for ISO 8601 timestamps
+    .sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0));
   const next: Record<string, Notification> = {};
   for (const n of sorted.slice(0, CAP)) next[n.id] = n;
   return next;
