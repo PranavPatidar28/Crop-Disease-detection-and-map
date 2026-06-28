@@ -1,0 +1,3 @@
+## 2025-02-09 - Lexicographical Date String Sorting Optimization
+**Learning:** Instantiating `new Date(isoString)` in tight loops like `.filter()` or `.sort()` (which runs O(N log N)) creates significant object instantiation overhead and CPU bound Date parsing. Because Prisma returns ISO 8601 strings and ISO strings sort lexicographically the same as chronological order, we can use simple string comparisons `<` and `>` directly instead of parsing the dates.
+**Action:** Use direct string comparisons for sorting or filtering by dates returned from the API, rather than converting them into `Date` objects inside loops.
