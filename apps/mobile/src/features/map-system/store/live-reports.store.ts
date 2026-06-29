@@ -32,9 +32,13 @@ interface PersistedShape {
 function trimToCap(byId: Record<string, Report>, cap: number): Record<string, Report> {
   const ids = Object.keys(byId);
   if (ids.length <= cap) return byId;
+
+  // ⚡ Bolt: Optimize date sorting by using lexicographical string comparison
+  // instead of repeatedly parsing ISO 8601 strings into Date objects
   const sorted = ids
     .map((id) => byId[id]!)
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    .sort((a, b) => (b.createdAt > a.createdAt ? 1 : b.createdAt < a.createdAt ? -1 : 0));
+
   const kept = sorted.slice(0, cap);
   const next: Record<string, Report> = {};
   for (const r of kept) next[r.id] = r;

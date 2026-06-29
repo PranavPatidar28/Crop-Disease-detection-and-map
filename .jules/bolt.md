@@ -1,0 +1,3 @@
+## 2024-03-24 - ISO 8601 Timestamp String Comparison Optimization
+**Learning:** Instantiating `new Date(isoString).getTime()` inside loops (like `sort` or `filter` across large datasets, e.g. thousands of map reports or notifications) introduces significant overhead in JS/React Native due to date parsing. Because backend timestamps are strictly ISO 8601 (e.g. `2024-03-24T12:00:00.000Z`), they are inherently lexicographically sortable.
+**Action:** When sorting or filtering large lists of records by `createdAt` or similar ISO 8601 dates on the frontend, use direct lexicographical string comparison (`a > b ? 1 : a < b ? -1 : 0` or `r.createdAt < cutoffIso`) instead of parsing to `Date` objects to dramatically improve list processing and rendering performance.
