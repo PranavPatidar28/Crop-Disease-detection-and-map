@@ -1,0 +1,4 @@
+## 2025-01-20 - Prevent Information Leakage in Global Exception Filter
+**Vulnerability:** The global `AllExceptionsFilter` was inadvertently leaking sensitive server-side details (e.g., database connection issues, raw SQL errors, internal logic exceptions) by returning `exception.message` and `exception.name` for any generic `Error` object thrown in the application.
+**Learning:** Returning unhandled or generic internal error messages directly to the client can give an attacker valuable insights into the backend architecture, schema, or inner workings of the application. The global error handler must act as a catch-all safety net that sanitizes errors.
+**Prevention:** In global exception filters (like `AllExceptionsFilter`), ensure unhandled generic `Error` instances return a standard, non-descriptive message (e.g., "Internal server error") and error name, while retaining full logging of the actual error on the server side for debugging purposes.
