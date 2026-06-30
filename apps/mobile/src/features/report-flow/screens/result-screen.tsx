@@ -14,8 +14,11 @@ import { EngineBadge } from '../components/engine-badge';
 import { RecommendationsCard } from '../components/recommendations-card';
 import { SeverityPill } from '../components/severity-pill';
 import { ShareToggleCard } from '../components/share-toggle-card';
-import { LOW_CONFIDENCE_THRESHOLD } from '../types';
-import type { AnalysisResult, CapturedImage } from '../types';
+import {
+  LOW_CONFIDENCE_THRESHOLD,
+  type AnalysisResult,
+  type CapturedImage,
+} from '../types';
 
 interface Props {
   image: CapturedImage;
