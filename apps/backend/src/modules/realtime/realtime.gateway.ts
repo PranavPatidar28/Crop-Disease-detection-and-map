@@ -13,7 +13,7 @@ import { createWsJwtMiddleware } from './ws-jwt.middleware';
 
 @WebSocketGateway({
   cors: {
-    origin: process.env.CORS_ORIGIN ?? '*',
+    origin: process.env.CORS_ORIGIN || '',
   },
 })
 export class RealtimeGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
