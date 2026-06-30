@@ -1,3 +1,0 @@
-## 2024-06-10 - Batching DB Lookups and External API Calls
-**Learning:** Found a critical performance bottleneck in `NotificationsService.createForUsers`. While the DB insertions were batched via `createMany`, the loop dispatched push notifications one by one via `sendToUser`. This triggered an N+1 query problem against `pushToken` and caused N external HTTP requests to Expo SDK, blocking node's event loop when processing large outbreak alert fanouts.
-**Action:** When fan-outing notifications to multiple users, always pass the entire array of notifications to the push service. In the push service, extract `userId`s to query all push tokens via an `IN` clause. Map and chunk the entire payload array to optimize the external Expo API HTTP request chunks.

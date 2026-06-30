@@ -34,6 +34,7 @@ pnpm-debug.log*
 .cursor/
 .opencode/
 .superpowers/
+.jules/
 *.swp
 *.swo
 .DS_Store
