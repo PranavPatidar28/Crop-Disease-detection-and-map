@@ -136,9 +136,10 @@ export default function MapScreen() {
             60 *
             60 *
             1000;
+    const cutoffIso = cutoff > 0 ? new Date(cutoff).toISOString() : '';
 
     return all.filter((r) => {
-      if (filters.window !== 'all' && new Date(r.createdAt).getTime() < cutoff) return false;
+      if (filters.window !== 'all' && r.createdAt < cutoffIso) return false;
       if (filters.severities.length > 0 && (!r.severity || !filters.severities.includes(r.severity))) {
         return false;
       }

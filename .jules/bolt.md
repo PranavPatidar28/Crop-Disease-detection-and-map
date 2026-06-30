@@ -1,0 +1,3 @@
+## 2024-03-30 - Lexicographical Date String Comparisons
+**Learning:** Instantiating `new Date(isoString)` inside large list loops (like `.filter` or `.sort`) on the frontend is a significant performance bottleneck due to parsing overhead. Prisma backend timestamps are returned as ISO 8601 strings, which naturally sort and compare correctly using standard lexicographical string operators (`<`, `>`, `===`).
+**Action:** When filtering or sorting large arrays of items based on API timestamps on the frontend, avoid `new Date()` inside the loop. Convert the cutoff threshold to an ISO string outside the loop and use basic string comparison operators.
