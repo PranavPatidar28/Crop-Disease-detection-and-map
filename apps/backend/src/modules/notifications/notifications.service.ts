@@ -121,12 +121,10 @@ export class NotificationsService {
 
     for (const notification of created) {
       this.realtime.notificationCreated(notification.userId, notification);
-      void this.push
-        .sendToUser(notification.userId, notification)
-        .catch((err: unknown) =>
-          this.logger.warn(`Push dispatch failed for user=${notification.userId}: ${String(err)}`),
-        );
     }
+
+    // Batch Expo push notifications to avoid N+1 queries and API calls
+    void this.push.sendMultiple(created);
 
     this.logger.log(
       `Notifications dispatched: type=${template.type} severity=${template.severity ?? '-'} recipients=${created.length}`,
