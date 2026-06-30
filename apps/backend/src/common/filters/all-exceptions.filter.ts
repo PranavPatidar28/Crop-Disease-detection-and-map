@@ -41,9 +41,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
         error = obj.error ?? exception.name;
       }
     } else if (exception instanceof Error) {
-      message = 'Internal server error';
-      error = 'InternalServerError';
+      // Log the real error server-side, but never leak internal error messages
+      // (Prisma queries, connection details, invariants) to the client.
       this.logger.error(`Unhandled exception: ${exception.message}`, exception.stack);
+      // message/error stay as the generic 'Internal server error' defaults.
     } else {
       this.logger.error('Unknown exception', JSON.stringify(exception));
     }

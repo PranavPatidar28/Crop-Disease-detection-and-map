@@ -1,103 +1,69 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect } from 'react';
-import Animated, {
-  cancelAnimation,
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-} from 'react-native-reanimated';
+import { StyleSheet } from 'react-native';
 
 import { palette } from '@/theme/colors';
 import { Text, View } from '@/tw';
 import type { Severity } from '@/features/upload-report/types';
-
-/**
- * Soft Sage marker fills. Tuned for a light map background — slightly more
- * saturated than the global status tokens so dots stay readable.
- */
-const SEVERITY_FILL: Record<'LOW' | 'MEDIUM' | 'HIGH', string> = {
-  LOW: '#047857',
-  MEDIUM: '#d97706',
-  HIGH: '#dc2626',
-};
-
-function severityFill(severity: Severity | null | undefined): string {
-  const norm = (severity ?? 'LOW').toString().toUpperCase();
-  if (norm === 'HIGH') return SEVERITY_FILL.HIGH;
-  if (norm === 'MEDIUM') return SEVERITY_FILL.MEDIUM;
-  return SEVERITY_FILL.LOW;
-}
+import { mapSeverityFill } from '@/features/map-system/utils/marker-colors';
 
 interface MapMarkerProps {
   severity: Severity | null;
   cropEmoji?: string;
-  /** Pulse only on HIGH severity for performance + visual hierarchy. */
+  /** Kept for API compatibility; no longer drives animation. */
   enablePulse?: boolean;
 }
 
 /**
- * Custom severity-colored map marker. Designed to render via
- * `<Marker>`'s child renderer with `tracksViewChanges={false}` after first
- * frame so we don't rerender on every region change.
+ * Refined teardrop marker. Solid severity-colored body with a white crop emoji
+ * and a tail that points to the exact coordinate (pair with the Marker's
+ * `anchor={{ x: 0.5, y: 1 }}` so the tail tip marks the spot).
+ *
+ * No animation: react-native-maps rasterizes marker children into a one-time
+ * bitmap clipped to the view bounds. The previous scaling pulse exceeded those
+ * bounds and was clipped on zoom. Everything here sits inside a padded box, so
+ * the static first frame is the complete, correct look.
  */
-export function MapMarker({ severity, cropEmoji, enablePulse }: MapMarkerProps) {
-  const fill = severityFill(severity);
-  const pulse = useSharedValue(0);
-  const isHigh = (severity ?? '').toString().toUpperCase() === 'HIGH';
-  const shouldPulse = enablePulse && isHigh;
-
-  useEffect(() => {
-    if (!shouldPulse) return undefined;
-    pulse.value = withRepeat(
-      withTiming(1, { duration: 1600, easing: Easing.out(Easing.ease) }),
-      -1,
-      false,
-    );
-    return () => cancelAnimation(pulse);
-  }, [pulse, shouldPulse]);
-
-  const ringStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: 1 + pulse.value * 1.4 }],
-    opacity: 0.55 - pulse.value * 0.55,
-  }));
+export function MapMarker({ severity, cropEmoji }: MapMarkerProps) {
+  const fill = mapSeverityFill(severity);
+  const size = 40;
 
   return (
-    <View style={{ width: 48, height: 48, alignItems: 'center', justifyContent: 'center' }}>
-      {shouldPulse ? (
-        <Animated.View
-          style={[
-            {
-              position: 'absolute',
-              width: 36,
-              height: 36,
-              borderRadius: 18,
-              backgroundColor: fill,
-              opacity: 0.3,
-            },
-            ringStyle,
-          ]}
+    // Padding wrapper keeps body border + tail + shadow inside the bitmap bounds.
+    <View style={{ paddingTop: 6, paddingHorizontal: 6, paddingBottom: 12, alignItems: 'center' }}>
+      <View style={{ width: size, height: size }}>
+        {/* tail: rotated square peeking below the body */}
+        <View
+          style={{
+            position: 'absolute',
+            left: '50%',
+            bottom: -5,
+            width: 14,
+            height: 14,
+            marginLeft: -7,
+            borderRadius: 3,
+            backgroundColor: fill,
+            transform: [{ rotate: '45deg' }],
+          }}
         />
-      ) : null}
-      <View
-        style={{
-          width: 32,
-          height: 32,
-          borderRadius: 16,
-          backgroundColor: fill,
-          alignItems: 'center',
-          justifyContent: 'center',
-          borderWidth: 2,
-          borderColor: '#ffffff',
-          shadowColor: fill,
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.4,
-          shadowRadius: 6,
-          elevation: 6,
-        }}
-      >
-        <Text style={{ fontSize: 16 }}>{cropEmoji ?? '🌿'}</Text>
+        <View
+          style={{
+            width: size,
+            height: size,
+            borderRadius: size / 2,
+            backgroundColor: fill,
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderWidth: 2.5,
+            borderColor: '#ffffff',
+            shadowColor: '#282e26',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.32,
+            shadowRadius: 6,
+            elevation: 6,
+          }}
+        >
+          <Text style={{ fontSize: 18 }}>{cropEmoji ?? '🌿'}</Text>
+        </View>
       </View>
     </View>
   );
@@ -137,7 +103,7 @@ export function MapCluster({ count, highCount }: MapClusterProps) {
         overflow: 'hidden',
         shadowColor: shadowTint,
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.4,
+        shadowOpacity: 0.45,
         shadowRadius: 8,
         elevation: 6,
       }}
@@ -146,7 +112,7 @@ export function MapCluster({ count, highCount }: MapClusterProps) {
         colors={gradientColors}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={{ position: 'absolute', inset: 0 }}
+        style={StyleSheet.absoluteFill}
       />
       <Text style={{ fontSize, fontWeight: '700', color: '#ffffff' }}>
         {count >= 1000 ? `${Math.round(count / 100) / 10}k` : count}

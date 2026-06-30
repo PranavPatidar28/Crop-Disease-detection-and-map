@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { type ReactNode } from 'react';
-import { type ViewStyle } from 'react-native';
+import { StyleSheet, type ViewStyle } from 'react-native';
 
 import { View } from '@/tw';
 import { palette } from '@/theme/colors';
@@ -56,7 +56,7 @@ export function Card({
           colors={[`${palette.brand[400]}26`, 'transparent']}
           start={{ x: 0.1, y: 0.1 }}
           end={{ x: 0.85, y: 0.9 }}
-          style={{ position: 'absolute', inset: 0 }}
+          style={StyleSheet.absoluteFill}
         />
       ) : null}
       <View>{children}</View>

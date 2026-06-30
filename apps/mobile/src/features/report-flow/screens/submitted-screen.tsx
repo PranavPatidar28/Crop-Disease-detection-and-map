@@ -1,33 +1,36 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { Check } from 'lucide-react-native';
+import { StyleSheet } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BottomActionBar } from '@/components/layout/bottom-action-bar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { SeverityBadge } from '@/features/disease-analysis/components/severity-badge';
+import { useTranslation } from '@/i18n';
 import { palette } from '@/theme/colors';
 import { Text, View } from '@/tw';
 
-import { SeverityPill } from '../components/severity-pill';
 import type { AnalysisResult } from '../types';
 
 interface Props {
   result: AnalysisResult;
   cropType: string | null;
-  shareToMap: boolean;
   reportId: string | null;
   onAnother: () => void;
 }
 
 /**
- * Step 4 of the report flow. Confirms the submission and offers two paths
+ * Final step of the report flow. Confirms the submission and offers two paths
  * forward: open the report on the map, or kick off another report.
  */
-export function SubmittedScreen({ result, cropType, shareToMap, reportId, onAnother }: Props) {
+export function SubmittedScreen({ result, cropType, reportId, onAnother }: Props) {
+  const { t } = useTranslation();
   return (
     <View className="flex-1 bg-bg">
-      <SafeAreaView edges={['top', 'bottom']} style={{ flex: 1 }}>
+      <SafeAreaView edges={['top']} style={{ flex: 1 }}>
         <View className="flex-1 items-center justify-center gap-5 px-6">
           <Animated.View entering={FadeIn.duration(400)}>
             <View
@@ -44,7 +47,7 @@ export function SubmittedScreen({ result, cropType, shareToMap, reportId, onAnot
                 colors={[palette.brand[500], palette.brand[600]]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
-                style={{ position: 'absolute', inset: 0 }}
+                style={StyleSheet.absoluteFill}
               />
               <Check size={36} color="#ffffff" strokeWidth={2.6} />
             </View>
@@ -54,31 +57,29 @@ export function SubmittedScreen({ result, cropType, shareToMap, reportId, onAnot
             entering={FadeInDown.delay(100).duration(400)}
             className="items-center gap-1"
           >
-            <Text className="text-2xl font-extrabold tracking-tight text-text">Submitted</Text>
+            <Text className="text-2xl font-extrabold tracking-tight text-text">{t('reportFlow.submitted')}</Text>
             <Text className="text-center text-sm text-text-muted">
-              {shareToMap
-                ? 'Visible to nearby agronomists and farmers.'
-                : 'Saved to your history. Not added to the public map.'}
+              {t('reportFlow.submittedDesc')}
             </Text>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(180).duration(400)} className="self-stretch">
             <Card padding="md">
               <View className="flex-row flex-wrap items-center gap-2">
-                {result.severity ? <SeverityPill severity={result.severity} /> : null}
+                <SeverityBadge severity={result.severity} />
                 <Text className="text-sm font-bold text-text">
-                  {cropType ?? '—'} · {result.disease ?? 'Manual entry'}
+                  {cropType ?? '—'} · {result.disease ?? t('reportFlow.manualEntry')}
                 </Text>
               </View>
-              <Text className="mt-1 text-xs text-text-subtle">just now</Text>
+              <Text className="mt-1 text-xs text-text-subtle">{t('reportFlow.justNow')}</Text>
             </Card>
           </Animated.View>
         </View>
 
-        <View className="gap-2 px-4 pb-4">
-          <Button label="View on map" variant="ghost" onPress={() => router.replace('/map')} />
+        <BottomActionBar divider={false}>
+          <Button label={t('reportFlow.viewOnMap')} variant="ghost" onPress={() => router.replace('/map')} />
           <Button
-            label={reportId ? 'View this report' : 'Report another'}
+            label={reportId ? t('reportFlow.viewThisReport') : t('reportFlow.reportAnother')}
             variant="gradient"
             onPress={() =>
               reportId
@@ -86,7 +87,7 @@ export function SubmittedScreen({ result, cropType, shareToMap, reportId, onAnot
                 : onAnother()
             }
           />
-        </View>
+        </BottomActionBar>
       </SafeAreaView>
     </View>
   );

@@ -1,14 +1,18 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import { KeyboardAvoidingView, Platform } from 'react-native';
+import { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BottomActionBar } from '@/components/layout/bottom-action-bar';
+import { BackButton } from '@/components/ui/back-button';
 import { Button } from '@/components/ui/button';
+import { TextButton } from '@/components/ui/text-button';
 import { OtpInput } from '@/features/auth/components/otp-input';
 import { useSendOtp } from '@/features/auth/hooks/use-send-otp';
 import { useVerifyOtp } from '@/features/auth/hooks/use-verify-otp';
-import { Text, View } from '@/tw';
+import { useTranslation } from '@/i18n';
+import { AnimatedView, Text, View } from '@/tw';
 import { normalizeError } from '@/utils/errors';
 
 const RESEND_SECONDS = 30;
@@ -16,6 +20,7 @@ const RESEND_SECONDS = 30;
 export default function OtpScreen() {
   const params = useLocalSearchParams<{ phone?: string }>();
   const phone = params.phone ?? '';
+  const { t } = useTranslation();
   const [otp, setOtp] = useState('');
   const [error, setError] = useState<string | undefined>();
   const [secondsLeft, setSecondsLeft] = useState(RESEND_SECONDS);
@@ -32,11 +37,11 @@ export default function OtpScreen() {
   const handleSubmit = async (code = otp) => {
     setError(undefined);
     if (code.length !== 6) {
-      setError('Enter the 6-digit code');
+      setError(t('otp.errorLength'));
       return;
     }
     if (!phone) {
-      setError('Missing phone number. Please go back and try again.');
+      setError(t('otp.errorMissingPhone'));
       return;
     }
     try {
@@ -60,29 +65,22 @@ export default function OtpScreen() {
 
   return (
     <View className="flex-1 bg-bg">
-      <SafeAreaView style={{ flex: 1 }}>
+      <SafeAreaView edges={['top']} style={{ flex: 1 }}>
         <KeyboardAvoidingView
           style={{ flex: 1 }}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
           <View className="px-4 pt-3">
-            <Pressable
-              onPress={() => router.back()}
-              accessibilityRole="button"
-              accessibilityLabel="Back"
-              className="self-start"
-            >
-              <Text className="text-sm font-bold text-brand-700">‹ Back</Text>
-            </Pressable>
+            <BackButton onPress={() => router.back()} />
           </View>
 
           <View className="flex-1 items-center justify-center gap-5 px-6">
-            <Animated.View entering={FadeInDown.duration(400)} className="items-center gap-1">
+            <AnimatedView entering={FadeInDown.duration(400)} className="items-center gap-1">
               <Text className="text-2xl font-extrabold tracking-tight text-text">
-                Enter 6-digit code
+                {t('otp.title')}
               </Text>
-              <Text className="text-sm text-text-muted">Sent to +91 {phone}</Text>
-            </Animated.View>
+              <Text className="text-sm text-text-muted">{t('otp.sentTo', { phone })}</Text>
+            </AnimatedView>
 
             <OtpInput
               value={otp}
@@ -91,26 +89,23 @@ export default function OtpScreen() {
               onComplete={handleSubmit}
             />
 
-            <Pressable accessibilityRole="button" onPress={handleResend} disabled={secondsLeft > 0 || sendOtp.isPending}>
-              <Text
-                className={
-                  secondsLeft > 0
-                    ? 'text-sm font-bold text-text-faint'
-                    : 'text-sm font-bold text-brand-700'
-                }
-              >
-                {secondsLeft > 0
-                  ? `Resend in ${secondsLeft}s`
+            <TextButton
+              label={
+                secondsLeft > 0
+                  ? t('otp.resendIn', { seconds: secondsLeft })
                   : sendOtp.isPending
-                    ? 'Sending…'
-                    : 'Resend code'}
-              </Text>
-            </Pressable>
+                    ? t('otp.sending')
+                    : t('otp.resendCode')
+              }
+              onPress={handleResend}
+              disabled={secondsLeft > 0 || sendOtp.isPending}
+              className="self-center"
+            />
           </View>
 
-          <View className="gap-2 px-4 pb-6">
+          <BottomActionBar divider={false}>
             <Button
-              label={verifyOtp.isPending ? 'Verifying…' : 'Verify'}
+              label={verifyOtp.isPending ? t('otp.verifying') : t('otp.verify')}
               variant="gradient"
               size="lg"
               loading={verifyOtp.isPending}
@@ -118,9 +113,9 @@ export default function OtpScreen() {
               onPress={() => handleSubmit()}
             />
             <Text className="text-center text-xs text-text-faint">
-              Demo OTP: 123456
+              {t('otp.demoOtp')}
             </Text>
-          </View>
+          </BottomActionBar>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </View>

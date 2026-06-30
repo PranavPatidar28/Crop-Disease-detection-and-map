@@ -17,6 +17,9 @@ export function useReport(id: string | undefined) {
     queryFn: () => diseaseApi.getReport(id as string),
     enabled: !!id,
     refetchInterval: (query) => {
+      // Stop polling if the request itself keeps failing (404/403/network),
+      // otherwise we'd hammer a broken endpoint every 3s indefinitely.
+      if (query.state.status === 'error') return false;
       const status = query.state.data?.processingStatus;
       if (status === 'SUCCESS' || status === 'FAILED') return false;
       return POLL_INTERVAL_MS;

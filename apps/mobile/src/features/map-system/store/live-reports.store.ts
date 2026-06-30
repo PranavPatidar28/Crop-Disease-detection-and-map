@@ -32,9 +32,12 @@ interface PersistedShape {
 function trimToCap(byId: Record<string, Report>, cap: number): Record<string, Report> {
   const ids = Object.keys(byId);
   if (ids.length <= cap) return byId;
+
+  // ⚡ Bolt: Fast string comparison on ISO dates avoids expensive Date instantiations in tight loops
   const sorted = ids
     .map((id) => byId[id]!)
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    .sort((a, b) => (b.createdAt < a.createdAt ? -1 : b.createdAt > a.createdAt ? 1 : 0));
+
   const kept = sorted.slice(0, cap);
   const next: Record<string, Report> = {};
   for (const r of kept) next[r.id] = r;
@@ -71,9 +74,13 @@ export const useLiveReportsStore = create<LiveReportsState>((set, get) => ({
   },
 
   setMany(reports) {
-    const byId: Record<string, Report> = {};
-    for (const r of reports) byId[r.id] = r;
-    const trimmed = trimToCap(byId, get().cap);
+    // Merge into the existing map rather than replacing it. A bare replace would
+    // wipe reports delivered via `report.created` socket events (and any outside
+    // the current radius/filter) on every 30s poll or region change, making live
+    // markers flicker out. The cap trims the oldest, so the map stays bounded.
+    const merged = { ...get().byId };
+    for (const r of reports) merged[r.id] = r;
+    const trimmed = trimToCap(merged, get().cap);
     set({ byId: trimmed });
     schedulePersist({ byId: trimmed, outbreakById: get().outbreakById });
   },
@@ -91,10 +98,12 @@ export const useLiveReportsStore = create<LiveReportsState>((set, get) => ({
   },
 
   setOutbreaks(zones) {
-    const byId: Record<string, OutbreakZone> = {};
-    for (const z of zones) byId[z.id] = z;
-    set({ outbreakById: byId });
-    schedulePersist({ byId: get().byId, outbreakById: byId });
+    // Merge (see setMany) so socket-driven outbreak.created/updated zones aren't
+    // discarded by the periodic /outbreaks seed fetch.
+    const merged = { ...get().outbreakById };
+    for (const z of zones) merged[z.id] = z;
+    set({ outbreakById: merged });
+    schedulePersist({ byId: get().byId, outbreakById: merged });
   },
 
   removeOutbreak(id) {
@@ -105,6 +114,11 @@ export const useLiveReportsStore = create<LiveReportsState>((set, get) => ({
   },
 
   async clear() {
+    // Cancel any pending debounced persist so it can't resurrect cleared data.
+    if (persistTimer) {
+      clearTimeout(persistTimer);
+      persistTimer = null;
+    }
     set({ byId: {}, outbreakById: {} });
     await persistentStorage.remove(CACHE_KEYS.liveReports);
   },

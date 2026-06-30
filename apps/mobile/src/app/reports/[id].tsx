@@ -1,23 +1,31 @@
 import { router, useLocalSearchParams } from 'expo-router';
-import { ChevronLeft, MoreHorizontal, RefreshCw } from 'lucide-react-native';
-import { ScrollView } from 'react-native';
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
+import { MoreHorizontal, RefreshCw, Share2 } from 'lucide-react-native';
+import { Share, ScrollView } from 'react-native';
+import { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BackButton } from '@/components/ui/back-button';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Chip } from '@/components/ui/chip';
+import { Dropdown, type DropdownOption } from '@/components/ui/dropdown';
+import { IconButton } from '@/components/ui/icon-button';
 import { Loader } from '@/components/ui/loader';
-import { PressableScale } from '@/components/ui/pressable-scale';
 import { SectionLabel } from '@/components/ui/section-label';
+import { TextButton } from '@/components/ui/text-button';
 import { ConfidenceRing } from '@/features/disease-analysis/components/confidence-ring';
+import { DiseaseAdvisory } from '@/features/disease-analysis/components/disease-advisory';
+import { ExpertReviewCard } from '@/features/disease-analysis/components/expert-review-card';
 import { ProcessingState } from '@/features/disease-analysis/components/processing-state';
 import { RecommendationsList } from '@/features/disease-analysis/components/recommendations-list';
+import { ReportFeedback } from '@/features/disease-analysis/components/report-feedback';
 import { ResultActions } from '@/features/disease-analysis/components/result-actions';
 import { ResultHero } from '@/features/disease-analysis/components/result-hero';
 import { SeverityBadge } from '@/features/disease-analysis/components/severity-badge';
 import { useReport, useReprocessReport } from '@/features/disease-analysis/hooks/use-report';
+import { getExpertReview } from '@/features/disease-analysis/mocks/expert-review.mock';
 import { palette } from '@/theme/colors';
-import { Text, View } from '@/tw';
+import { AnimatedView, Text, View } from '@/tw';
 import { timeAgo } from '@/utils/severity';
 
 /**
@@ -34,31 +42,55 @@ export default function ReportDetailScreen() {
   const { data: report, isPending, isError, refetch } = useReport(id);
   const reprocess = useReprocessReport(id);
 
+  const shareReport = async () => {
+    if (!report) return;
+    try {
+      await Share.share({
+        message: `Crop diagnosis from AgroRadar\n\n${report.cropType} · ${
+          report.disease ?? 'unknown'
+        } (${report.confidence ?? 0}% confidence)\n\nReport ID: ${report.id}`,
+        title: 'Crop disease report',
+      });
+    } catch {
+      /* dismissed */
+    }
+  };
+
+  type MenuAction = 'share' | 'rerun';
+
+  const canReprocess = !!report && report.processingStatus !== 'PROCESSING' && !reprocess.isPending;
+
+  const menuItems: DropdownOption<MenuAction>[] = [
+    { value: 'share', label: 'Share report', icon: Share2 },
+    ...(canReprocess
+      ? [{ value: 'rerun' as const, label: 'Re-run analysis', icon: RefreshCw }]
+      : []),
+  ];
+
+  const handleMenuAction = (action: MenuAction) => {
+    if (action === 'share') void shareReport();
+    else if (action === 'rerun') reprocess.mutate();
+  };
+
   return (
     <View className="flex-1 bg-bg">
       <SafeAreaView edges={['top']} style={{ flex: 1 }}>
         <View className="flex-row items-center justify-between px-4 py-2">
-          <PressableScale
-            accessibilityRole="button"
-            accessibilityLabel="Back"
-            onPress={() => router.back()}
-            haptic="selection"
-            pressedScale={0.92}
-            className="h-10 w-10 items-center justify-center rounded-full border border-border bg-surface"
-          >
-            <ChevronLeft size={20} color={palette.brand[700]} strokeWidth={2.2} />
-          </PressableScale>
+          <BackButton onPress={() => router.back()} />
           <Text className="text-base font-bold text-text">Report</Text>
-          <PressableScale
-            accessibilityRole="button"
-            accessibilityLabel="More"
-            onPress={() => undefined}
-            haptic="selection"
-            pressedScale={0.92}
-            className="h-10 w-10 items-center justify-center rounded-full border border-border bg-surface"
-          >
-            <MoreHorizontal size={18} color={palette.brand[700]} strokeWidth={2.2} />
-          </PressableScale>
+          <Dropdown
+            mode="menu"
+            align="end"
+            items={menuItems}
+            onSelect={handleMenuAction}
+            disabled={!report}
+            trigger={
+              <IconButton
+                accessibilityLabel="More options"
+                icon={<MoreHorizontal size={18} color={palette.brand[700]} strokeWidth={2.2} />}
+              />
+            }
+          />
         </View>
 
         <ScrollView
@@ -75,20 +107,20 @@ export default function ReportDetailScreen() {
               <Button label="Retry" variant="ghost" onPress={() => refetch()} fullWidth={false} />
             </View>
           ) : report.processingStatus === 'PENDING' || report.processingStatus === 'PROCESSING' ? (
-            <Animated.View entering={FadeIn.duration(400)}>
+            <AnimatedView entering={FadeIn.duration(400)}>
               <ProcessingState imageUrl={report.imageUrl} cropType={report.cropType} />
-            </Animated.View>
+            </AnimatedView>
           ) : (
             <>
-              <Animated.View entering={FadeIn.duration(400)}>
+              <AnimatedView entering={FadeIn.duration(400)}>
                 <ResultHero
                   imageUrl={report.imageUrl}
                   cropType={report.cropType}
                   severity={report.severity}
                 />
-              </Animated.View>
+              </AnimatedView>
 
-              <Animated.View entering={FadeInDown.delay(100).duration(400)}>
+              <AnimatedView entering={FadeInDown.delay(100).duration(400)}>
                 <Card padding="md">
                   <View className="flex-row items-center gap-4">
                     <ConfidenceRing
@@ -100,9 +132,17 @@ export default function ReportDetailScreen() {
                     <View className="flex-1 gap-1">
                       <SectionLabel>Detected</SectionLabel>
                       <Text className="text-lg font-extrabold tracking-tight text-text">
-                        {report.disease ?? 'Unknown'}
+                        {report.advisory?.primaryDiagnosis.displayName ?? report.disease ?? 'Unknown'}
                       </Text>
-                      <SeverityBadge severity={report.severity} />
+                      <View className="flex-row flex-wrap items-center gap-1.5">
+                        <SeverityBadge severity={report.severity} />
+                        {report.advisory?.primaryDiagnosis.confidenceBadge ? (
+                          <Chip
+                            label={`${report.advisory.primaryDiagnosis.confidenceBadge} confidence`}
+                            tone="brand"
+                          />
+                        ) : null}
+                      </View>
                       {report.processedAt ? (
                         <Text className="mt-1 text-[11px] text-text-subtle">
                           Analyzed {timeAgo(report.processedAt)}
@@ -111,55 +151,59 @@ export default function ReportDetailScreen() {
                     </View>
                   </View>
                 </Card>
-              </Animated.View>
+              </AnimatedView>
 
               {report.notes ? (
-                <Animated.View entering={FadeInDown.delay(160).duration(400)}>
+                <AnimatedView entering={FadeInDown.delay(160).duration(400)}>
                   <Card padding="md">
                     <SectionLabel>Your notes</SectionLabel>
                     <Text className="mt-1 text-sm leading-5 text-text">{report.notes}</Text>
                   </Card>
-                </Animated.View>
+                </AnimatedView>
               ) : null}
 
-              <Animated.View entering={FadeInDown.delay(200).duration(400)} className="gap-2">
+              <AnimatedView entering={FadeInDown.delay(200).duration(400)} className="gap-2">
                 <View className="flex-row items-center justify-between px-1">
                   <Text className="text-base font-bold tracking-tight text-text">
-                    Recommended actions
+                    {report.advisory ? 'Advisory' : 'Recommended actions'}
                   </Text>
-                  <PressableScale
-                    accessibilityRole="button"
-                    accessibilityLabel="Re-run analysis"
-                    onPress={() => reprocess.mutate()}
+                  <TextButton
+                    label={reprocess.isPending ? 'Re-analyzing…' : 'Re-run'}
+                    size="sm"
                     disabled={reprocess.isPending}
-                    haptic="selection"
-                    pressedScale={0.95}
-                  >
-                    <View className="flex-row items-center gap-1">
-                      <RefreshCw size={12} color={palette.brand[700]} strokeWidth={2.4} />
-                      <Text className="text-xs font-bold text-brand-700">
-                        {reprocess.isPending ? 'Re-analyzing…' : 'Re-run'}
-                      </Text>
-                    </View>
-                  </PressableScale>
+                    leftSlot={<RefreshCw size={12} color={palette.brand[700]} strokeWidth={2.4} />}
+                    onPress={() => reprocess.mutate()}
+                  />
                 </View>
-                <RecommendationsList items={report.recommendations} />
-              </Animated.View>
+                {report.advisory ? (
+                  <DiseaseAdvisory advisory={report.advisory} />
+                ) : (
+                  <RecommendationsList items={report.recommendations} />
+                )}
+              </AnimatedView>
 
-              <Animated.View entering={FadeInDown.delay(260).duration(400)}>
+              <AnimatedView entering={FadeInDown.delay(240).duration(400)}>
+                <ExpertReviewCard review={getExpertReview(report)} />
+              </AnimatedView>
+
+              <AnimatedView entering={FadeInDown.delay(280).duration(400)}>
                 <ResultActions
                   report={report}
-                  onUploadAnother={() => router.replace('/upload')}
+                  onUploadAnother={() => router.replace('/report')}
                   onViewOnMap={() => router.push('/map')}
                 />
-              </Animated.View>
+              </AnimatedView>
 
-              <Animated.View entering={FadeInDown.delay(320).duration(400)}>
+              <AnimatedView entering={FadeInDown.delay(320).duration(400)}>
+                <ReportFeedback />
+              </AnimatedView>
+
+              <AnimatedView entering={FadeInDown.delay(360).duration(400)}>
                 <Text className="px-2 text-[11px] text-text-subtle">
                   AI predictions are advisory. For high-severity diagnoses, consult your local
                   agricultural extension officer.
                 </Text>
-              </Animated.View>
+              </AnimatedView>
             </>
           )}
         </ScrollView>

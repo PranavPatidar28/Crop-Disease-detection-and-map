@@ -19,11 +19,15 @@ let currentToken: string | null = null;
 export async function getSocket(): Promise<Socket> {
   const token = await secureStorage.get(STORAGE_KEYS.authToken);
 
-  if (socket && socket.connected && token === currentToken) {
+  // Reuse the existing socket whenever the token is unchanged — even if it's
+  // momentarily disconnected. socket.io auto-reconnects (reconnection: true),
+  // so keying reuse on `connected` would tear down a socket mid-reconnect and
+  // drop every feature listener attached by the realtime hooks.
+  if (socket && token === currentToken) {
     return socket;
   }
 
-  // Token changed (or socket dropped) — tear down before creating fresh.
+  // Token changed (or first call) — tear down any stale socket before creating fresh.
   if (socket) {
     socket.removeAllListeners();
     socket.disconnect();

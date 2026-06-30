@@ -18,7 +18,10 @@ export const envSchema = z.object({
 
   FASTAPI_URL: z.string().url().default('http://localhost:8000'),
 
-  AI_PROVIDER: z.enum(['mock', 'fastapi']).default('mock'),
+  /** Hugging Face crop-disease inference base URL (used when AI_PROVIDER=huggingface). */
+  HF_URL: z.string().url().default('https://prateek712-cpl-crop-disease-api.hf.space'),
+
+  AI_PROVIDER: z.enum(['mock', 'fastapi', 'huggingface']).default('mock'),
 
   // Outbreak engine thresholds (v7). Tunable via env without code changes.
   OUTBREAK_CREATE_THRESHOLD: z.coerce.number().int().min(2).default(5),
@@ -38,7 +41,12 @@ export const envSchema = z.object({
 
   // Demo mode (v10) — speeds up mock AI, biases outputs to severe diseases,
   // and exposes the DEMO badge on /version. Off in production.
-  DEMO_MODE: z.coerce.boolean().default(false),
+  // NOTE: do NOT use z.coerce.boolean() — it runs Boolean(value), so the
+  // string "false" coerces to `true`. Parse the literal explicitly instead.
+  DEMO_MODE: z
+    .enum(['true', 'false'])
+    .default('false')
+    .transform((v) => v === 'true'),
   GIT_SHA: z.string().optional().default('dev'),
   BUILD_TIME: z.string().optional().default(''),
 });

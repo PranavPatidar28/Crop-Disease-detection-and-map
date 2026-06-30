@@ -23,6 +23,22 @@ pnpm dev
 - `pnpm prisma:migrate` — apply migrations in dev mode
 - `pnpm prisma:studio` — open Prisma Studio
 - `pnpm lint`, `pnpm typecheck`
+- `pnpm upload:crop-images` — one-time: upload the repo-root `crop-images/` photos to
+  Cloudinary and write `src/scripts/data/crop-image-manifest.json` (+ the mobile
+  `crop-image-urls.json`). Requires `CLOUDINARY_*` env vars.
+- `pnpm seed:demo` — seed the Bhopal-region demo data (users, reports, outbreak zones).
+
+### Demo data setup
+
+Run once, in order, to get reports whose images match their crop and disease:
+
+```bash
+pnpm --filter backend upload:crop-images   # needs CLOUDINARY_* creds
+pnpm --filter backend seed:demo            # needs DATABASE_URL
+```
+
+If `upload:crop-images` hasn't been run, `seed:demo` still works — it falls back
+to placeholder images until the manifest exists.
 
 ## Endpoints
 

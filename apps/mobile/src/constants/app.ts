@@ -5,6 +5,7 @@ export const STORAGE_KEYS = {
   authToken: 'auth.token',
   authUser: 'auth.user',
   themeMode: 'theme.mode',
+  preferences: 'preferences.v1',
 } as const;
 
 export const QUERY_KEYS = {

@@ -2,7 +2,8 @@ import { ChevronRight, Layers } from 'lucide-react-native';
 import { memo } from 'react';
 
 import { PressableScale } from '@/components/ui/pressable-scale';
-import { CROP_BY_NAME } from '@/constants/crops';
+import { CROP_BY_NAME, cropDisplayName } from '@/constants/crops';
+import { useTranslation } from '@/i18n';
 import { palette } from '@/theme/colors';
 import { shadows } from '@/theme/shadows';
 import { Text, View } from '@/tw';
@@ -15,6 +16,7 @@ interface PlotCardProps {
 }
 
 function PlotCardImpl({ plot, onPress }: PlotCardProps) {
+  const { language } = useTranslation();
   return (
     <PressableScale
       accessibilityRole="button"
@@ -55,7 +57,7 @@ function PlotCardImpl({ plot, onPress }: PlotCardProps) {
                     className="rounded-full bg-brand-50 px-2 py-0.5"
                   >
                     <Text className="text-[10px] font-bold text-brand-700">
-                      {known?.emoji ?? ''} {c}
+                      {known?.emoji ?? ''} {known ? cropDisplayName(known, language) : c}
                     </Text>
                   </View>
                 );

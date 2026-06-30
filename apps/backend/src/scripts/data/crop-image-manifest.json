@@ -1,0 +1,752 @@
+{
+  "blackgram": {
+    "anthracnose": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336140/crop-disease/demo-seed/blackgram/anthracnose-0.jpg",
+        "publicId": "crop-disease/demo-seed/blackgram/anthracnose-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336142/crop-disease/demo-seed/blackgram/anthracnose-1.jpg",
+        "publicId": "crop-disease/demo-seed/blackgram/anthracnose-1"
+      }
+    ],
+    "healthy": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336143/crop-disease/demo-seed/blackgram/healthy-0.jpg",
+        "publicId": "crop-disease/demo-seed/blackgram/healthy-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336144/crop-disease/demo-seed/blackgram/healthy-1.jpg",
+        "publicId": "crop-disease/demo-seed/blackgram/healthy-1"
+      }
+    ],
+    "leaf_crinckle": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336145/crop-disease/demo-seed/blackgram/leaf_crinckle-0.jpg",
+        "publicId": "crop-disease/demo-seed/blackgram/leaf_crinckle-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336146/crop-disease/demo-seed/blackgram/leaf_crinckle-1.jpg",
+        "publicId": "crop-disease/demo-seed/blackgram/leaf_crinckle-1"
+      }
+    ],
+    "powdery_mildew": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336147/crop-disease/demo-seed/blackgram/powdery_mildew-0.jpg",
+        "publicId": "crop-disease/demo-seed/blackgram/powdery_mildew-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336148/crop-disease/demo-seed/blackgram/powdery_mildew-1.jpg",
+        "publicId": "crop-disease/demo-seed/blackgram/powdery_mildew-1"
+      }
+    ],
+    "yellow_mosaic": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336150/crop-disease/demo-seed/blackgram/yellow_mosaic-0.jpg",
+        "publicId": "crop-disease/demo-seed/blackgram/yellow_mosaic-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336151/crop-disease/demo-seed/blackgram/yellow_mosaic-1.jpg",
+        "publicId": "crop-disease/demo-seed/blackgram/yellow_mosaic-1"
+      }
+    ]
+  },
+  "brinjal": {
+    "cercospora_leaf_spot": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336152/crop-disease/demo-seed/brinjal/cercospora_leaf_spot-0.jpg",
+        "publicId": "crop-disease/demo-seed/brinjal/cercospora_leaf_spot-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336153/crop-disease/demo-seed/brinjal/cercospora_leaf_spot-1.jpg",
+        "publicId": "crop-disease/demo-seed/brinjal/cercospora_leaf_spot-1"
+      }
+    ],
+    "healthy": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336155/crop-disease/demo-seed/brinjal/healthy-0.jpg",
+        "publicId": "crop-disease/demo-seed/brinjal/healthy-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336156/crop-disease/demo-seed/brinjal/healthy-1.jpg",
+        "publicId": "crop-disease/demo-seed/brinjal/healthy-1"
+      }
+    ]
+  },
+  "cabbage": {
+    "alternaria_leaf_spot": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336157/crop-disease/demo-seed/cabbage/alternaria_leaf_spot-0.jpg",
+        "publicId": "crop-disease/demo-seed/cabbage/alternaria_leaf_spot-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336158/crop-disease/demo-seed/cabbage/alternaria_leaf_spot-1.jpg",
+        "publicId": "crop-disease/demo-seed/cabbage/alternaria_leaf_spot-1"
+      }
+    ],
+    "bacterial_spot_rot": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336159/crop-disease/demo-seed/cabbage/bacterial_spot_rot-0.jpg",
+        "publicId": "crop-disease/demo-seed/cabbage/bacterial_spot_rot-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336160/crop-disease/demo-seed/cabbage/bacterial_spot_rot-1.jpg",
+        "publicId": "crop-disease/demo-seed/cabbage/bacterial_spot_rot-1"
+      }
+    ],
+    "black_rot": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336161/crop-disease/demo-seed/cabbage/black_rot-0.jpg",
+        "publicId": "crop-disease/demo-seed/cabbage/black_rot-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336163/crop-disease/demo-seed/cabbage/black_rot-1.jpg",
+        "publicId": "crop-disease/demo-seed/cabbage/black_rot-1"
+      }
+    ],
+    "cabbage_aphid_colony": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336164/crop-disease/demo-seed/cabbage/cabbage_aphid_colony-0.jpg",
+        "publicId": "crop-disease/demo-seed/cabbage/cabbage_aphid_colony-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336165/crop-disease/demo-seed/cabbage/cabbage_aphid_colony-1.jpg",
+        "publicId": "crop-disease/demo-seed/cabbage/cabbage_aphid_colony-1"
+      }
+    ],
+    "club_root": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336166/crop-disease/demo-seed/cabbage/club_root-0.jpg",
+        "publicId": "crop-disease/demo-seed/cabbage/club_root-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336167/crop-disease/demo-seed/cabbage/club_root-1.jpg",
+        "publicId": "crop-disease/demo-seed/cabbage/club_root-1"
+      }
+    ],
+    "downy_mildew": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336169/crop-disease/demo-seed/cabbage/downy_mildew-0.jpg",
+        "publicId": "crop-disease/demo-seed/cabbage/downy_mildew-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336170/crop-disease/demo-seed/cabbage/downy_mildew-1.jpg",
+        "publicId": "crop-disease/demo-seed/cabbage/downy_mildew-1"
+      }
+    ],
+    "healthy": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336171/crop-disease/demo-seed/cabbage/healthy-0.jpg",
+        "publicId": "crop-disease/demo-seed/cabbage/healthy-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336172/crop-disease/demo-seed/cabbage/healthy-1.jpg",
+        "publicId": "crop-disease/demo-seed/cabbage/healthy-1"
+      }
+    ],
+    "ring_spot": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336173/crop-disease/demo-seed/cabbage/ring_spot-0.jpg",
+        "publicId": "crop-disease/demo-seed/cabbage/ring_spot-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336174/crop-disease/demo-seed/cabbage/ring_spot-1.jpg",
+        "publicId": "crop-disease/demo-seed/cabbage/ring_spot-1"
+      }
+    ]
+  },
+  "cauliflower": {
+    "bacterial_spot_rot": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336175/crop-disease/demo-seed/cauliflower/bacterial_spot_rot-0.jpg",
+        "publicId": "crop-disease/demo-seed/cauliflower/bacterial_spot_rot-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336176/crop-disease/demo-seed/cauliflower/bacterial_spot_rot-1.jpg",
+        "publicId": "crop-disease/demo-seed/cauliflower/bacterial_spot_rot-1"
+      }
+    ],
+    "black_rot": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336177/crop-disease/demo-seed/cauliflower/black_rot-0.jpg",
+        "publicId": "crop-disease/demo-seed/cauliflower/black_rot-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336178/crop-disease/demo-seed/cauliflower/black_rot-1.jpg",
+        "publicId": "crop-disease/demo-seed/cauliflower/black_rot-1"
+      }
+    ],
+    "downy_mildew": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336179/crop-disease/demo-seed/cauliflower/downy_mildew-0.jpg",
+        "publicId": "crop-disease/demo-seed/cauliflower/downy_mildew-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336180/crop-disease/demo-seed/cauliflower/downy_mildew-1.jpg",
+        "publicId": "crop-disease/demo-seed/cauliflower/downy_mildew-1"
+      }
+    ],
+    "healthy": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336182/crop-disease/demo-seed/cauliflower/healthy-0.jpg",
+        "publicId": "crop-disease/demo-seed/cauliflower/healthy-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336184/crop-disease/demo-seed/cauliflower/healthy-1.jpg",
+        "publicId": "crop-disease/demo-seed/cauliflower/healthy-1"
+      }
+    ]
+  },
+  "chilli": {
+    "bacterial_spot": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336185/crop-disease/demo-seed/chilli/bacterial_spot-0.jpg",
+        "publicId": "crop-disease/demo-seed/chilli/bacterial_spot-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336186/crop-disease/demo-seed/chilli/bacterial_spot-1.jpg",
+        "publicId": "crop-disease/demo-seed/chilli/bacterial_spot-1"
+      }
+    ],
+    "healthy": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336188/crop-disease/demo-seed/chilli/healthy-0.jpg",
+        "publicId": "crop-disease/demo-seed/chilli/healthy-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336189/crop-disease/demo-seed/chilli/healthy-1.jpg",
+        "publicId": "crop-disease/demo-seed/chilli/healthy-1"
+      }
+    ]
+  },
+  "cotton": {
+    "bacterial_blight": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336190/crop-disease/demo-seed/cotton/bacterial_blight-0.jpg",
+        "publicId": "crop-disease/demo-seed/cotton/bacterial_blight-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336191/crop-disease/demo-seed/cotton/bacterial_blight-1.jpg",
+        "publicId": "crop-disease/demo-seed/cotton/bacterial_blight-1"
+      }
+    ],
+    "curl_virus": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336193/crop-disease/demo-seed/cotton/curl_virus-0.jpg",
+        "publicId": "crop-disease/demo-seed/cotton/curl_virus-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336195/crop-disease/demo-seed/cotton/curl_virus-1.jpg",
+        "publicId": "crop-disease/demo-seed/cotton/curl_virus-1"
+      }
+    ],
+    "fussarium_wilt": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336196/crop-disease/demo-seed/cotton/fussarium_wilt-0.jpg",
+        "publicId": "crop-disease/demo-seed/cotton/fussarium_wilt-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336197/crop-disease/demo-seed/cotton/fussarium_wilt-1.jpg",
+        "publicId": "crop-disease/demo-seed/cotton/fussarium_wilt-1"
+      }
+    ],
+    "healthy": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336198/crop-disease/demo-seed/cotton/healthy-0.jpg",
+        "publicId": "crop-disease/demo-seed/cotton/healthy-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336199/crop-disease/demo-seed/cotton/healthy-1.jpg",
+        "publicId": "crop-disease/demo-seed/cotton/healthy-1"
+      }
+    ]
+  },
+  "groundnut": {
+    "dead_leaf": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336200/crop-disease/demo-seed/groundnut/dead_leaf-0.jpg",
+        "publicId": "crop-disease/demo-seed/groundnut/dead_leaf-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336201/crop-disease/demo-seed/groundnut/dead_leaf-1.jpg",
+        "publicId": "crop-disease/demo-seed/groundnut/dead_leaf-1"
+      }
+    ],
+    "diseased_leaf": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336202/crop-disease/demo-seed/groundnut/diseased_leaf-0.jpg",
+        "publicId": "crop-disease/demo-seed/groundnut/diseased_leaf-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336208/crop-disease/demo-seed/groundnut/diseased_leaf-1.jpg",
+        "publicId": "crop-disease/demo-seed/groundnut/diseased_leaf-1"
+      }
+    ],
+    "healthy": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336209/crop-disease/demo-seed/groundnut/healthy-0.jpg",
+        "publicId": "crop-disease/demo-seed/groundnut/healthy-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336210/crop-disease/demo-seed/groundnut/healthy-1.jpg",
+        "publicId": "crop-disease/demo-seed/groundnut/healthy-1"
+      }
+    ]
+  },
+  "maize": {
+    "blight": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336211/crop-disease/demo-seed/maize/blight-0.jpg",
+        "publicId": "crop-disease/demo-seed/maize/blight-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336212/crop-disease/demo-seed/maize/blight-1.jpg",
+        "publicId": "crop-disease/demo-seed/maize/blight-1"
+      }
+    ],
+    "common_rust": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336213/crop-disease/demo-seed/maize/common_rust-0.jpg",
+        "publicId": "crop-disease/demo-seed/maize/common_rust-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336215/crop-disease/demo-seed/maize/common_rust-1.jpg",
+        "publicId": "crop-disease/demo-seed/maize/common_rust-1"
+      }
+    ],
+    "gray_leaf_spot": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336216/crop-disease/demo-seed/maize/gray_leaf_spot-0.jpg",
+        "publicId": "crop-disease/demo-seed/maize/gray_leaf_spot-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336217/crop-disease/demo-seed/maize/gray_leaf_spot-1.jpg",
+        "publicId": "crop-disease/demo-seed/maize/gray_leaf_spot-1"
+      }
+    ],
+    "healthy": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336218/crop-disease/demo-seed/maize/healthy-0.jpg",
+        "publicId": "crop-disease/demo-seed/maize/healthy-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336219/crop-disease/demo-seed/maize/healthy-1.jpg",
+        "publicId": "crop-disease/demo-seed/maize/healthy-1"
+      }
+    ]
+  },
+  "rice": {
+    "bacterialblight": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336220/crop-disease/demo-seed/rice/bacterialblight-0.jpg",
+        "publicId": "crop-disease/demo-seed/rice/bacterialblight-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336221/crop-disease/demo-seed/rice/bacterialblight-1.jpg",
+        "publicId": "crop-disease/demo-seed/rice/bacterialblight-1"
+      }
+    ],
+    "blast": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336222/crop-disease/demo-seed/rice/blast-0.jpg",
+        "publicId": "crop-disease/demo-seed/rice/blast-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336223/crop-disease/demo-seed/rice/blast-1.jpg",
+        "publicId": "crop-disease/demo-seed/rice/blast-1"
+      }
+    ],
+    "brownspot": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336224/crop-disease/demo-seed/rice/brownspot-0.jpg",
+        "publicId": "crop-disease/demo-seed/rice/brownspot-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336225/crop-disease/demo-seed/rice/brownspot-1.jpg",
+        "publicId": "crop-disease/demo-seed/rice/brownspot-1"
+      }
+    ],
+    "tungro": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336226/crop-disease/demo-seed/rice/tungro-0.jpg",
+        "publicId": "crop-disease/demo-seed/rice/tungro-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336227/crop-disease/demo-seed/rice/tungro-1.jpg",
+        "publicId": "crop-disease/demo-seed/rice/tungro-1"
+      }
+    ]
+  },
+  "sorghum": {
+    "anthracnose_and_red_rot": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336228/crop-disease/demo-seed/sorghum/anthracnose_and_red_rot-0.jpg",
+        "publicId": "crop-disease/demo-seed/sorghum/anthracnose_and_red_rot-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336229/crop-disease/demo-seed/sorghum/anthracnose_and_red_rot-1.jpg",
+        "publicId": "crop-disease/demo-seed/sorghum/anthracnose_and_red_rot-1"
+      }
+    ],
+    "cereal_grain_molds": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336230/crop-disease/demo-seed/sorghum/cereal_grain_molds-0.jpg",
+        "publicId": "crop-disease/demo-seed/sorghum/cereal_grain_molds-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336232/crop-disease/demo-seed/sorghum/cereal_grain_molds-1.jpg",
+        "publicId": "crop-disease/demo-seed/sorghum/cereal_grain_molds-1"
+      }
+    ],
+    "covered_kernel_smut": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336233/crop-disease/demo-seed/sorghum/covered_kernel_smut-0.jpg",
+        "publicId": "crop-disease/demo-seed/sorghum/covered_kernel_smut-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336234/crop-disease/demo-seed/sorghum/covered_kernel_smut-1.jpg",
+        "publicId": "crop-disease/demo-seed/sorghum/covered_kernel_smut-1"
+      }
+    ],
+    "head_smut": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336236/crop-disease/demo-seed/sorghum/head_smut-0.jpg",
+        "publicId": "crop-disease/demo-seed/sorghum/head_smut-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336237/crop-disease/demo-seed/sorghum/head_smut-1.jpg",
+        "publicId": "crop-disease/demo-seed/sorghum/head_smut-1"
+      }
+    ],
+    "loose_smut": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336238/crop-disease/demo-seed/sorghum/loose_smut-0.jpg",
+        "publicId": "crop-disease/demo-seed/sorghum/loose_smut-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336240/crop-disease/demo-seed/sorghum/loose_smut-1.jpg",
+        "publicId": "crop-disease/demo-seed/sorghum/loose_smut-1"
+      }
+    ],
+    "rust": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336241/crop-disease/demo-seed/sorghum/rust-0.jpg",
+        "publicId": "crop-disease/demo-seed/sorghum/rust-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336242/crop-disease/demo-seed/sorghum/rust-1.jpg",
+        "publicId": "crop-disease/demo-seed/sorghum/rust-1"
+      }
+    ]
+  },
+  "soyabean": {
+    "bacterial_blight": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336243/crop-disease/demo-seed/soyabean/bacterial_blight-0.jpg",
+        "publicId": "crop-disease/demo-seed/soyabean/bacterial_blight-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336244/crop-disease/demo-seed/soyabean/bacterial_blight-1.jpg",
+        "publicId": "crop-disease/demo-seed/soyabean/bacterial_blight-1"
+      }
+    ],
+    "brown_spot": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336245/crop-disease/demo-seed/soyabean/brown_spot-0.jpg",
+        "publicId": "crop-disease/demo-seed/soyabean/brown_spot-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336246/crop-disease/demo-seed/soyabean/brown_spot-1.jpg",
+        "publicId": "crop-disease/demo-seed/soyabean/brown_spot-1"
+      }
+    ],
+    "ferrugen": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336247/crop-disease/demo-seed/soyabean/ferrugen-0.jpg",
+        "publicId": "crop-disease/demo-seed/soyabean/ferrugen-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336248/crop-disease/demo-seed/soyabean/ferrugen-1.jpg",
+        "publicId": "crop-disease/demo-seed/soyabean/ferrugen-1"
+      }
+    ],
+    "powdery_mildew": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336249/crop-disease/demo-seed/soyabean/powdery_mildew-0.jpg",
+        "publicId": "crop-disease/demo-seed/soyabean/powdery_mildew-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336250/crop-disease/demo-seed/soyabean/powdery_mildew-1.jpg",
+        "publicId": "crop-disease/demo-seed/soyabean/powdery_mildew-1"
+      }
+    ],
+    "southern_blight": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336251/crop-disease/demo-seed/soyabean/southern_blight-0.jpg",
+        "publicId": "crop-disease/demo-seed/soyabean/southern_blight-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336252/crop-disease/demo-seed/soyabean/southern_blight-1.jpg",
+        "publicId": "crop-disease/demo-seed/soyabean/southern_blight-1"
+      }
+    ],
+    "sudden_death_syndrone": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336253/crop-disease/demo-seed/soyabean/sudden_death_syndrone-0.jpg",
+        "publicId": "crop-disease/demo-seed/soyabean/sudden_death_syndrone-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336254/crop-disease/demo-seed/soyabean/sudden_death_syndrone-1.jpg",
+        "publicId": "crop-disease/demo-seed/soyabean/sudden_death_syndrone-1"
+      }
+    ],
+    "yellow_mosaic": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336255/crop-disease/demo-seed/soyabean/yellow_mosaic-0.jpg",
+        "publicId": "crop-disease/demo-seed/soyabean/yellow_mosaic-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336256/crop-disease/demo-seed/soyabean/yellow_mosaic-1.jpg",
+        "publicId": "crop-disease/demo-seed/soyabean/yellow_mosaic-1"
+      }
+    ]
+  },
+  "sugarcane": {
+    "healthy": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336257/crop-disease/demo-seed/sugarcane/healthy-0.jpg",
+        "publicId": "crop-disease/demo-seed/sugarcane/healthy-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336258/crop-disease/demo-seed/sugarcane/healthy-1.jpg",
+        "publicId": "crop-disease/demo-seed/sugarcane/healthy-1"
+      }
+    ],
+    "mosaic": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336259/crop-disease/demo-seed/sugarcane/mosaic-0.jpg",
+        "publicId": "crop-disease/demo-seed/sugarcane/mosaic-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336261/crop-disease/demo-seed/sugarcane/mosaic-1.jpg",
+        "publicId": "crop-disease/demo-seed/sugarcane/mosaic-1"
+      }
+    ],
+    "redrot": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336262/crop-disease/demo-seed/sugarcane/redrot-0.jpg",
+        "publicId": "crop-disease/demo-seed/sugarcane/redrot-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336262/crop-disease/demo-seed/sugarcane/redrot-1.jpg",
+        "publicId": "crop-disease/demo-seed/sugarcane/redrot-1"
+      }
+    ],
+    "rust": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336264/crop-disease/demo-seed/sugarcane/rust-0.jpg",
+        "publicId": "crop-disease/demo-seed/sugarcane/rust-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336265/crop-disease/demo-seed/sugarcane/rust-1.jpg",
+        "publicId": "crop-disease/demo-seed/sugarcane/rust-1"
+      }
+    ],
+    "yellow": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336266/crop-disease/demo-seed/sugarcane/yellow-0.jpg",
+        "publicId": "crop-disease/demo-seed/sugarcane/yellow-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336267/crop-disease/demo-seed/sugarcane/yellow-1.jpg",
+        "publicId": "crop-disease/demo-seed/sugarcane/yellow-1"
+      }
+    ]
+  },
+  "sunflower": {
+    "downy_mildew": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336268/crop-disease/demo-seed/sunflower/downy_mildew-0.jpg",
+        "publicId": "crop-disease/demo-seed/sunflower/downy_mildew-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336269/crop-disease/demo-seed/sunflower/downy_mildew-1.jpg",
+        "publicId": "crop-disease/demo-seed/sunflower/downy_mildew-1"
+      }
+    ],
+    "gray_mold": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336270/crop-disease/demo-seed/sunflower/gray_mold-0.jpg",
+        "publicId": "crop-disease/demo-seed/sunflower/gray_mold-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336272/crop-disease/demo-seed/sunflower/gray_mold-1.jpg",
+        "publicId": "crop-disease/demo-seed/sunflower/gray_mold-1"
+      }
+    ],
+    "healthy": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336273/crop-disease/demo-seed/sunflower/healthy-0.jpg",
+        "publicId": "crop-disease/demo-seed/sunflower/healthy-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336275/crop-disease/demo-seed/sunflower/healthy-1.jpg",
+        "publicId": "crop-disease/demo-seed/sunflower/healthy-1"
+      }
+    ],
+    "leaf_scars": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336276/crop-disease/demo-seed/sunflower/leaf_scars-0.jpg",
+        "publicId": "crop-disease/demo-seed/sunflower/leaf_scars-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336277/crop-disease/demo-seed/sunflower/leaf_scars-1.jpg",
+        "publicId": "crop-disease/demo-seed/sunflower/leaf_scars-1"
+      }
+    ]
+  },
+  "tomato": {
+    "bacterial_spot": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336278/crop-disease/demo-seed/tomato/bacterial_spot-0.jpg",
+        "publicId": "crop-disease/demo-seed/tomato/bacterial_spot-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336279/crop-disease/demo-seed/tomato/bacterial_spot-1.jpg",
+        "publicId": "crop-disease/demo-seed/tomato/bacterial_spot-1"
+      }
+    ],
+    "early_blight": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336279/crop-disease/demo-seed/tomato/early_blight-0.jpg",
+        "publicId": "crop-disease/demo-seed/tomato/early_blight-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336281/crop-disease/demo-seed/tomato/early_blight-1.jpg",
+        "publicId": "crop-disease/demo-seed/tomato/early_blight-1"
+      }
+    ],
+    "healthy": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336282/crop-disease/demo-seed/tomato/healthy-0.jpg",
+        "publicId": "crop-disease/demo-seed/tomato/healthy-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336283/crop-disease/demo-seed/tomato/healthy-1.jpg",
+        "publicId": "crop-disease/demo-seed/tomato/healthy-1"
+      }
+    ],
+    "late_blight": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336283/crop-disease/demo-seed/tomato/late_blight-0.jpg",
+        "publicId": "crop-disease/demo-seed/tomato/late_blight-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336284/crop-disease/demo-seed/tomato/late_blight-1.jpg",
+        "publicId": "crop-disease/demo-seed/tomato/late_blight-1"
+      }
+    ],
+    "leaf_mold": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336285/crop-disease/demo-seed/tomato/leaf_mold-0.jpg",
+        "publicId": "crop-disease/demo-seed/tomato/leaf_mold-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336286/crop-disease/demo-seed/tomato/leaf_mold-1.jpg",
+        "publicId": "crop-disease/demo-seed/tomato/leaf_mold-1"
+      }
+    ],
+    "powdery_mildew": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336287/crop-disease/demo-seed/tomato/powdery_mildew-0.jpg",
+        "publicId": "crop-disease/demo-seed/tomato/powdery_mildew-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336288/crop-disease/demo-seed/tomato/powdery_mildew-1.jpg",
+        "publicId": "crop-disease/demo-seed/tomato/powdery_mildew-1"
+      }
+    ],
+    "septoria_leaf_spot": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336289/crop-disease/demo-seed/tomato/septoria_leaf_spot-0.jpg",
+        "publicId": "crop-disease/demo-seed/tomato/septoria_leaf_spot-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336290/crop-disease/demo-seed/tomato/septoria_leaf_spot-1.jpg",
+        "publicId": "crop-disease/demo-seed/tomato/septoria_leaf_spot-1"
+      }
+    ],
+    "spider_mites_two_spotted_spider_mite": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336291/crop-disease/demo-seed/tomato/spider_mites_two_spotted_spider_mite-0.jpg",
+        "publicId": "crop-disease/demo-seed/tomato/spider_mites_two_spotted_spider_mite-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336292/crop-disease/demo-seed/tomato/spider_mites_two_spotted_spider_mite-1.jpg",
+        "publicId": "crop-disease/demo-seed/tomato/spider_mites_two_spotted_spider_mite-1"
+      }
+    ],
+    "target_spot": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336293/crop-disease/demo-seed/tomato/target_spot-0.jpg",
+        "publicId": "crop-disease/demo-seed/tomato/target_spot-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336293/crop-disease/demo-seed/tomato/target_spot-1.jpg",
+        "publicId": "crop-disease/demo-seed/tomato/target_spot-1"
+      }
+    ],
+    "tomato_mosaic_virus": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336295/crop-disease/demo-seed/tomato/tomato_mosaic_virus-0.jpg",
+        "publicId": "crop-disease/demo-seed/tomato/tomato_mosaic_virus-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336295/crop-disease/demo-seed/tomato/tomato_mosaic_virus-1.jpg",
+        "publicId": "crop-disease/demo-seed/tomato/tomato_mosaic_virus-1"
+      }
+    ],
+    "tomato_yellow_leaf_curl_virus": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336296/crop-disease/demo-seed/tomato/tomato_yellow_leaf_curl_virus-0.jpg",
+        "publicId": "crop-disease/demo-seed/tomato/tomato_yellow_leaf_curl_virus-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336297/crop-disease/demo-seed/tomato/tomato_yellow_leaf_curl_virus-1.jpg",
+        "publicId": "crop-disease/demo-seed/tomato/tomato_yellow_leaf_curl_virus-1"
+      }
+    ]
+  },
+  "wheat": {
+    "healthy": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336298/crop-disease/demo-seed/wheat/healthy-0.jpg",
+        "publicId": "crop-disease/demo-seed/wheat/healthy-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336299/crop-disease/demo-seed/wheat/healthy-1.jpg",
+        "publicId": "crop-disease/demo-seed/wheat/healthy-1"
+      }
+    ],
+    "septoria": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336300/crop-disease/demo-seed/wheat/septoria-0.jpg",
+        "publicId": "crop-disease/demo-seed/wheat/septoria-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336301/crop-disease/demo-seed/wheat/septoria-1.jpg",
+        "publicId": "crop-disease/demo-seed/wheat/septoria-1"
+      }
+    ],
+    "stripe_rust": [
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336302/crop-disease/demo-seed/wheat/stripe_rust-0.jpg",
+        "publicId": "crop-disease/demo-seed/wheat/stripe_rust-0"
+      },
+      {
+        "url": "https://res.cloudinary.com/djbc9uuo0/image/upload/v1781336303/crop-disease/demo-seed/wheat/stripe_rust-1.jpg",
+        "publicId": "crop-disease/demo-seed/wheat/stripe_rust-1"
+      }
+    ]
+  }
+}

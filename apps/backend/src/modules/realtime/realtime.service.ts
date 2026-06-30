@@ -4,6 +4,30 @@ import type { Notification, OutbreakZone, Report } from '@prisma/client';
 import { RealtimeGateway } from './realtime.gateway';
 
 /**
+ * Map-safe view of a Report for global broadcast. `report.created` goes to every
+ * connected client, so it must not leak per-farmer PII — `notes`, `userId`,
+ * `imagePublicId`, and `aiError` are deliberately omitted (mirrors the
+ * `/reports/nearby` redaction).
+ */
+function toMapSafeReport(report: Report) {
+  return {
+    id: report.id,
+    cropType: report.cropType,
+    imageUrl: report.imageUrl,
+    latitude: report.latitude,
+    longitude: report.longitude,
+    disease: report.disease,
+    confidence: report.confidence,
+    severity: report.severity,
+    recommendations: report.recommendations,
+    processingStatus: report.processingStatus,
+    processedAt: report.processedAt,
+    createdAt: report.createdAt,
+    updatedAt: report.updatedAt,
+  };
+}
+
+/**
  * Server-side emit helpers. Imported by ReportsProcessor / OutbreakProcessor /
  * NotificationsService to broadcast realtime events without coupling them to
  * Socket.IO directly.
@@ -20,7 +44,7 @@ export class RealtimeService {
   constructor(private readonly gateway: RealtimeGateway) {}
 
   reportCreated(report: Report): void {
-    this.gateway.server.emit('report.created', { report });
+    this.gateway.server.emit('report.created', { report: toMapSafeReport(report) });
     this.tickMap();
   }
 

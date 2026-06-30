@@ -72,17 +72,30 @@ export function regionToZoom(region: MapRegion): number {
   return Math.max(0, Math.min(20, Math.round(Math.log2(360 / region.longitudeDelta))));
 }
 
+/**
+ * Inverse of regionToZoom: the longitudeDelta a given zoom level corresponds to.
+ * Used to animate the camera to a cluster's expansion zoom precisely, instead of
+ * a hardcoded power-of-two factor that over/undershoots at different scales.
+ */
+export function zoomToLongitudeDelta(zoom: number): number {
+  return 360 / Math.pow(2, Math.max(0, Math.min(20, zoom)));
+}
+
+const clamp = (value: number, min: number, max: number) => Math.max(min, Math.min(max, value));
+
 export function getClusters(
   index: Supercluster<ReportPointProps, ClusterAccumProps>,
   region: MapRegion,
 ): AnyFeature[] {
   const lngHalf = region.longitudeDelta / 2;
   const latHalf = region.latitudeDelta / 2;
+  // Clamp to valid WGS84 ranges so a wide/edge region doesn't pass an invalid
+  // bbox (e.g. lat beyond ±90) into supercluster.
   const bbox: [number, number, number, number] = [
-    region.longitude - lngHalf,
-    region.latitude - latHalf,
-    region.longitude + lngHalf,
-    region.latitude + latHalf,
+    clamp(region.longitude - lngHalf, -180, 180),
+    clamp(region.latitude - latHalf, -90, 90),
+    clamp(region.longitude + lngHalf, -180, 180),
+    clamp(region.latitude + latHalf, -90, 90),
   ];
   const zoom = regionToZoom(region);
   return index.getClusters(bbox, zoom) as AnyFeature[];

@@ -1,64 +1,76 @@
-import { Search, SlidersHorizontal } from 'lucide-react-native';
-import { Pressable } from 'react-native';
+import { Search, X } from 'lucide-react-native';
+import { useState } from 'react';
+import { Pressable, TextInput } from 'react-native';
 
-import { ConnectionPill } from '@/features/map-system/components/connection-pill';
-import { Text, View } from '@/tw';
-import { palette } from '@/theme/colors';
+import { SurfaceCard } from '@/features/map-system/components/surface-card';
+import { useTranslation } from '@/i18n';
+import { lightColors, palette } from '@/theme/colors';
 
 interface MapSearchBarProps {
-  isConnected: boolean;
-  reportCount: number;
-  onPressSearch: () => void;
-  onPressFilter: () => void;
+  value: string;
+  onChangeText: (value: string) => void;
 }
 
 /**
- * The Map screen's top bar. A faux search field on the left (taps open the
- * filter sheet for now) plus a dedicated filter button on the right.
- * The connection pill lives inside the search field's right edge.
+ * The Map screen's top search bar — a solid white card with a live text field
+ * that filters the visible report markers by crop or disease name. The
+ * connection/count pill now lives on the filter chip rail below, so the field
+ * stays focused on search alone.
  */
-export function MapSearchBar({
-  isConnected,
-  reportCount,
-  onPressSearch,
-  onPressFilter,
-}: MapSearchBarProps) {
+export function MapSearchBar({ value, onChangeText }: MapSearchBarProps) {
+  const { t } = useTranslation();
+  const [focused, setFocused] = useState(false);
+
   return (
-    <View className="flex-row items-center gap-2">
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Search area or crop"
-        onPress={onPressSearch}
-        className="flex-1 flex-row items-center gap-2 rounded-xl border border-border bg-surface px-3 py-2.5"
+    <SurfaceCard
+      radius={18}
+      style={{
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        paddingHorizontal: 14,
+        height: 52,
+        borderColor: focused ? palette.brand[400] : lightColors.border,
+        borderWidth: focused ? 1.5 : 1,
+      }}
+    >
+      <Search size={18} color={palette.brand[700]} strokeWidth={2.2} />
+      <TextInput
+        value={value}
+        onChangeText={onChangeText}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        placeholder={t('search.cropOrDiseaseEllipsis')}
+        placeholderTextColor={palette.brand[400]}
+        returnKeyType="search"
+        autoCorrect={false}
+        accessibilityLabel={t('search.mapAccessibility')}
         style={{
-          shadowColor: '#0f172a',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.08,
-          shadowRadius: 12,
-          elevation: 4,
+          flex: 1,
+          fontSize: 16,
+          fontWeight: '500',
+          color: palette.brand[900],
+          padding: 0,
         }}
-      >
-        <Search size={16} color={palette.brand[700]} strokeWidth={2.2} />
-        <Text className="flex-1 text-sm font-medium text-text-faint" numberOfLines={1}>
-          Search area or crop…
-        </Text>
-        <ConnectionPill isConnected={isConnected} reportCount={reportCount} />
-      </Pressable>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Open filters"
-        onPress={onPressFilter}
-        className="h-11 w-11 items-center justify-center rounded-xl border border-border bg-surface"
-        style={{
-          shadowColor: '#0f172a',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.08,
-          shadowRadius: 12,
-          elevation: 4,
-        }}
-      >
-        <SlidersHorizontal size={18} color={palette.brand[700]} strokeWidth={2.2} />
-      </Pressable>
-    </View>
+      />
+      {value.length > 0 ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('common.clearSearch')}
+          hitSlop={8}
+          onPress={() => onChangeText('')}
+          style={{
+            width: 24,
+            height: 24,
+            borderRadius: 12,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: lightColors.surfaceMuted,
+          }}
+        >
+          <X size={15} color={palette.brand[600]} strokeWidth={2.4} />
+        </Pressable>
+      ) : null}
+    </SurfaceCard>
   );
 }

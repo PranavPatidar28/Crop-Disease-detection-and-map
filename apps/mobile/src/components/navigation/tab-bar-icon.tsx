@@ -1,6 +1,6 @@
-import { Bell, House, Map, Plus, User } from 'lucide-react-native';
+import { Bell, ClipboardList, House, Map, Plus, User } from 'lucide-react-native';
 
-export type TabIconName = 'house' | 'map' | 'plus' | 'bell' | 'user';
+export type TabIconName = 'house' | 'map' | 'plus' | 'bell' | 'user' | 'reports';
 
 interface TabBarIconProps {
   name: TabIconName;
@@ -15,6 +15,7 @@ const ICONS: Record<TabIconName, typeof House> = {
   plus: Plus,
   bell: Bell,
   user: User,
+  reports: ClipboardList,
 };
 
 export function TabBarIcon({ name, focused, color, size = 24 }: TabBarIconProps) {

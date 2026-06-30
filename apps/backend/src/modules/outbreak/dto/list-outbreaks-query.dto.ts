@@ -1,10 +1,13 @@
 import { Severity } from '@prisma/client';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { IsBoolean, IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class ListOutbreaksQueryDto {
+  // NOTE: do NOT use @Type(() => Boolean) — it runs Boolean(value), so the
+  // query string "false" coerces to `true` and inactive zones can never be
+  // queried. Transform the literal explicitly instead.
   @IsOptional()
-  @Type(() => Boolean)
+  @Transform(({ value }) => value === true || value === 'true')
   @IsBoolean()
   active: boolean = true;
 

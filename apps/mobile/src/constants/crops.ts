@@ -38,9 +38,52 @@ export const CROPS: Crop[] = [
   { id: 'tea', name: 'Tea', emoji: '🍵', category: 'beverage' },
 ];
 
+/**
+ * Hindi display names, keyed by the stable crop `id`. Display-only — the
+ * canonical `name` above is still what gets stored in report.cropType and used
+ * for filtering, so this layer never affects data or lookups.
+ */
+export const CROP_NAME_HI: Record<string, string> = {
+  tomato: 'टमाटर',
+  potato: 'आलू',
+  onion: 'प्याज़',
+  chili: 'मिर्च',
+  cabbage: 'पत्ता गोभी',
+  cauliflower: 'फूलगोभी',
+  brinjal: 'बैंगन',
+  okra: 'भिंडी',
+  rice: 'धान',
+  wheat: 'गेहूँ',
+  maize: 'मक्का',
+  bajra: 'बाजरा',
+  jowar: 'ज्वार',
+  soybean: 'सोयाबीन',
+  groundnut: 'मूंगफली',
+  mustard: 'सरसों',
+  cotton: 'कपास',
+  sugarcane: 'गन्ना',
+  banana: 'केला',
+  mango: 'आम',
+  grape: 'अंगूर',
+  apple: 'सेब',
+  pomegranate: 'अनार',
+  coffee: 'कॉफ़ी',
+  tea: 'चाय',
+};
+
 export const CROP_BY_ID = Object.fromEntries(CROPS.map((c) => [c.id, c]));
 export const CROP_BY_NAME = Object.fromEntries(CROPS.map((c) => [c.name.toLowerCase(), c]));
 
 export function findCropByName(name: string): Crop | undefined {
   return CROP_BY_NAME[name.toLowerCase()];
+}
+
+/**
+ * Localized display name for a crop. Falls back to the canonical English
+ * `name` for any language without a translation. Display-only — never use the
+ * result as a stored value or lookup key.
+ */
+export function cropDisplayName(crop: Crop, language: string): string {
+  if (language === 'hi') return CROP_NAME_HI[crop.id] ?? crop.name;
+  return crop.name;
 }

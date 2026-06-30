@@ -14,7 +14,12 @@ import type { User } from '@prisma/client';
 
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
 
-import { ListNotificationsQueryDto, RegisterPushTokenDto, UpdatePreferencesDto } from './dto';
+import {
+  ListNotificationsQueryDto,
+  RegisterPushTokenDto,
+  RevokePushTokenDto,
+  UpdatePreferencesDto,
+} from './dto';
 import { NotificationPreferencesService } from './notification-preferences.service';
 import { NotificationsService } from './notifications.service';
 import { PushTokenService } from './push-token.service';
@@ -65,7 +70,7 @@ export class NotificationsController {
 
   @Delete('users/me/push-token')
   @HttpCode(HttpStatus.OK)
-  async revokePushToken(@CurrentUser() user: User, @Body() dto: { token: string }) {
+  async revokePushToken(@CurrentUser() user: User, @Body() dto: RevokePushTokenDto) {
     await this.pushTokens.revoke(user.id, dto.token);
     return { ok: true };
   }

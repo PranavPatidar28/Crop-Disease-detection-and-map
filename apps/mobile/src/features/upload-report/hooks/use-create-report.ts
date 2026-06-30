@@ -2,14 +2,20 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 
 import { useAuthStore } from '@/store/auth.store';
 
 import { cloudinaryApi } from '../api/cloudinary.api';
 import { reportsApi } from '../api/reports.api';
 import { useOfflineQueueStore } from '../store/offline-queue.store';
-import type { PickedImage, Report, ReportDraft, ReportLocation, Severity, UploadState } from '../types';
+import type {
+  DiagnosisPayload,
+  PickedImage,
+  Report,
+  ReportDraft,
+  ReportLocation,
+  UploadState,
+} from '../types';
 import { compressImage } from '../utils/compress-image';
 import { copyToUploadsDir, deleteLocalFile } from '../utils/file-storage';
 
@@ -21,12 +27,13 @@ interface CreateReportInput {
   location: { latitude: number; longitude: number; manual?: boolean };
   /** When true, skip the network and enqueue offline. */
   forceOffline?: boolean;
-  /** Optional pre-diagnosed disease (e.g., from cloud/on-device AI in the report flow). */
-  diseaseHint?: string;
-  /** Optional pre-diagnosed severity. */
-  severityHint?: Severity;
-  /** When false, the report is created privately and not added to the public outbreak map. */
-  shareToMap?: boolean;
+  /** Pre-computed diagnosis from the capture→review flow. */
+  diagnosis?: DiagnosisPayload;
+  /**
+   * Image already uploaded to Cloudinary by the flow (the analyze step). When
+   * present, the upload step is skipped and these are sent directly.
+   */
+  preUploaded?: { imageUrl: string; imagePublicId: string };
   /**
    * When true, the hook does not auto-navigate on success — the caller
    * (e.g., the report-flow state machine) will handle navigation itself.
@@ -46,6 +53,17 @@ interface UseCreateReportResult {
 
 function makeId(): string {
   return `r_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+// RFC4122 v4 UUID generated in pure JS. Used only as an idempotency key, so it
+// does not need to be cryptographically secure (avoids the native ExpoCrypto
+// module, which would require a dev-client rebuild).
+function generateUuid(): string {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
 }
 
 export function useCreateReport(): UseCreateReportResult {
@@ -96,7 +114,7 @@ export function useCreateReport(): UseCreateReportResult {
       const itemId = makeId();
       // Idempotency key reused for the entire lifecycle of this draft so the
       // backend dedupes if we retry from the offline queue.
-      const clientId = uuidv4();
+      const clientId = generateUuid();
       let persistentUri: string;
       try {
         persistentUri = copyToUploadsDir(compressedUri, itemId);
@@ -117,6 +135,7 @@ export function useCreateReport(): UseCreateReportResult {
         location: reportLocation,
         localImageUri: persistentUri,
         clientId,
+        diagnosis: input.diagnosis,
       };
 
       if (input.forceOffline) {
@@ -131,24 +150,34 @@ export function useCreateReport(): UseCreateReportResult {
         return undefined;
       }
 
-      // Step 2 — upload to Cloudinary
+      // Step 2 — upload to Cloudinary (skipped when the flow already uploaded it)
       setState('uploading');
-      let uploadResult;
-      try {
-        const sig = await cloudinaryApi.getSignature();
-        uploadResult = await cloudinaryApi.uploadImage(persistentUri, sig, (p) => setProgress(p));
-      } catch (err) {
-        // Network or Cloudinary failure → enqueue for offline retry
-        await enqueue({
-          id: itemId,
-          draft,
-          status: 'pending',
-          attempts: 0,
-          lastError: (err as Error).message,
-          createdAt: new Date().toISOString(),
-        });
-        setState('queued-offline');
-        return undefined;
+      let imageUrl: string;
+      let imagePublicId: string;
+      if (input.preUploaded) {
+        imageUrl = input.preUploaded.imageUrl;
+        imagePublicId = input.preUploaded.imagePublicId;
+      } else {
+        try {
+          const sig = await cloudinaryApi.getSignature();
+          const uploadResult = await cloudinaryApi.uploadImage(persistentUri, sig, (p) =>
+            setProgress(p),
+          );
+          imageUrl = uploadResult.secure_url;
+          imagePublicId = uploadResult.public_id;
+        } catch (err) {
+          // Network or Cloudinary failure → enqueue for offline retry
+          await enqueue({
+            id: itemId,
+            draft,
+            status: 'pending',
+            attempts: 0,
+            lastError: (err as Error).message,
+            createdAt: new Date().toISOString(),
+          });
+          setState('queued-offline');
+          return undefined;
+        }
       }
 
       // Step 3 — backend report creation
@@ -157,17 +186,16 @@ export function useCreateReport(): UseCreateReportResult {
         const created = await reportsApi.create({
           clientId: draft.clientId,
           cropType: draft.cropTypeName,
-          imageUrl: uploadResult.secure_url,
-          imagePublicId: uploadResult.public_id,
+          imageUrl,
+          imagePublicId,
           notes: draft.notes,
           latitude: draft.location.latitude,
           longitude: draft.location.longitude,
-          // Pass through report-flow hints. The backend may ignore unknown
-          // fields today; this is a best-effort propagation so the diagnosis
-          // surfaces as soon as the API supports it.
-          diseaseHint: input.diseaseHint,
-          severityHint: input.severityHint,
-          shareToMap: input.shareToMap,
+          disease: input.diagnosis?.disease,
+          confidence: input.diagnosis?.confidence,
+          severity: input.diagnosis?.severity,
+          advisory: input.diagnosis?.advisory,
+          engine: input.diagnosis?.engine,
         });
         setResult(created);
         setState('success');
@@ -196,6 +224,10 @@ export function useCreateReport(): UseCreateReportResult {
           attempts: 0,
           lastError: (err as Error).message,
           createdAt: new Date().toISOString(),
+          // Carry the already-uploaded asset so the drainer reuses it instead of
+          // re-uploading localImageUri (which would orphan/duplicate the asset).
+          uploadedImageUrl: imageUrl,
+          uploadedPublicId: imagePublicId,
         });
         setState('queued-offline');
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(
