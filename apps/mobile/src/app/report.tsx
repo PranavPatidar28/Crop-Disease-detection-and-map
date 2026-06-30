@@ -34,7 +34,13 @@ export default function ReportScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally only re-runs on a new GPS fix
   }, [locationCtl.location]);
 
-  const submitting = flow.create.state === 'uploading' || flow.create.state === 'processing';
+  // Covers the whole submit lifecycle (compress → upload → backend create) so
+  // the Confirm button is disabled + shows loading for the entire duration —
+  // 'compressing' was previously excluded, leaving a tappable window.
+  const submitting =
+    flow.create.state === 'compressing' ||
+    flow.create.state === 'uploading' ||
+    flow.create.state === 'processing';
 
   let body: React.ReactNode = null;
   switch (flow.state.step) {
@@ -42,7 +48,11 @@ export default function ReportScreen() {
       body = <CaptureScreen onCaptured={flow.setImage} onCancel={flow.reset} />;
       break;
     case 'analyzing':
-      body = flow.state.image ? <AnalyzingScreen image={flow.state.image} /> : <View className="flex-1 bg-bg" />;
+      body = flow.state.image ? (
+        <AnalyzingScreen image={flow.state.image} />
+      ) : (
+        <View className="flex-1 bg-bg" />
+      );
       break;
     case 'retake':
       body =

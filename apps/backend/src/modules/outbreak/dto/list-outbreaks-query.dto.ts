@@ -1,6 +1,15 @@
 import { Severity } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
-import { IsBoolean, IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import {
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsISO8601,
+  IsOptional,
+  IsString,
+  Max,
+  Min,
+} from 'class-validator';
 
 export class ListOutbreaksQueryDto {
   // NOTE: do NOT use @Type(() => Boolean) — it runs Boolean(value), so the
@@ -21,7 +30,7 @@ export class ListOutbreaksQueryDto {
 
   /** Reports created on or after this ISO timestamp. Default: 30d ago. */
   @IsOptional()
-  @IsString()
+  @IsISO8601()
   since?: string;
 
   @IsOptional()

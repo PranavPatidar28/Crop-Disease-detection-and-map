@@ -14,7 +14,7 @@ export function PendingUploadsSection() {
   const theme = useTheme();
   const items = useOfflineQueueStore((s) => s.items);
   const remove = useOfflineQueueStore((s) => s.remove);
-  const update = useOfflineQueueStore((s) => s.update);
+  const retry = useOfflineQueueStore((s) => s.retry);
 
   if (items.length === 0) return null;
 
@@ -64,11 +64,7 @@ export function PendingUploadsSection() {
                   accessibilityRole="button"
                   accessibilityLabel="Retry"
                   onPress={() => {
-                    void update(item.id, {
-                      status: 'pending',
-                      attempts: 0,
-                      nextAttemptAt: undefined,
-                    });
+                    void retry(item.id);
                   }}
                   className="h-9 w-9 items-center justify-center rounded-xl bg-surface"
                 >

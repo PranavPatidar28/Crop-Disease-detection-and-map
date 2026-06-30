@@ -75,15 +75,26 @@ export class PlotsService {
 
     // Reactivating a soft-deleted plot must respect the active-plot cap —
     // otherwise a user could soft-delete plots and PATCH active:true to exceed it.
+    // The count check and the update run in one Serializable transaction so
+    // concurrent reactivations can't both pass the check (mirrors create()).
     if (dto.active === true && !existing.active) {
-      const activeCount = await this.prisma.plot.count({
-        where: { userId, active: true },
-      });
-      if (activeCount >= this.maxPlotsPerUser) {
-        throw new BadRequestException(
-          `Plot limit reached (${this.maxPlotsPerUser}). Remove an existing plot to reactivate this one.`,
-        );
-      }
+      return this.prisma.$transaction(
+        async (tx) => {
+          const activeCount = await tx.plot.count({
+            where: { userId, active: true },
+          });
+          if (activeCount >= this.maxPlotsPerUser) {
+            throw new BadRequestException(
+              `Plot limit reached (${this.maxPlotsPerUser}). Remove an existing plot to reactivate this one.`,
+            );
+          }
+          return tx.plot.update({
+            where: { id },
+            data: { ...dto },
+          });
+        },
+        { isolationLevel: 'Serializable' },
+      );
     }
 
     return this.prisma.plot.update({

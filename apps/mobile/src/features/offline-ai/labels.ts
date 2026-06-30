@@ -39,10 +39,7 @@ export interface Prediction {
  * Convert a 139-vector of softmax probabilities into the top-k named
  * predictions, sorted by descending confidence. `topK` defaults to 3.
  */
-export function topKPredictions(
-  probs: Float32Array | number[],
-  topK = 3,
-): Prediction[] {
+export function topKPredictions(probs: Float32Array | number[], topK = 3): Prediction[] {
   const indexed: [number, number][] = [];
   for (let i = 0; i < probs.length; i++) {
     indexed.push([i, probs[i] as number]);
@@ -72,10 +69,7 @@ export function topKPredictions(
 export function isHealthyLabel(diseaseSegment: string): boolean {
   const d = diseaseSegment.toLowerCase();
   return (
-    d.includes('healthy') ||
-    d.includes('fresh leaf') ||
-    d.includes('fresh_leaf') ||
-    d === 'onion1'
+    d.includes('healthy') || d.includes('fresh leaf') || d.includes('fresh_leaf') || d === 'onion1'
   );
 }
 
@@ -90,10 +84,12 @@ export function prettyDisease(crop: string, diseaseSegment: string): string {
 
   // Drop a leading "Crop___" prefix some labels carry (e.g. tomato classes).
   d = d.replace(/^[A-Za-z]+___/, '');
+  // Strip trailing dataset artefacts like "-D"/"-P"/"_D" BEFORE normalising
+  // underscores — otherwise "Alternaria_D" becomes "Alternaria D" and the
+  // separator+capital pattern no longer matches, leaving a stray "D".
+  d = d.replace(/[-_][A-Z]$/, '');
   // Underscores / triple-underscores -> spaces.
   d = d.replace(/_+/g, ' ');
-  // Trailing dataset artefacts like a stray "t" or "-D"/"-P" suffixes.
-  d = d.replace(/-[A-Z]$/, '').trim();
   // Collapse whitespace.
   d = d.replace(/\s+/g, ' ').trim();
 

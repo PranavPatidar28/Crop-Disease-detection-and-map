@@ -21,7 +21,6 @@ export function useRealtimeReports(): void {
   const { socket } = useSocket();
   const upsertReport = useLiveReportsStore((s) => s.upsertReport);
   const upsertOutbreak = useLiveReportsStore((s) => s.upsertOutbreak);
-  const removeOutbreak = useLiveReportsStore((s) => s.removeOutbreak);
 
   useEffect(() => {
     if (!socket) return undefined;
@@ -36,10 +35,11 @@ export function useRealtimeReports(): void {
       if (payload?.zone) upsertOutbreak(payload.zone);
     };
     const onOutbreakResolved = (payload: OutbreakPayload) => {
-      // For resolved outbreaks: keep the row but mark inactive so the UI can
-      // animate its removal. The store handles persistence via upsert; we
-      // delete from the active map.
-      if (payload?.zone) removeOutbreak(payload.zone.id);
+      // The backend emits the resolved zone with `active: false`. Upsert it
+      // (rather than deleting) so the map's `showResolved` filter can decide
+      // whether to dim or hide it. Deleting here would yank a just-resolved
+      // outbreak off the map even when the user has "Show resolved" enabled.
+      if (payload?.zone) upsertOutbreak(payload.zone);
     };
 
     socket.on('report.created', onReportCreated);
@@ -53,5 +53,5 @@ export function useRealtimeReports(): void {
       socket.off('outbreak.updated', onOutbreakUpdated);
       socket.off('outbreak.resolved', onOutbreakResolved);
     };
-  }, [socket, upsertReport, upsertOutbreak, removeOutbreak]);
+  }, [socket, upsertReport, upsertOutbreak]);
 }

@@ -33,11 +33,19 @@ export class PushService {
 
     const userIds = Array.from(new Set(notifications.map((n) => n.userId)));
 
-    // Batch DB query to avoid N+1
-    const userTokens = await this.prisma.pushToken.findMany({
-      where: { userId: { in: userIds } },
-      select: { userId: true, token: true },
-    });
+    // Batch DB query to avoid N+1. Guarded: a transient DB failure here must
+    // fail soft (the in-app rows + WS events already landed), never propagate
+    // out of this fire-and-forget path and crash the process.
+    let userTokens: Array<{ userId: string; token: string }>;
+    try {
+      userTokens = await this.prisma.pushToken.findMany({
+        where: { userId: { in: userIds } },
+        select: { userId: true, token: true },
+      });
+    } catch (err) {
+      this.logger.warn(`Push token lookup failed: ${(err as Error).message}`);
+      return;
+    }
 
     if (userTokens.length === 0) return;
 

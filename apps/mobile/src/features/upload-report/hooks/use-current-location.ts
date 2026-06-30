@@ -9,7 +9,8 @@ interface UseCurrentLocationResult {
   location: ReportLocation | null;
   status: Status;
   errorMessage: string | null;
-  refresh: () => Promise<void>;
+  /** Resolves to the freshly-fetched location, or null on denied/error. */
+  refresh: () => Promise<ReportLocation | null>;
   setManual: (lat: number, lng: number) => void;
 }
 
@@ -18,29 +19,34 @@ export function useCurrentLocation(autoFetch = true): UseCurrentLocationResult {
   const [status, setStatus] = useState<Status>('idle');
   const [errorMessage, setError] = useState<string | null>(null);
 
-  const refresh = useCallback(async () => {
+  const refresh = useCallback(async (): Promise<ReportLocation | null> => {
     setError(null);
     setStatus('requesting');
     const perm = await Location.requestForegroundPermissionsAsync();
     if (!perm.granted) {
       setStatus('denied');
       setError('Location permission was denied. You can pick the location on the map instead.');
-      return;
+      return null;
     }
     setStatus('fetching');
     try {
       const result = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
       });
-      setLocation({
+      const next: ReportLocation = {
         latitude: result.coords.latitude,
         longitude: result.coords.longitude,
         manual: false,
-      });
+      };
+      setLocation(next);
       setStatus('ready');
+      // Return the value too: callers that act on the fix right after awaiting
+      // can't read it off `location` (that's the stale render closure).
+      return next;
     } catch (err) {
       setStatus('error');
       setError((err as Error).message ?? 'Failed to get location');
+      return null;
     }
   }, []);
 

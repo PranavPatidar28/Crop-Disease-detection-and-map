@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios, { AxiosError, type AxiosInstance } from 'axios';
 
+import { assertPublicHttpUrl } from '@/common/utils/ssrf';
 import type { Env } from '@/config/env.schema';
 
 import type { AnalysisRequest, AnalysisResult } from '../dto/analysis-result';
@@ -143,11 +144,16 @@ export class HfCropDiseaseClient implements AiClient {
   }
 
   async downloadImage(url: string): Promise<{ bytes: Buffer; contentType: string }> {
+    // SSRF guard: the URL is client-supplied (report.imageUrl / analyze DTO), so
+    // reject anything resolving to a private/reserved host before fetching, and
+    // disable redirects so a public host can't 3xx us into an internal target.
+    await assertPublicHttpUrl(url);
     const res = await axios.get<ArrayBuffer>(url, {
       responseType: 'arraybuffer',
       timeout: DOWNLOAD_TIMEOUT_MS,
       maxContentLength: MAX_IMAGE_BYTES,
       maxBodyLength: MAX_IMAGE_BYTES,
+      maxRedirects: 0,
     });
     const bytes = Buffer.from(res.data);
     const contentType =

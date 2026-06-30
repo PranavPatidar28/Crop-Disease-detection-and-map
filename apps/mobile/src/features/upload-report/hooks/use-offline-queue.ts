@@ -21,6 +21,7 @@ import { backoffDelayMs, MAX_QUEUE_ATTEMPTS } from '../utils/upload-states';
 export function useOfflineQueue(enabled: boolean): void {
   const items = useOfflineQueueStore((s) => s.items);
   const isHydrated = useOfflineQueueStore((s) => s.isHydrated);
+  const retryNonce = useOfflineQueueStore((s) => s.retryNonce);
   const update = useOfflineQueueStore((s) => s.update);
   const remove = useOfflineQueueStore((s) => s.remove);
   const queryClient = useQueryClient();
@@ -55,10 +56,7 @@ export function useOfflineQueue(enabled: boolean): void {
       const waiting = useOfflineQueueStore
         .getState()
         .items.filter(
-          (i) =>
-            i.status !== 'failed' &&
-            i.nextAttemptAt != null &&
-            i.nextAttemptAt > now,
+          (i) => i.status !== 'failed' && i.nextAttemptAt != null && i.nextAttemptAt > now,
         );
       if (waiting.length === 0) return;
       const soonest = Math.min(...waiting.map((i) => i.nextAttemptAt as number));
@@ -119,7 +117,7 @@ export function useOfflineQueue(enabled: boolean): void {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, isHydrated, items.length]);
+  }, [enabled, isHydrated, items.length, retryNonce]);
 }
 
 async function processItem(
@@ -175,9 +173,13 @@ async function processItem(
     const attempts = item.attempts + 1;
     const reachedCap = attempts >= MAX_QUEUE_ATTEMPTS;
     const error = (err as Error).message ?? 'Unknown error';
-    // Once an item is permanently failed it will never drain again, so free its
-    // persistent local copy now rather than leaking it in documentDirectory.
-    if (reachedCap) deleteLocalFile(item.draft.localImageUri);
+    // At cap we'd normally free the local copy. But only do so if the image
+    // already made it to Cloudinary (uploadedImageUrl set) — otherwise the
+    // on-device file is the SOLE copy of the photo, and deleting it while the
+    // UI still offers a Retry would lose the report permanently and make every
+    // retry fail on a missing file. Keep it so Retry can re-upload.
+    const hasRemoteCopy = Boolean(item.uploadedImageUrl);
+    if (reachedCap && hasRemoteCopy) deleteLocalFile(item.draft.localImageUri);
     await update(item.id, {
       status: reachedCap ? 'failed' : 'pending',
       attempts,
