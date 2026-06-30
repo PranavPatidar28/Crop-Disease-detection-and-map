@@ -54,7 +54,7 @@ export function useUserLocation(enabled = true): UseUserLocationResult {
         longitude: initial.coords.longitude,
       });
 
-      subRef.current = await Location.watchPositionAsync(
+      const sub = await Location.watchPositionAsync(
         {
           accuracy: Location.Accuracy.Balanced,
           timeInterval: 30_000,
@@ -67,6 +67,15 @@ export function useUserLocation(enabled = true): UseUserLocationResult {
           });
         },
       );
+      // The effect may have been torn down while watchPositionAsync was in
+      // flight; the cleanup already ran with subRef still null, so this
+      // subscription would leak (GPS stays active, setState on unmounted
+      // component). Remove it immediately instead of storing it.
+      if (cancelled) {
+        sub.remove();
+        return;
+      }
+      subRef.current = sub;
     })();
 
     return () => {

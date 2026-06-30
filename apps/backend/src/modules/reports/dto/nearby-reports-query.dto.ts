@@ -3,6 +3,7 @@ import { Type } from 'class-transformer';
 import {
   IsEnum,
   IsInt,
+  IsISO8601,
   IsLatitude,
   IsLongitude,
   IsNumber,
@@ -54,6 +55,6 @@ export class NearbyReportsQueryDto {
 
   /** Reports created on or after this ISO timestamp. */
   @IsOptional()
-  @IsString()
+  @IsISO8601()
   since?: string;
 }

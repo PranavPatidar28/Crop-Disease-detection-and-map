@@ -101,6 +101,11 @@ export function useReportFlow() {
   const create = useCreateReport();
   // Monotonic token so a slow analysis can't dispatch onto a fresh capture.
   const runTokenRef = useRef(0);
+  // Re-entry guard for submit(): the Confirm button is tappable during the
+  // 'compressing' phase (not covered by the screen's `submitting` flag), so a
+  // double-tap could fire two create.submit() calls with different clientIds and
+  // create duplicate reports. This guard collapses concurrent calls into one.
+  const submittingRef = useRef(false);
 
   const runOnDevice = useCallback(
     async (image: CapturedImage, isStale: () => boolean): Promise<void> => {
@@ -226,18 +231,24 @@ export function useReportFlow() {
 
   const submit = useCallback(async () => {
     if (!state.image || !state.location || !state.result) return;
-    const cropType = state.cropType ?? state.result.detectedCrop ?? 'Unknown';
-    const reportId = await create.submit({
-      picked: { uri: state.image.uri, width: state.image.width, height: state.image.height },
-      cropTypeId: cropType,
-      cropTypeName: cropType,
-      notes: state.notes.trim() || undefined,
-      location: state.location,
-      diagnosis: toDiagnosis(state.result),
-      preUploaded: state.uploaded ?? undefined,
-      skipNavigation: true,
-    });
-    if (reportId) dispatch({ type: 'SET_SUBMITTED', reportId });
+    if (submittingRef.current) return; // collapse double-taps into one report
+    submittingRef.current = true;
+    try {
+      const cropType = state.cropType ?? state.result.detectedCrop ?? 'Unknown';
+      const reportId = await create.submit({
+        picked: { uri: state.image.uri, width: state.image.width, height: state.image.height },
+        cropTypeId: cropType,
+        cropTypeName: cropType,
+        notes: state.notes.trim() || undefined,
+        location: state.location,
+        diagnosis: toDiagnosis(state.result),
+        preUploaded: state.uploaded ?? undefined,
+        skipNavigation: true,
+      });
+      if (reportId) dispatch({ type: 'SET_SUBMITTED', reportId });
+    } finally {
+      submittingRef.current = false;
+    }
   }, [state, create]);
 
   return {

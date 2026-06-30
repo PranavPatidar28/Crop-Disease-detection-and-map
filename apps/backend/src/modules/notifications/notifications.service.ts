@@ -46,8 +46,13 @@ export class NotificationsService {
 
     let nextCursor: string | null = null;
     if (items.length > options.limit) {
-      const overflow = items.pop();
-      if (overflow) nextCursor = overflow.id;
+      // Drop the look-ahead overflow row, then page from the LAST RETURNED row.
+      // The next query applies `skip: 1` to the cursor, so using the overflow
+      // row here would skip a row that was never returned (silent data loss —
+      // one notification dropped at every page boundary).
+      items.pop();
+      const last = items[items.length - 1];
+      if (last) nextCursor = last.id;
     }
 
     const unreadCount = await this.prisma.notification.count({
@@ -123,8 +128,13 @@ export class NotificationsService {
       this.realtime.notificationCreated(notification.userId, notification);
     }
 
-    // Batch Expo push notifications to avoid N+1 queries and API calls
-    void this.push.sendMultiple(created);
+    // Batch Expo push notifications to avoid N+1 queries and API calls.
+    // Fire-and-forget by design (push must never block/await the in-app rows),
+    // but guard the floating promise: an unhandled rejection here would crash
+    // the process and drop every WS connection.
+    void this.push.sendMultiple(created).catch((err: unknown) => {
+      this.logger.warn(`Push dispatch failed: ${(err as Error).message}`);
+    });
 
     this.logger.log(
       `Notifications dispatched: type=${template.type} severity=${template.severity ?? '-'} recipients=${created.length}`,

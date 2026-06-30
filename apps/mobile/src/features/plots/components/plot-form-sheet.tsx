@@ -64,20 +64,15 @@ export const PlotFormSheet = forwardRef<BottomSheetModal, PlotFormSheetProps>(
     };
 
     const handleUseGps = async () => {
-      await locationCtl.refresh();
-      if (locationCtl.location) {
-        setCoords({ lat: locationCtl.location.latitude, lng: locationCtl.location.longitude });
+      // Use the value returned by refresh() — reading locationCtl.location here
+      // would read the stale render closure (state hasn't updated yet after the
+      // await), so in edit mode (coords already set) the fix would be silently
+      // dropped and the old coordinates saved.
+      const fix = await locationCtl.refresh();
+      if (fix) {
+        setCoords({ lat: fix.latitude, lng: fix.longitude });
       }
     };
-
-    // If location resolves after refresh
-    useEffect(() => {
-      if (locationCtl.location && !coords) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        setCoords({ lat: locationCtl.location.latitude, lng: locationCtl.location.longitude });
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [locationCtl.location]);
 
     const toggleCrop = (cropName: string) => {
       setCrops((prev) =>
@@ -140,20 +135,13 @@ export const PlotFormSheet = forwardRef<BottomSheetModal, PlotFormSheetProps>(
         }}
         handleIndicatorStyle={{ backgroundColor: '#e8e4dc', width: 36 }}
         backdropComponent={(props) => (
-          <BottomSheetBackdrop
-            {...props}
-            disappearsOnIndex={-1}
-            appearsOnIndex={0}
-            opacity={0.5}
-          />
+          <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} opacity={0.5} />
         )}
         keyboardBehavior="interactive"
         keyboardBlurBehavior="restore"
       >
         <View className="flex-row items-center justify-between px-5 pb-3 pt-1">
-          <Text className="text-xl font-bold text-text">
-            {isEdit ? 'Edit plot' : 'Add a plot'}
-          </Text>
+          <Text className="text-xl font-bold text-text">{isEdit ? 'Edit plot' : 'Add a plot'}</Text>
           <IconButton
             accessibilityLabel="Close"
             icon={<X size={18} color={theme.text} strokeWidth={2} />}
@@ -194,16 +182,9 @@ export const PlotFormSheet = forwardRef<BottomSheetModal, PlotFormSheetProps>(
                     size="sm"
                     onPress={handleUseGps}
                     disabled={
-                      locationCtl.status === 'fetching' ||
-                      locationCtl.status === 'requesting'
+                      locationCtl.status === 'fetching' || locationCtl.status === 'requesting'
                     }
-                    leftSlot={
-                      <Crosshair
-                        size={14}
-                        color={theme.text}
-                        strokeWidth={2.2}
-                      />
-                    }
+                    leftSlot={<Crosshair size={14} color={theme.text} strokeWidth={2.2} />}
                   />
                 </View>
                 <View className="flex-1">
@@ -212,13 +193,7 @@ export const PlotFormSheet = forwardRef<BottomSheetModal, PlotFormSheetProps>(
                     variant="ghost"
                     size="sm"
                     onPress={() => onOpenMapPicker?.(coords)}
-                    leftSlot={
-                      <MapPin
-                        size={14}
-                        color={palette.brand[600]}
-                        strokeWidth={2.2}
-                      />
-                    }
+                    leftSlot={<MapPin size={14} color={palette.brand[600]} strokeWidth={2.2} />}
                   />
                 </View>
               </View>
@@ -255,7 +230,9 @@ export const PlotFormSheet = forwardRef<BottomSheetModal, PlotFormSheetProps>(
               haptic="medium"
               pressedScale={0.92}
             >
-              <View className={`h-12 w-12 items-center justify-center rounded-xl border border-danger-tint bg-danger-tint ${remove.isPending ? 'opacity-50' : ''}`}>
+              <View
+                className={`h-12 w-12 items-center justify-center rounded-xl border border-danger-tint bg-danger-tint ${remove.isPending ? 'opacity-50' : ''}`}
+              >
                 <Trash2 size={16} color={theme.danger} strokeWidth={2.2} />
               </View>
             </PressableScale>

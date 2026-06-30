@@ -61,5 +61,15 @@ export const validateEnv = (config: Record<string, unknown>): Env => {
       .join('\n');
     throw new Error(`Invalid environment variables:\n${formatted}`);
   }
+
+  // An empty CORS_ORIGIN makes the `cors` lib emit `Access-Control-Allow-Origin: *`,
+  // silently disabling the origin allowlist. Tolerable in dev/test, but a
+  // misconfiguration in production — fail fast rather than ship a wildcard.
+  if (parsed.data.NODE_ENV === 'production' && parsed.data.CORS_ORIGIN.trim() === '') {
+    throw new Error(
+      'Invalid environment variables:\n  - CORS_ORIGIN: must be set in production (empty value allows all origins)',
+    );
+  }
+
   return parsed.data;
 };

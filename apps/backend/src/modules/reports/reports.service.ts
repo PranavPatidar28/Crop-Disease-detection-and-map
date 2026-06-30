@@ -13,7 +13,7 @@ import { CreateReportDto, ListReportsQueryDto, NearbyReportsQueryDto, ReportScop
 import { ReportsProcessor } from './reports.processor';
 
 export interface PaginatedReports {
-  items: Report[];
+  items: Array<Report | NearbyReport>;
   nextCursor: string | null;
 }
 
@@ -48,6 +48,27 @@ export type NearbyReport = Pick<
   | 'createdAt'
   | 'updatedAt'
 >;
+
+/**
+ * Prisma `select` matching {@link NearbyReport}. Shared by every cross-user feed
+ * (`/reports/nearby`, `/reports?scope=all`) so PII columns (`notes`, `userId`,
+ * `imagePublicId`, `aiError`) can never leak across farmers.
+ */
+const NEARBY_REPORT_SELECT = {
+  id: true,
+  cropType: true,
+  imageUrl: true,
+  latitude: true,
+  longitude: true,
+  disease: true,
+  confidence: true,
+  severity: true,
+  recommendations: true,
+  processingStatus: true,
+  processedAt: true,
+  createdAt: true,
+  updatedAt: true,
+} satisfies Prisma.ReportSelect;
 
 export interface NearbyReportsResult {
   items: NearbyReport[];
@@ -135,19 +156,39 @@ export class ReportsService {
   }
 
   async list(userId: string, query: ListReportsQueryDto): Promise<PaginatedReports> {
-    const where: Prisma.ReportWhereInput = query.scope === ReportScope.Mine ? { userId } : {};
+    const isMine = query.scope === ReportScope.Mine;
+    const cursor = query.cursor ? { id: query.cursor } : undefined;
+    const skip = query.cursor ? 1 : undefined;
 
-    const items = await this.prisma.report.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      take: query.limit + 1,
-      ...(query.cursor ? { cursor: { id: query.cursor }, skip: 1 } : {}),
-    });
+    // `scope=all` spans every user's reports, so it must NOT leak per-farmer PII
+    // (notes, userId, imagePublicId, aiError) — return the same map-safe
+    // projection as `/reports/nearby`. `scope=mine` returns the caller's own
+    // full rows, which is safe. Two explicit queries keep Prisma's row types sound.
+    const items: Array<Report | NearbyReport> = isMine
+      ? await this.prisma.report.findMany({
+          where: { userId },
+          orderBy: { createdAt: 'desc' },
+          take: query.limit + 1,
+          cursor,
+          skip,
+        })
+      : await this.prisma.report.findMany({
+          where: {},
+          orderBy: { createdAt: 'desc' },
+          take: query.limit + 1,
+          cursor,
+          skip,
+          select: NEARBY_REPORT_SELECT,
+        });
 
     let nextCursor: string | null = null;
     if (items.length > query.limit) {
-      const overflow = items.pop();
-      if (overflow) nextCursor = overflow.id;
+      // Drop the look-ahead overflow row, then page from the LAST RETURNED row.
+      // The next query applies `skip: 1` to the cursor, so using the overflow
+      // row here would skip a row that was never returned (silent data loss).
+      items.pop();
+      const last = items[items.length - 1];
+      if (last) nextCursor = last.id;
     }
 
     return { items, nextCursor };
@@ -208,21 +249,7 @@ export class ReportsService {
       take: Math.min(query.limit * 3, 1500),
       // Map-safe projection only — never expose other farmers' notes, userId,
       // imagePublicId, or aiError on the public nearby feed.
-      select: {
-        id: true,
-        cropType: true,
-        imageUrl: true,
-        latitude: true,
-        longitude: true,
-        disease: true,
-        confidence: true,
-        severity: true,
-        recommendations: true,
-        processingStatus: true,
-        processedAt: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      select: NEARBY_REPORT_SELECT,
     });
 
     const items = candidates

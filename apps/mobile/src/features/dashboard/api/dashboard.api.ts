@@ -40,6 +40,10 @@ export const dashboardApi = {
           ...summary,
           activeOutbreaks: zones.length,
           highSeverityZones: zones.filter((z) => z.severity === 'HIGH').length,
+          // No real "reports this week" aggregation endpoint yet — once live
+          // data overrides the mock summary, don't surface the mock's bogus
+          // "+47 new" pill. Zero it until a real source lands (v8+).
+          reportsThisWeek: 0,
         };
       }
     } catch {

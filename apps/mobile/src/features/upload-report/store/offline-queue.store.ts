@@ -9,12 +9,17 @@ const STORAGE_KEY = 'upload.queue.v1';
 interface OfflineQueueState {
   items: QueueItem[];
   isHydrated: boolean;
+  /** Bumped by manual "Retry" so the drainer (which keys on items.length) wakes
+   * even though a retry only mutates item content, not the array length. */
+  retryNonce: number;
 
   hydrate: () => Promise<void>;
   enqueue: (item: QueueItem) => Promise<void>;
   remove: (id: string) => Promise<void>;
   update: (id: string, patch: Partial<QueueItem>) => Promise<void>;
   clearFailed: () => Promise<void>;
+  /** Resets one failed item to pending and triggers an immediate drain. */
+  retry: (id: string) => Promise<void>;
   /** Resets cooldown + failed status on every queue item so the next drainer
    * pass picks them up immediately. Used by the manual "Retry now" button. */
   retryAll: () => Promise<void>;
@@ -27,6 +32,7 @@ async function persist(items: QueueItem[]): Promise<void> {
 export const useOfflineQueueStore = create<OfflineQueueState>((set, get) => ({
   items: [],
   isHydrated: false,
+  retryNonce: 0,
 
   async hydrate() {
     if (get().isHydrated) return;
@@ -79,6 +85,26 @@ export const useOfflineQueueStore = create<OfflineQueueState>((set, get) => ({
     await persist(next);
   },
 
+  async retry(id) {
+    const next = get().items.map((it) =>
+      it.id === id
+        ? {
+            ...it,
+            status: 'pending' as const,
+            attempts: 0,
+            nextAttemptAt: undefined,
+            lastError: undefined,
+          }
+        : it,
+    );
+    // Bump the nonce so the drainer effect (keyed on items.length + retryNonce)
+    // re-runs — update() alone changes content but not length, so the drain
+    // would otherwise never fire while already online and the item would hang
+    // on "Queued" forever.
+    set({ items: next, retryNonce: get().retryNonce + 1 });
+    await persist(next);
+  },
+
   async retryAll() {
     const next = get().items.map((it) => ({
       ...it,
@@ -87,7 +113,7 @@ export const useOfflineQueueStore = create<OfflineQueueState>((set, get) => ({
       nextAttemptAt: undefined,
       lastError: undefined,
     }));
-    set({ items: next });
+    set({ items: next, retryNonce: get().retryNonce + 1 });
     await persist(next);
   },
 }));

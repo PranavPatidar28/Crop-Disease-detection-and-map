@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 
 import { STORAGE_KEYS } from '@/constants';
+import { useNotificationsStore } from '@/features/notifications/store/notifications.store';
+import { queryClient } from '@/providers/query-provider';
 import { asyncStorage } from '@/services/storage/async';
 import { secureStorage } from '@/services/storage/secure';
 import { disconnectSocket } from '@/services/socket';
@@ -47,6 +49,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       asyncStorage.remove(STORAGE_KEYS.authUser),
     ]);
     disconnectSocket();
+    // Clear the previous account's data so it can't leak to the next user on a
+    // shared device: the persisted React Query cache (profile, reports, etc.)
+    // and the notifications store (feed + unread badge) both outlive the token.
+    queryClient.clear();
+    void useNotificationsStore.getState().reset();
     set({ user: null, token: null, isAuthenticated: false });
   },
 

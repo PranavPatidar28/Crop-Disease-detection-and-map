@@ -18,6 +18,7 @@ interface NotificationsState {
   markAllRead: () => Promise<void>;
   remove: (id: string) => Promise<void>;
   setUnreadCount: (count: number) => void;
+  reset: () => Promise<void>;
 }
 
 interface PersistedShape {
@@ -105,12 +106,28 @@ export const useNotificationsStore = create<NotificationsState>((set, get) => ({
     const removed = get().byId[id];
     const next = { ...get().byId };
     delete next[id];
-    const unread = removed && !removed.read ? Math.max(0, get().unreadCount - 1) : get().unreadCount;
+    const unread =
+      removed && !removed.read ? Math.max(0, get().unreadCount - 1) : get().unreadCount;
     set({ byId: next, unreadCount: unread });
     await persist({ byId: next, unreadCount: unread });
   },
 
   setUnreadCount(count) {
     set({ unreadCount: count });
+  },
+
+  /**
+   * Clears all in-memory + persisted notification state. Called on logout so
+   * the next account on this device can't see the previous user's notifications
+   * or inherit their unread badge count. Keeps isHydrated true (we're already
+   * initialized) so the next user's feed populates from the server.
+   */
+  async reset() {
+    set({ byId: {}, unreadCount: 0 });
+    try {
+      await AsyncStorage.removeItem(STORAGE_KEY);
+    } catch {
+      /* ignore */
+    }
   },
 }));

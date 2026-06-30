@@ -2,7 +2,7 @@ import { createAsyncStoragePersister } from '@tanstack/query-async-storage-persi
 import { focusManager, QueryClient } from '@tanstack/react-query';
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { AppState, AppStateStatus, Platform } from 'react-native';
 
 function onAppStateChange(status: AppStateStatus) {
@@ -33,6 +33,13 @@ const createClient = () =>
     },
   });
 
+/**
+ * Module-singleton QueryClient. Exposed so non-React code (e.g. the auth store's
+ * logout()) can clear the cache without a hook — preventing one account's cached
+ * data from leaking to the next user on a shared device.
+ */
+export const queryClient = createClient();
+
 const persister = createAsyncStoragePersister({
   storage: AsyncStorage,
   key: 'crop-disease.cache.react-query.v1',
@@ -40,8 +47,6 @@ const persister = createAsyncStoragePersister({
 });
 
 export function QueryProvider({ children }: { children: ReactNode }) {
-  const [client] = useState(createClient);
-
   useEffect(() => {
     const sub = AppState.addEventListener('change', onAppStateChange);
     return () => sub.remove();
@@ -49,7 +54,7 @@ export function QueryProvider({ children }: { children: ReactNode }) {
 
   return (
     <PersistQueryClientProvider
-      client={client}
+      client={queryClient}
       persistOptions={{
         persister,
         buster: CACHE_BUSTER,
