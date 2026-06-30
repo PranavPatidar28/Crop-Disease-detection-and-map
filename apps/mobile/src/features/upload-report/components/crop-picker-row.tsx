@@ -3,8 +3,9 @@ import { ChevronRight, Leaf } from 'lucide-react-native';
 import { Platform } from 'react-native';
 
 import { PressableScale } from '@/components/ui/pressable-scale';
-import { CROP_BY_ID, type Crop } from '@/constants/crops';
+import { CROP_BY_ID, cropDisplayName, type Crop } from '@/constants/crops';
 import { useTheme } from '@/hooks/use-theme';
+import { useTranslation } from '@/i18n';
 import { palette } from '@/theme/colors';
 import { Text, View } from '@/tw';
 
@@ -16,6 +17,7 @@ interface CropPickerRowProps {
 
 export function CropPickerRow({ cropId, onPress, error }: CropPickerRowProps) {
   const theme = useTheme();
+  const { language } = useTranslation();
   const crop: Crop | undefined = cropId ? CROP_BY_ID[cropId] : undefined;
 
   return (
@@ -48,7 +50,7 @@ export function CropPickerRow({ cropId, onPress, error }: CropPickerRowProps) {
               Crop
             </Text>
             <Text className="text-base font-semibold text-text">
-              {crop?.name ?? 'Choose crop'}
+              {crop ? cropDisplayName(crop, language) : 'Choose crop'}
             </Text>
             {error ? <Text className="text-xs text-danger">{error}</Text> : null}
           </View>

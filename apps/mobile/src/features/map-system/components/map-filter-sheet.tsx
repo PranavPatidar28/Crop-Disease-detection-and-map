@@ -5,8 +5,9 @@ import { forwardRef, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { PressableScale } from '@/components/ui/pressable-scale';
-import { CROPS } from '@/constants/crops';
+import { CROPS, cropDisplayName } from '@/constants/crops';
 import { useTheme } from '@/hooks/use-theme';
+import { useTranslation } from '@/i18n';
 import { Text, View } from '@/tw';
 import type { Severity } from '@/features/upload-report/types';
 
@@ -30,6 +31,7 @@ const SEVERITIES: Severity[] = ['LOW', 'MEDIUM', 'HIGH'];
 export const MapFilterSheet = forwardRef<BottomSheetModal, MapFilterSheetProps>(
   function MapFilterSheet({ matchingCount }, ref) {
     const theme = useTheme();
+    const { language } = useTranslation();
 
     const crops = useMapFiltersStore((s) => s.crops);
     const diseases = useMapFiltersStore((s) => s.diseases);
@@ -126,7 +128,7 @@ export const MapFilterSheet = forwardRef<BottomSheetModal, MapFilterSheetProps>(
               {CROPS.map((crop) => (
                 <Chip
                   key={crop.id}
-                  label={`${crop.emoji} ${crop.name}`}
+                  label={`${crop.emoji} ${cropDisplayName(crop, language)}`}
                   active={crops.includes(crop.name)}
                   onPress={() => {
                     if (crops.includes(crop.name)) {
