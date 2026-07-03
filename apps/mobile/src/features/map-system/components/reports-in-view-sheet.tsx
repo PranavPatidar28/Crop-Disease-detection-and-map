@@ -49,10 +49,14 @@ export const ReportsInViewSheet = forwardRef<BottomSheetModal, Props>(function R
       copy.sort(
         (a, b) =>
           (SEVERITY_RANK[b.severity ?? ''] ?? 0) - (SEVERITY_RANK[a.severity ?? ''] ?? 0) ||
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+          // Performance: use direct string comparison for ISO timestamps instead of parsing Dates
+          (b.createdAt > a.createdAt ? 1 : b.createdAt < a.createdAt ? -1 : 0),
       );
     } else {
-      copy.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      copy.sort((a, b) =>
+        // Performance: use direct string comparison for ISO timestamps instead of parsing Dates
+        (b.createdAt > a.createdAt ? 1 : b.createdAt < a.createdAt ? -1 : 0)
+      );
     }
     return copy;
   }, [reports, sort]);

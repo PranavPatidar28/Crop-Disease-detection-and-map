@@ -151,7 +151,7 @@ export default function MapScreen() {
   const filteredReports = useMemo(() => {
     const all = Object.values(reportsById);
     const q = searchQuery.trim().toLowerCase();
-    const cutoff =
+    const cutoffMs =
       filters.window === 'all'
         ? 0
         : nowTick -
@@ -160,8 +160,11 @@ export default function MapScreen() {
             60 *
             1000;
 
+    // Performance: Use ISO string comparison instead of instantiating Date objects in the filter loop
+    const cutoffIso = cutoffMs ? new Date(cutoffMs).toISOString() : null;
+
     return all.filter((r) => {
-      if (filters.window !== 'all' && new Date(r.createdAt).getTime() < cutoff) return false;
+      if (cutoffIso && r.createdAt < cutoffIso) return false;
       if (filters.severities.length > 0 && (!r.severity || !filters.severities.includes(r.severity))) {
         return false;
       }
