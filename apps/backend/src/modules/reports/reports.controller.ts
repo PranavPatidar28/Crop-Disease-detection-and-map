@@ -1,4 +1,15 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import type { User } from '@prisma/client';
 
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
@@ -7,6 +18,7 @@ import { CreateReportDto, ListReportsQueryDto, NearbyReportsQueryDto } from './d
 import { ReportsService } from './reports.service';
 
 @Controller('reports')
+@UseGuards(ThrottlerGuard)
 export class ReportsController {
   constructor(private readonly reports: ReportsService) {}
 
