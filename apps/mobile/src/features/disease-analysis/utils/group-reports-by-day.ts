@@ -10,21 +10,6 @@ export interface ReportGroup {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-function timestampOf(report: Report): number {
-  return new Date(report.processedAt ?? report.createdAt).getTime();
-}
-
-function bucketOf(ts: number): DayBucket {
-  const now = Date.now();
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayStart = today.getTime();
-  if (ts >= todayStart) return 'today';
-  if (ts >= todayStart - DAY_MS) return 'yesterday';
-  if (ts >= now - 7 * DAY_MS) return 'this-week';
-  return 'earlier';
-}
-
 const LABELS: Record<DayBucket, string> = {
   today: 'Today',
   yesterday: 'Yesterday',
@@ -46,9 +31,28 @@ export function groupReportsByDay(reports: Report[]): ReportGroup[] {
     'this-week': [],
     earlier: [],
   };
+
+  const now = Date.now();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStart = today.getTime();
+
+  const todayIso = new Date(todayStart).toISOString();
+  const yesterdayIso = new Date(todayStart - DAY_MS).toISOString();
+  const thisWeekIso = new Date(now - 7 * DAY_MS).toISOString();
+
   for (const report of reports) {
-    map[bucketOf(timestampOf(report))].push(report);
+    const tsIso = report.processedAt ?? report.createdAt;
+
+    let bucket: DayBucket;
+    if (tsIso >= todayIso) bucket = 'today';
+    else if (tsIso >= yesterdayIso) bucket = 'yesterday';
+    else if (tsIso >= thisWeekIso) bucket = 'this-week';
+    else bucket = 'earlier';
+
+    map[bucket].push(report);
   }
+
   return ORDER.filter((b) => map[b].length > 0).map((b) => ({
     bucket: b,
     label: LABELS[b],
