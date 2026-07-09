@@ -10,18 +10,6 @@ export interface NotificationGroup {
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-function bucketOf(createdAtIso: string): DayBucket {
-  const createdAt = new Date(createdAtIso).getTime();
-  const now = Date.now();
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const todayStart = today.getTime();
-  if (createdAt >= todayStart) return 'today';
-  if (createdAt >= todayStart - DAY_MS) return 'yesterday';
-  if (createdAt >= now - 7 * DAY_MS) return 'this-week';
-  return 'earlier';
-}
-
 const LABELS: Record<DayBucket, string> = {
   today: 'Today',
   yesterday: 'Yesterday',
@@ -42,9 +30,26 @@ export function groupByDay(items: Notification[]): NotificationGroup[] {
     'this-week': [],
     earlier: [],
   };
+
+  const now = Date.now();
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStart = today.getTime();
+
+  const todayIso = new Date(todayStart).toISOString();
+  const yesterdayIso = new Date(todayStart - DAY_MS).toISOString();
+  const thisWeekIso = new Date(now - 7 * DAY_MS).toISOString();
+
   for (const item of items) {
-    map[bucketOf(item.createdAt)].push(item);
+    let bucket: DayBucket;
+    if (item.createdAt >= todayIso) bucket = 'today';
+    else if (item.createdAt >= yesterdayIso) bucket = 'yesterday';
+    else if (item.createdAt >= thisWeekIso) bucket = 'this-week';
+    else bucket = 'earlier';
+
+    map[bucket].push(item);
   }
+
   return ORDER
     .filter((b) => map[b].length > 0)
     .map((b) => ({ bucket: b, label: LABELS[b], items: map[b] }));
