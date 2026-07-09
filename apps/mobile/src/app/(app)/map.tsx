@@ -153,15 +153,15 @@ export default function MapScreen() {
     const q = searchQuery.trim().toLowerCase();
     const cutoff =
       filters.window === 'all'
-        ? 0
-        : nowTick -
+        ? ''
+        : new Date(nowTick -
           (filters.window === '24h' ? 24 : filters.window === '7d' ? 7 * 24 : 30 * 24) *
             60 *
             60 *
-            1000;
+            1000).toISOString();
 
     return all.filter((r) => {
-      if (filters.window !== 'all' && new Date(r.createdAt).getTime() < cutoff) return false;
+      if (filters.window !== 'all' && r.createdAt < cutoff) return false;
       if (filters.severities.length > 0 && (!r.severity || !filters.severities.includes(r.severity))) {
         return false;
       }
