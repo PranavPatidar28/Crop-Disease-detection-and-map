@@ -1,4 +1,5 @@
-import { Controller, Delete, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
+import { Controller, Delete, HttpCode, HttpStatus, Param, Post, UseGuards } from '@nestjs/common';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import type { User } from '@prisma/client';
 
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
@@ -6,6 +7,7 @@ import { CurrentUser } from '@/common/decorators/current-user.decorator';
 import { CloudinaryService, UploadSignaturePayload } from './cloudinary.service';
 
 @Controller('uploads')
+@UseGuards(ThrottlerGuard)
 export class CloudinaryController {
   constructor(private readonly cloudinary: CloudinaryService) {}
 

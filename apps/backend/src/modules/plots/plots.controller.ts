@@ -8,7 +8,9 @@ import {
   Param,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import type { User } from '@prisma/client';
 
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
@@ -17,6 +19,7 @@ import { CreatePlotDto, UpdatePlotDto } from './dto';
 import { PlotsService } from './plots.service';
 
 @Controller('plots')
+@UseGuards(ThrottlerGuard)
 export class PlotsController {
   constructor(private readonly plots: PlotsService) {}
 
