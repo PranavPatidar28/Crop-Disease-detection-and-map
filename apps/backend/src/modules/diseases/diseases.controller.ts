@@ -1,10 +1,13 @@
-import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
 import { DiseasesService } from './diseases.service';
 import type { AnalyzeResponse } from './diseases.types';
 import { AnalyzeDiseaseDto } from './dto/analyze.dto';
 
 @Controller('diseases')
+// 🛡️ Sentinel: Added ThrottlerGuard to mitigate DoS and abuse risks.
+@UseGuards(ThrottlerGuard)
 export class DiseasesController {
   constructor(private readonly diseases: DiseasesService) {}
 
