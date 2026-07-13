@@ -1,5 +1,6 @@
 import { CheckCircle2, Layers, TriangleAlert } from 'lucide-react-native';
 import { Pressable } from 'react-native';
+import React from 'react';
 
 import { Chip } from '@/components/ui/chip';
 import { Text, View } from '@/tw';
@@ -31,7 +32,8 @@ function pickIcon(type: NotificationType): Visual {
   return ICON_BY_TYPE[type] ?? ICON_BY_TYPE.SYSTEM;
 }
 
-export function NotificationCard({ notification, onPress }: Props) {
+// ⚡ Bolt: Wrapped in React.memo to prevent unnecessary re-renders when rendering inside ScrollView.map()
+export const NotificationCard = React.memo(function NotificationCard({ notification, onPress }: Props) {
   const { Icon, tint, bg } = pickIcon(notification.type);
   const isCritical = notification.type === 'OUTBREAK';
   const unread = !notification.read;
@@ -82,4 +84,4 @@ export function NotificationCard({ notification, onPress }: Props) {
       </View>
     </Pressable>
   );
-}
+});
