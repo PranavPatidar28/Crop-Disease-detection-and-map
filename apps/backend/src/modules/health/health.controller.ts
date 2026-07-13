@@ -1,5 +1,6 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
 import { Public } from '@/common/decorators/public.decorator';
 import type { Env } from '@/config/env.schema';
@@ -15,6 +16,7 @@ interface VersionInfo {
 }
 
 @Controller()
+@UseGuards(ThrottlerGuard)
 export class HealthController {
   private readonly startedAt = new Date().toISOString();
 
