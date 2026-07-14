@@ -570,9 +570,6 @@ export const CROP_DISEASE_CATALOG: Record<string, Record<string, CropDiseaseEntr
 };
 
 /** Returns the catalog entry for a crop/disease folder pair, or undefined. */
-export function getCatalogEntry(
-  crop: string,
-  disease: string,
-): CropDiseaseEntry | undefined {
+export function getCatalogEntry(crop: string, disease: string): CropDiseaseEntry | undefined {
   return CROP_DISEASE_CATALOG[crop]?.[disease];
 }
