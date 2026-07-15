@@ -14,16 +14,12 @@
  *     Vidisha wheat, LOW/MEDIUM Bhopal tomato); other crops are scattered.
  */
 
+import { PrismaClient, ProcessingStatus, Severity } from '@prisma/client';
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 
-import { PrismaClient, ProcessingStatus, Severity } from '@prisma/client';
-
 import { logger } from '../common/utils/logger';
-import {
-  CatalogSeverity,
-  getCatalogEntry,
-} from './data/crop-disease-catalog';
+import { CatalogSeverity, getCatalogEntry } from './data/crop-disease-catalog';
 
 const prisma = new PrismaClient();
 
@@ -161,17 +157,52 @@ function buildReports(): SeedReport[] {
     { cropType: 'Maize', cropFolder: 'maize', diseaseFolder: 'common_rust', anchor: RAISEN },
     { cropType: 'Maize', cropFolder: 'maize', diseaseFolder: 'blight', anchor: HOSHANGABAD },
     { cropType: 'Cotton', cropFolder: 'cotton', diseaseFolder: 'curl_virus', anchor: RAJGARH },
-    { cropType: 'Cotton', cropFolder: 'cotton', diseaseFolder: 'bacterial_blight', anchor: RAJGARH },
+    {
+      cropType: 'Cotton',
+      cropFolder: 'cotton',
+      diseaseFolder: 'bacterial_blight',
+      anchor: RAJGARH,
+    },
     { cropType: 'Chilli', cropFolder: 'chilli', diseaseFolder: 'bacterial_spot', anchor: BERASIA },
-    { cropType: 'Sugarcane', cropFolder: 'sugarcane', diseaseFolder: 'redrot', anchor: HOSHANGABAD },
+    {
+      cropType: 'Sugarcane',
+      cropFolder: 'sugarcane',
+      diseaseFolder: 'redrot',
+      anchor: HOSHANGABAD,
+    },
     { cropType: 'Rice', cropFolder: 'rice', diseaseFolder: 'blast', anchor: HOSHANGABAD },
     { cropType: 'Sorghum', cropFolder: 'sorghum', diseaseFolder: 'rust', anchor: RAJGARH },
-    { cropType: 'Brinjal', cropFolder: 'brinjal', diseaseFolder: 'cercospora_leaf_spot', anchor: BERASIA },
-    { cropType: 'Cauliflower', cropFolder: 'cauliflower', diseaseFolder: 'downy_mildew', anchor: BERASIA },
+    {
+      cropType: 'Brinjal',
+      cropFolder: 'brinjal',
+      diseaseFolder: 'cercospora_leaf_spot',
+      anchor: BERASIA,
+    },
+    {
+      cropType: 'Cauliflower',
+      cropFolder: 'cauliflower',
+      diseaseFolder: 'downy_mildew',
+      anchor: BERASIA,
+    },
     { cropType: 'Cabbage', cropFolder: 'cabbage', diseaseFolder: 'black_rot', anchor: BERASIA },
-    { cropType: 'Groundnut', cropFolder: 'groundnut', diseaseFolder: 'diseased_leaf', anchor: RAJGARH },
-    { cropType: 'Sunflower', cropFolder: 'sunflower', diseaseFolder: 'downy_mildew', anchor: RAISEN },
-    { cropType: 'Blackgram', cropFolder: 'blackgram', diseaseFolder: 'anthracnose', anchor: RAISEN },
+    {
+      cropType: 'Groundnut',
+      cropFolder: 'groundnut',
+      diseaseFolder: 'diseased_leaf',
+      anchor: RAJGARH,
+    },
+    {
+      cropType: 'Sunflower',
+      cropFolder: 'sunflower',
+      diseaseFolder: 'downy_mildew',
+      anchor: RAISEN,
+    },
+    {
+      cropType: 'Blackgram',
+      cropFolder: 'blackgram',
+      diseaseFolder: 'anthracnose',
+      anchor: RAISEN,
+    },
   ];
   for (const s of scattered) {
     const entry = entryOrThrow(s.cropFolder, s.diseaseFolder);
@@ -257,13 +288,55 @@ interface SeedUser {
 }
 
 const SEED_USERS: SeedUser[] = [
-  { phone: '9999999999', name: 'Mahesh Verma', district: 'Bhopal', lat: BHOPAL.lat, lng: BHOPAL.lng },
-  { phone: '8888888888', name: 'Sunita Rajput', district: 'Sehore', lat: SEHORE.lat, lng: SEHORE.lng },
-  { phone: '7777777777', name: 'Ramesh Patidar', district: 'Vidisha', lat: VIDISHA.lat, lng: VIDISHA.lng },
-  { phone: '7766554433', name: 'Lakhan Yadav', district: 'Raisen', lat: RAISEN.lat, lng: RAISEN.lng },
-  { phone: '7755443322', name: 'Geeta Lodhi', district: 'Hoshangabad', lat: HOSHANGABAD.lat, lng: HOSHANGABAD.lng },
-  { phone: '7744332211', name: 'Devilal Meena', district: 'Rajgarh', lat: RAJGARH.lat, lng: RAJGARH.lng },
-  { phone: '7733221100', name: 'Kailash Dangi', district: 'Berasia', lat: BERASIA.lat, lng: BERASIA.lng },
+  {
+    phone: '9999999999',
+    name: 'Mahesh Verma',
+    district: 'Bhopal',
+    lat: BHOPAL.lat,
+    lng: BHOPAL.lng,
+  },
+  {
+    phone: '8888888888',
+    name: 'Sunita Rajput',
+    district: 'Sehore',
+    lat: SEHORE.lat,
+    lng: SEHORE.lng,
+  },
+  {
+    phone: '7777777777',
+    name: 'Ramesh Patidar',
+    district: 'Vidisha',
+    lat: VIDISHA.lat,
+    lng: VIDISHA.lng,
+  },
+  {
+    phone: '7766554433',
+    name: 'Lakhan Yadav',
+    district: 'Raisen',
+    lat: RAISEN.lat,
+    lng: RAISEN.lng,
+  },
+  {
+    phone: '7755443322',
+    name: 'Geeta Lodhi',
+    district: 'Hoshangabad',
+    lat: HOSHANGABAD.lat,
+    lng: HOSHANGABAD.lng,
+  },
+  {
+    phone: '7744332211',
+    name: 'Devilal Meena',
+    district: 'Rajgarh',
+    lat: RAJGARH.lat,
+    lng: RAJGARH.lng,
+  },
+  {
+    phone: '7733221100',
+    name: 'Kailash Dangi',
+    district: 'Berasia',
+    lat: BERASIA.lat,
+    lng: BERASIA.lng,
+  },
 ];
 
 async function seed(): Promise<void> {
@@ -296,10 +369,34 @@ async function seed(): Promise<void> {
 
   // Plots near each cluster, owned by relevant users. Idempotent on (userId, name).
   const plots = [
-    { userId: userA.id, name: 'Bhopal Kolar Soybean', latitude: BHOPAL.lat - 0.05, longitude: BHOPAL.lng - 0.02, cropTypes: ['Soybean'] },
-    { userId: userA.id, name: 'Bhopal Berasia Wheat', latitude: BHOPAL.lat + 0.18, longitude: BHOPAL.lng + 0.06, cropTypes: ['Wheat'] },
-    { userId: users[1]!.id, name: 'Sehore Soybean Field', latitude: SEHORE.lat + 0.01, longitude: SEHORE.lng - 0.005, cropTypes: ['Soybean'] },
-    { userId: users[2]!.id, name: 'Vidisha Wheat Field', latitude: VIDISHA.lat - 0.01, longitude: VIDISHA.lng + 0.01, cropTypes: ['Wheat'] },
+    {
+      userId: userA.id,
+      name: 'Bhopal Kolar Soybean',
+      latitude: BHOPAL.lat - 0.05,
+      longitude: BHOPAL.lng - 0.02,
+      cropTypes: ['Soybean'],
+    },
+    {
+      userId: userA.id,
+      name: 'Bhopal Berasia Wheat',
+      latitude: BHOPAL.lat + 0.18,
+      longitude: BHOPAL.lng + 0.06,
+      cropTypes: ['Wheat'],
+    },
+    {
+      userId: users[1]!.id,
+      name: 'Sehore Soybean Field',
+      latitude: SEHORE.lat + 0.01,
+      longitude: SEHORE.lng - 0.005,
+      cropTypes: ['Soybean'],
+    },
+    {
+      userId: users[2]!.id,
+      name: 'Vidisha Wheat Field',
+      latitude: VIDISHA.lat - 0.01,
+      longitude: VIDISHA.lng + 0.01,
+      cropTypes: ['Wheat'],
+    },
   ];
   for (const p of plots) {
     const existing = await prisma.plot.findFirst({ where: { userId: p.userId, name: p.name } });
@@ -393,9 +490,7 @@ async function seed(): Promise<void> {
       radius: 4500,
       severity: Severity.MEDIUM,
       crops: ['Wheat'],
-      reports: reports.filter(
-        (r) => r.cropFolder === 'wheat' && r.diseaseFolder === 'stripe_rust',
-      ),
+      reports: reports.filter((r) => r.cropFolder === 'wheat' && r.diseaseFolder === 'stripe_rust'),
     },
     {
       disease: 'Late Blight',
