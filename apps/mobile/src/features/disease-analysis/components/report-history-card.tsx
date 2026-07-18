@@ -1,5 +1,6 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
+import React from 'react';
 import { ChevronRight, Clock, ImageOff } from 'lucide-react-native';
 
 import { Chip } from '@/components/ui/chip';
@@ -31,7 +32,7 @@ const SEVERITY_LABEL: Record<Severity, string> = {
  * processing / failed states render their own affordance so the user can tell
  * a report is still being analyzed vs done.
  */
-export function ReportHistoryCard({ report }: ReportHistoryCardProps) {
+export const ReportHistoryCard = React.memo(function ReportHistoryCard({ report }: ReportHistoryCardProps) {
   const isTerminal = report.processingStatus === 'SUCCESS' || report.processingStatus === 'FAILED';
   const title =
     report.advisory?.primaryDiagnosis.displayName ??
@@ -95,4 +96,4 @@ export function ReportHistoryCard({ report }: ReportHistoryCardProps) {
       </View>
     </PressableScale>
   );
-}
+});
