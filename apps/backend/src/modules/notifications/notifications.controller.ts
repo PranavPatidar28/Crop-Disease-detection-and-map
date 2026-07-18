@@ -9,7 +9,9 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import type { User } from '@prisma/client';
 
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
@@ -25,6 +27,7 @@ import { NotificationsService } from './notifications.service';
 import { PushTokenService } from './push-token.service';
 
 @Controller()
+@UseGuards(ThrottlerGuard)
 export class NotificationsController {
   constructor(
     private readonly notifications: NotificationsService,

@@ -11,10 +11,9 @@
  * Deterministic public_ids mean re-runs overwrite rather than duplicate.
  */
 
+import { v2 as cloudinary } from 'cloudinary';
 import { existsSync, readdirSync, statSync, writeFileSync } from 'fs';
 import { dirname, join } from 'path';
-
-import { v2 as cloudinary } from 'cloudinary';
 
 import { logger } from '../common/utils/logger';
 
