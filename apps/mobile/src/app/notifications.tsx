@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -54,7 +54,10 @@ export default function NotificationsScreen() {
   );
   const groups = useMemo(() => groupByDay(items), [items]);
 
-  const handlePress = (n: Notification) => {
+  // ⚡ BOLT OPTIMIZATION:
+  // Wrapped in useCallback so the function reference remains stable across renders.
+  // This is required for the React.memo optimization on NotificationCard to work.
+  const handlePress = useCallback((n: Notification) => {
     if (!n.read) markRead.mutate(n.id);
     const data = n.data as Record<string, unknown> | null;
     const reportId = data?.reportId as string | undefined;
@@ -64,7 +67,7 @@ export default function NotificationsScreen() {
     } else if (outbreakId) {
       router.push('/map');
     }
-  };
+  }, [markRead]);
 
   return (
     <View className="flex-1 bg-bg">
