@@ -1,6 +1,7 @@
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { ChevronRight, Clock, ImageOff } from 'lucide-react-native';
+import React from 'react';
 
 import { Chip } from '@/components/ui/chip';
 import { PressableScale } from '@/components/ui/pressable-scale';
@@ -30,8 +31,12 @@ const SEVERITY_LABEL: Record<Severity, string> = {
  * crop · disease, a status/severity chip, and the analyzed time. Pending /
  * processing / failed states render their own affordance so the user can tell
  * a report is still being analyzed vs done.
+ *
+ * ⚡ BOLT OPTIMIZATION:
+ * Wrapped in React.memo to prevent O(N) re-render waterfalls when the parent
+ * ScrollView (e.g. in reports.tsx) re-renders due to state changes or pagination.
  */
-export function ReportHistoryCard({ report }: ReportHistoryCardProps) {
+export const ReportHistoryCard = React.memo(function ReportHistoryCard({ report }: ReportHistoryCardProps) {
   const isTerminal = report.processingStatus === 'SUCCESS' || report.processingStatus === 'FAILED';
   const title =
     report.advisory?.primaryDiagnosis.displayName ??
@@ -95,4 +100,4 @@ export function ReportHistoryCard({ report }: ReportHistoryCardProps) {
       </View>
     </PressableScale>
   );
-}
+});
