@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -54,17 +54,20 @@ export default function NotificationsScreen() {
   );
   const groups = useMemo(() => groupByDay(items), [items]);
 
-  const handlePress = (n: Notification) => {
-    if (!n.read) markRead.mutate(n.id);
-    const data = n.data as Record<string, unknown> | null;
-    const reportId = data?.reportId as string | undefined;
-    const outbreakId = data?.outbreakId as string | undefined;
-    if (reportId) {
-      router.push({ pathname: '/reports/[id]', params: { id: reportId } });
-    } else if (outbreakId) {
-      router.push('/map');
-    }
-  };
+  const handlePress = useCallback(
+    (n: Notification) => {
+      if (!n.read) markRead.mutate(n.id);
+      const data = n.data as Record<string, unknown> | null;
+      const reportId = data?.reportId as string | undefined;
+      const outbreakId = data?.outbreakId as string | undefined;
+      if (reportId) {
+        router.push({ pathname: '/reports/[id]', params: { id: reportId } });
+      } else if (outbreakId) {
+        router.push('/map');
+      }
+    },
+    [markRead],
+  );
 
   return (
     <View className="flex-1 bg-bg">
