@@ -1,9 +1,11 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { ThrottlerGuard } from '@nestjs/throttler';
 
 import { ListOutbreaksQueryDto } from './dto';
 import { OutbreakService } from './outbreak.service';
 
 @Controller('outbreaks')
+@UseGuards(ThrottlerGuard)
 export class OutbreakController {
   constructor(private readonly outbreaks: OutbreakService) {}
 
