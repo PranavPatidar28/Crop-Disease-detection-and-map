@@ -1,5 +1,6 @@
 import { CheckCircle2, Layers, TriangleAlert } from 'lucide-react-native';
 import { Pressable } from 'react-native';
+import { memo } from 'react';
 
 import { Chip } from '@/components/ui/chip';
 import { Text, View } from '@/tw';
@@ -31,7 +32,7 @@ function pickIcon(type: NotificationType): Visual {
   return ICON_BY_TYPE[type] ?? ICON_BY_TYPE.SYSTEM;
 }
 
-export function NotificationCard({ notification, onPress }: Props) {
+function NotificationCardImpl({ notification, onPress }: Props) {
   const { Icon, tint, bg } = pickIcon(notification.type);
   const isCritical = notification.type === 'OUTBREAK';
   const unread = !notification.read;
@@ -83,3 +84,7 @@ export function NotificationCard({ notification, onPress }: Props) {
     </Pressable>
   );
 }
+
+// ⚡ Bolt: Memoized component to prevent massive O(N) re-render waterfalls when
+// parent components (like NotificationsScreen) re-render during pagination.
+export const NotificationCard = memo(NotificationCardImpl);
