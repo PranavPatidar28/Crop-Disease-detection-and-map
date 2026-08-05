@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { Marker, type MapMarkerProps } from 'react-native-maps';
 
 interface TrackingMarkerProps extends MapMarkerProps {
@@ -23,7 +23,7 @@ interface TrackingMarkerProps extends MapMarkerProps {
  * lay out — and re-enable it whenever `contentKey` changes (e.g. severity or
  * count updates) so the new look is captured.
  */
-export function TrackingMarker({
+const TrackingMarkerImpl = function TrackingMarker({
   contentKey,
   trackDurationMs = 600,
   children,
@@ -47,4 +47,6 @@ export function TrackingMarker({
       {children}
     </Marker>
   );
-}
+};
+
+export const TrackingMarker = memo(TrackingMarkerImpl);
