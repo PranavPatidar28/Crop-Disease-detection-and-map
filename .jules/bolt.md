@@ -1,0 +1,3 @@
+## 2024-08-06 - Unmemoized map components block interactions
+**Learning:** In React Native maps, dynamically rendering unmemoized custom marker components (e.g. `TrackingMarker`, `MapMarker`, `MapCluster`, `OutbreakZoneLayer`) can cause a massive O(N) re-render waterfall when map state changes such as zooming, panning, or filtering updates. Even if the data for these markers hasn't changed, React will attempt to re-render all of them.
+**Action:** Always wrap dynamically generated, individual map layers and marker components in `React.memo()` using the named inner function pattern. This preserves component display names for debugging/fast refresh while aggressively protecting the UI thread from wasteful re-renders during map interactions.
