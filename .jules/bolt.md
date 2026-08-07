@@ -1,0 +1,2 @@
+## 2024-05-15 - Optimize Map Marker Rendering
+**Learning:** In React Native apps using `react-native-maps`, rendering many custom markers or layers dynamically (like `TrackingMarker`, `MapMarker`, `OutbreakZoneLayer`) causes a massive O(N) re-render waterfall during map interactions such as panning, zooming, or filtering. Always wrap these individual marker components in `React.memo()` using the named inner function pattern to optimize map performance.
