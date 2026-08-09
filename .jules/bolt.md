@@ -1,0 +1,3 @@
+## 2025-02-18 - Optimize react-native-maps Custom Markers with React.memo()
+**Learning:** Rendering many custom React components as markers or layers dynamically in `react-native-maps` (such as `MapMarker`, `MapCluster`, `TrackingMarker`, `OutbreakZoneLayer`) causes a massive O(N) re-render waterfall during map interactions (panning, zooming, filtering).
+**Action:** Always wrap individual custom marker components in `React.memo()` using the named inner function pattern (e.g., `const Component = memo(function ComponentImpl(...) { ... })`) to prevent these unnecessary re-renders and drastically improve overall map performance during interactions.
