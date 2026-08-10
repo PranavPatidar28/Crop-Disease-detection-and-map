@@ -1,5 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet } from 'react-native';
+import { memo } from 'react';
 
 import { palette } from '@/theme/colors';
 import { Text, View } from '@/tw';
@@ -23,7 +24,7 @@ interface MapMarkerProps {
  * bounds and was clipped on zoom. Everything here sits inside a padded box, so
  * the static first frame is the complete, correct look.
  */
-export function MapMarker({ severity, cropEmoji }: MapMarkerProps) {
+function MapMarkerImpl({ severity, cropEmoji }: MapMarkerProps) {
   const fill = mapSeverityFill(severity);
   const size = 40;
 
@@ -69,6 +70,10 @@ export function MapMarker({ severity, cropEmoji }: MapMarkerProps) {
   );
 }
 
+// ⚡ Bolt: Memoized to prevent O(N) re-render waterfalls during map panning/zooming.
+// Expected Impact: Significantly smoother map interactions when rendering many custom markers.
+export const MapMarker = memo(MapMarkerImpl);
+
 interface MapClusterProps {
   count: number;
   highCount: number;
@@ -80,7 +85,7 @@ interface MapClusterProps {
  * - Brand gradient when no HIGH severity reports are inside.
  * - Danger gradient (orange→red) when any HIGH severity is inside.
  */
-export function MapCluster({ count, highCount }: MapClusterProps) {
+function MapClusterImpl({ count, highCount }: MapClusterProps) {
   const dangerous = highCount > 0;
   const gradientColors: [string, string] = dangerous
     ? ['#f97316', '#dc2626']
@@ -120,3 +125,7 @@ export function MapCluster({ count, highCount }: MapClusterProps) {
     </View>
   );
 }
+
+// ⚡ Bolt: Memoized to prevent O(N) re-render waterfalls during map panning/zooming.
+// Expected Impact: Significantly smoother map interactions when rendering many custom clusters.
+export const MapCluster = memo(MapClusterImpl);

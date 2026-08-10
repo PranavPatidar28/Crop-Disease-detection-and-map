@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, memo } from 'react';
 import { Marker, type MapMarkerProps } from 'react-native-maps';
 
 interface TrackingMarkerProps extends MapMarkerProps {
@@ -23,7 +23,7 @@ interface TrackingMarkerProps extends MapMarkerProps {
  * lay out — and re-enable it whenever `contentKey` changes (e.g. severity or
  * count updates) so the new look is captured.
  */
-export function TrackingMarker({
+function TrackingMarkerImpl({
   contentKey,
   trackDurationMs = 600,
   children,
@@ -48,3 +48,7 @@ export function TrackingMarker({
     </Marker>
   );
 }
+
+// ⚡ Bolt: Memoized to prevent O(N) re-render waterfalls during map panning/zooming.
+// Expected Impact: Significantly smoother map interactions when rendering many custom markers.
+export const TrackingMarker = memo(TrackingMarkerImpl);
