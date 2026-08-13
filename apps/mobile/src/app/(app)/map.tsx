@@ -1,7 +1,7 @@
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import * as Haptics from 'expo-haptics';
 import { Home, MapPinOff } from 'lucide-react-native';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Platform } from 'react-native';
 import MapView, { PROVIDER_GOOGLE, type Region } from 'react-native-maps';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -55,6 +55,100 @@ const FALLBACK_REGION: Region = {
   latitudeDelta: 18,
   longitudeDelta: 18,
 };
+
+function PlotMarkerImpl({ plot }: { plot: any }) {
+  return (
+    <TrackingMarker
+      contentKey="plot"
+      coordinate={{ latitude: plot.latitude, longitude: plot.longitude }}
+      anchor={{ x: 0.5, y: 0.5 }}
+      zIndex={1}
+    >
+      <View
+        style={{
+          width: 28,
+          height: 28,
+          borderRadius: 14,
+          backgroundColor: `${palette.brand[500]}55`,
+          borderWidth: 2,
+          borderColor: '#ffffff',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Home size={12} color="#ffffff" strokeWidth={2.6} />
+      </View>
+    </TrackingMarker>
+  );
+}
+const PlotMarker = memo(PlotMarkerImpl);
+
+function ClusterMarkerImpl({
+  clusterId,
+  lat,
+  lng,
+  pointCount,
+  highCount,
+  mediumCount,
+  onPress,
+}: {
+  clusterId: number;
+  lat: number;
+  lng: number;
+  pointCount: number;
+  highCount: number;
+  mediumCount: number;
+  onPress: (id: number, lat: number, lng: number) => void;
+}) {
+  const handlePress = useCallback(() => {
+    onPress(clusterId, lat, lng);
+  }, [onPress, clusterId, lat, lng]);
+
+  return (
+    <TrackingMarker
+      contentKey={`${pointCount}|${highCount}|${mediumCount}`}
+      coordinate={{ latitude: lat, longitude: lng }}
+      onPress={handlePress}
+    >
+      <MapCluster
+        count={pointCount}
+        highCount={highCount}
+        mediumCount={mediumCount}
+      />
+    </TrackingMarker>
+  );
+}
+const ClusterMarker = memo(ClusterMarkerImpl);
+
+function ReportMarkerImpl({
+  report,
+  cropEmoji,
+  onPress,
+}: {
+  report: Report;
+  cropEmoji?: string;
+  onPress: (report: Report) => void;
+}) {
+  const handlePress = useCallback(() => {
+    onPress(report);
+  }, [onPress, report]);
+
+  return (
+    <TrackingMarker
+      contentKey={`${report.severity}|${report.cropType}`}
+      coordinate={{ latitude: report.latitude, longitude: report.longitude }}
+      onPress={handlePress}
+      anchor={{ x: 0.5, y: 1 }}
+    >
+      <MapMarker
+        severity={report.severity}
+        cropEmoji={cropEmoji}
+        enablePulse={report.severity === 'HIGH'}
+      />
+    </TrackingMarker>
+  );
+}
+const ReportMarker = memo(ReportMarkerImpl);
 
 export default function MapScreen() {
   const mapRef = useRef<MapView | null>(null);
@@ -209,6 +303,22 @@ export default function MapScreen() {
     outbreakSheetRef.current?.present();
   }, []);
 
+  const handleClusterPress = useCallback((id: number, lat: number, lng: number) => {
+    const expansionZoom = clusterIndex.getClusterExpansionZoom(id);
+    const nextLngDelta = zoomToLongitudeDelta(expansionZoom);
+    const aspect =
+      (debouncedRegion as MapRegion).latitudeDelta / (debouncedRegion as MapRegion).longitudeDelta;
+    mapRef.current?.animateToRegion(
+      {
+        latitude: lat,
+        longitude: lng,
+        latitudeDelta: nextLngDelta * aspect,
+        longitudeDelta: nextLngDelta,
+      },
+      500,
+    );
+  }, [clusterIndex, debouncedRegion]);
+
   // Layer toggle: cycles markers → heatmap → both
   const cycleLayer = () => {
     setLayerMode(
@@ -258,28 +368,7 @@ export default function MapScreen() {
 
         {/* User's own plots — rendered subtly so they don't compete with reports */}
         {plots?.map((plot) => (
-          <TrackingMarker
-            key={`plot-${plot.id}`}
-            contentKey="plot"
-            coordinate={{ latitude: plot.latitude, longitude: plot.longitude }}
-            anchor={{ x: 0.5, y: 0.5 }}
-            zIndex={1}
-          >
-            <View
-              style={{
-                width: 28,
-                height: 28,
-                borderRadius: 14,
-                backgroundColor: `${palette.brand[500]}55`,
-                borderWidth: 2,
-                borderColor: '#ffffff',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Home size={12} color="#ffffff" strokeWidth={2.6} />
-            </View>
-          </TrackingMarker>
+          <PlotMarker key={`plot-${plot.id}`} plot={plot} />
         ))}
 
         {/* Outbreak zones — v7 */}
@@ -298,36 +387,16 @@ export default function MapScreen() {
 
               if ('cluster' in props && props.cluster) {
                 return (
-                  <TrackingMarker
+                  <ClusterMarker
                     key={`cluster-${props.cluster_id}`}
-                    contentKey={`${props.point_count}|${props.highCount}|${props.mediumCount}`}
-                    coordinate={{ latitude: lat as number, longitude: lng as number }}
-                    onPress={() => {
-                      const expansionZoom = clusterIndex.getClusterExpansionZoom(
-                        props.cluster_id as number,
-                      );
-                      // Derive the exact longitudeDelta for the expansion zoom,
-                      // then keep the current aspect ratio for latitudeDelta.
-                      const nextLngDelta = zoomToLongitudeDelta(expansionZoom);
-                      const aspect =
-                        debouncedRegion.latitudeDelta / debouncedRegion.longitudeDelta;
-                      mapRef.current?.animateToRegion(
-                        {
-                          latitude: lat as number,
-                          longitude: lng as number,
-                          latitudeDelta: nextLngDelta * aspect,
-                          longitudeDelta: nextLngDelta,
-                        },
-                        500,
-                      );
-                    }}
-                  >
-                    <MapCluster
-                      count={props.point_count}
-                      highCount={props.highCount}
-                      mediumCount={props.mediumCount}
-                    />
-                  </TrackingMarker>
+                    clusterId={props.cluster_id as number}
+                    lat={lat as number}
+                    lng={lng as number}
+                    pointCount={props.point_count}
+                    highCount={props.highCount}
+                    mediumCount={props.mediumCount}
+                    onPress={handleClusterPress}
+                  />
                 );
               }
 
@@ -337,19 +406,12 @@ export default function MapScreen() {
               const cropEmoji = CROP_BY_NAME[report.cropType.toLowerCase()]?.emoji;
 
               return (
-                <TrackingMarker
+                <ReportMarker
                   key={report.id}
-                  contentKey={`${report.severity}|${report.cropType}`}
-                  coordinate={{ latitude: report.latitude, longitude: report.longitude }}
-                  onPress={() => handleMarkerPress(report)}
-                  anchor={{ x: 0.5, y: 1 }}
-                >
-                  <MapMarker
-                    severity={report.severity}
-                    cropEmoji={cropEmoji}
-                    enablePulse={report.severity === 'HIGH'}
-                  />
-                </TrackingMarker>
+                  report={report}
+                  cropEmoji={cropEmoji}
+                  onPress={handleMarkerPress}
+                />
               );
             })
           : null}
