@@ -1,0 +1,3 @@
+## 2024-08-14 - React Native Maps Marker Memoization
+**Learning:** Rendering many custom markers dynamically causes massive O(N) re-render waterfalls on map interactions in `react-native-maps`, especially when combined with Supercluster. Simply wrapping marker components in `React.memo` isn't enough; you must also extract the inline `.map` iterations into standalone memoized components outside the parent and stabilize their callbacks (e.g., using `useRef` + `useEffect` to hold the latest dependencies for the callback without re-creating it).
+**Action:** Always extract dynamic list iterations (like `clusters.map` or `plots.map`) in map views to standalone `memo`ized components and strictly stabilize any `onPress` callback props.
