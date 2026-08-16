@@ -1,0 +1,4 @@
+## 2025-02-18 - Second-order SSRF in external AI services
+**Vulnerability:** The FastAPI client (`FastApiAiClient`) accepted an `imageUrl` from an unverified client request and passed it directly to an external API (`/predict`), creating a second-order Server-Side Request Forgery vulnerability.
+**Learning:** Downstream services (like FastAPI or external machine learning services) that fetch URLs provided by the Node.js backend are susceptible to SSRF if the URL is not validated. The Node.js application must ensure URLs do not resolve to private, loopback, or reserved IP addresses before passing them along.
+**Prevention:** Always validate caller-supplied URLs on the Node.js backend using `await assertPublicHttpUrl(url)` from `@/common/utils/ssrf` before passing them to any service that performs HTTP fetches.

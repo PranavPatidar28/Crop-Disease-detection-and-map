@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import type { Severity } from '@prisma/client';
 import axios, { AxiosError, type AxiosInstance } from 'axios';
 
+import { assertPublicHttpUrl } from '@/common/utils/ssrf';
 import type { Env } from '@/config/env.schema';
 
 import type { AnalysisRequest, AnalysisResult } from '../dto/analysis-result';
@@ -37,6 +38,8 @@ export class FastApiAiClient implements AiClient {
 
   async analyze(request: AnalysisRequest): Promise<AnalysisResult> {
     try {
+      await assertPublicHttpUrl(request.imageUrl);
+
       const { data } = await this.http.post<FastApiResponse>('/predict', {
         image_url: request.imageUrl,
         crop_type: request.cropType,
