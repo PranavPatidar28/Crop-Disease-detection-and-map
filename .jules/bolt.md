@@ -1,0 +1,3 @@
+## 2023-10-27 - Stabilizing Callbacks for React Native Maps
+**Learning:** Extracting list components like markers into `React.memo` isn't enough if the `onPress` callback relies on frequently changing parent state (e.g., map bounds/regions). The callback invalidates the memoization.
+**Action:** When defining `useCallback` for heavily-rendered memoized list items, use `useRef` updated inside `useEffect` to hold the latest state (like `debouncedRegion` or `clusterIndex`). This provides stable function references that never invalidate, preventing massive O(N) re-render waterfalls while still accessing fresh state.
