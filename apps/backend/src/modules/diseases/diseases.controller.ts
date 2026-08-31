@@ -1,5 +1,5 @@
 import { Body, Controller, HttpCode, HttpStatus, Post, UseGuards } from '@nestjs/common';
-import { ThrottlerGuard } from '@nestjs/throttler';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 
 import { DiseasesService } from './diseases.service';
 import type { AnalyzeResponse } from './diseases.types';
@@ -18,6 +18,7 @@ export class DiseasesController {
    */
   @Post('analyze')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   analyze(@Body() dto: AnalyzeDiseaseDto): Promise<AnalyzeResponse> {
     return this.diseases.analyze(dto.imageUrl);
   }
