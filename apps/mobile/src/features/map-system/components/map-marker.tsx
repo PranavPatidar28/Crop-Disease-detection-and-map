@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import React, { memo } from 'react';
 import { StyleSheet } from 'react-native';
 
 import { palette } from '@/theme/colors';
@@ -23,7 +24,7 @@ interface MapMarkerProps {
  * bounds and was clipped on zoom. Everything here sits inside a padded box, so
  * the static first frame is the complete, correct look.
  */
-export function MapMarker({ severity, cropEmoji }: MapMarkerProps) {
+export const MapMarker = memo(function MapMarker({ severity, cropEmoji }: MapMarkerProps) {
   const fill = mapSeverityFill(severity);
   const size = 40;
 
@@ -67,7 +68,7 @@ export function MapMarker({ severity, cropEmoji }: MapMarkerProps) {
       </View>
     </View>
   );
-}
+});
 
 interface MapClusterProps {
   count: number;
@@ -80,7 +81,7 @@ interface MapClusterProps {
  * - Brand gradient when no HIGH severity reports are inside.
  * - Danger gradient (orange→red) when any HIGH severity is inside.
  */
-export function MapCluster({ count, highCount }: MapClusterProps) {
+export const MapCluster = memo(function MapCluster({ count, highCount }: MapClusterProps) {
   const dangerous = highCount > 0;
   const gradientColors: [string, string] = dangerous
     ? ['#f97316', '#dc2626']
@@ -119,4 +120,4 @@ export function MapCluster({ count, highCount }: MapClusterProps) {
       </Text>
     </View>
   );
-}
+});
