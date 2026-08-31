@@ -1,0 +1,4 @@
+## 2025-02-14 - Fix SSRF vulnerability in FastAPI client
+**Vulnerability:** The `FastApiAiClient` passed the client-supplied `imageUrl` directly to an external FastAPI AI service without asserting it resolved to a public IP. An attacker could provide a malicious URL (like `http://169.254.169.254/latest/meta-data/` or a local network IP), potentially causing the FastAPI service to execute a Server-Side Request Forgery (SSRF) and leak internal data.
+**Learning:** Even if your primary backend doesn't download the file itself, forwarding unsanitized URLs to internal microservices/APIs can shift the SSRF vulnerability to them.
+**Prevention:** Always validate and enforce public-only IP resolution on client-provided URLs via utilities like `assertPublicHttpUrl` before forwarding them to any service, or ensure the downstream service runs in an isolated network environment with strict egress rules.
