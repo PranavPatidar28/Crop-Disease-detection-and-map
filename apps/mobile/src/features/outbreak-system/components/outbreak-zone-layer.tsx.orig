@@ -35,8 +35,6 @@ function OutbreakZoneLayerImpl({ zone, onPress }: OutbreakZoneLayerProps) {
   const steps = zoneGlowSteps(zone.severity);
   const dimFactor = dimmed ? 0.45 : 1;
 
-  // ⚡ Bolt: Stable reference for the inner TrackerMarker to prevent
-  // inline re-allocation and subsequent O(N) map re-renders.
   const handlePress = useCallback(() => {
     onPress?.(zone);
   }, [onPress, zone]);
@@ -137,6 +135,4 @@ function OutbreakZoneLayerImpl({ zone, onPress }: OutbreakZoneLayerProps) {
   );
 }
 
-// ⚡ Bolt: Memoize the layer component to prevent an O(N) re-render waterfall
-// when unrelated markers or map state update rapidly in the parent map view.
 export const OutbreakZoneLayer = memo(OutbreakZoneLayerImpl);

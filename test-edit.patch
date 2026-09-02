@@ -1,0 +1,22 @@
+--- apps/mobile/src/features/outbreak-system/components/outbreak-zone-layer.tsx
++++ apps/mobile/src/features/outbreak-system/components/outbreak-zone-layer.tsx
+@@ -1,3 +1,4 @@
++import { memo } from 'react';
+ import { Circle } from 'react-native-maps';
+
+ import { TrackingMarker } from '@/features/map-system/components';
+@@ -23,7 +24,7 @@
+  * bitmap reliably on Android (and re-captured whenever the content changes),
+  * without leaving view-tracking on forever.
+  */
+-export function OutbreakZoneLayer({ zone, onPress }: OutbreakZoneLayerProps) {
++function OutbreakZoneLayerImpl({ zone, onPress }: OutbreakZoneLayerProps) {
+   const fill = mapSeverityFill(zone.severity);
+   const dimmed = !zone.active;
+   const steps = zoneGlowSteps(zone.severity);
+@@ -118,3 +119,5 @@
+     </>
+   );
+ }
++
++export const OutbreakZoneLayer = memo(OutbreakZoneLayerImpl);
