@@ -9,7 +9,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ThrottlerGuard } from '@nestjs/throttler';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import type { User } from '@prisma/client';
 
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
@@ -51,6 +51,7 @@ export class ReportsController {
 
   @Post(':id/reprocess')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
   reprocess(@CurrentUser() user: User, @Param('id') id: string) {
     return this.reports.reprocess(user.id, id);
   }
