@@ -115,6 +115,21 @@ const ClusterMarkerItemImpl = ({
 };
 const ClusterMarkerItem = memo(ClusterMarkerItemImpl);
 
+const OutbreakZoneLayerItemImpl = ({
+  zone,
+  onPress,
+}: {
+  zone: OutbreakZone;
+  onPress: (zone: OutbreakZone) => void;
+}) => {
+  const handlePress = useCallback(() => {
+    onPress(zone);
+  }, [onPress, zone]);
+
+  return <OutbreakZoneLayer zone={zone} onPress={handlePress} />;
+};
+const OutbreakZoneLayerItem = memo(OutbreakZoneLayerItemImpl);
+
 const ReportMarkerItemImpl = ({
   report,
   onPress,
@@ -384,7 +399,7 @@ export default function MapScreen() {
 
         {/* Outbreak zones — v7 */}
         {visibleZones.map((zone) => (
-          <OutbreakZoneLayer
+          <OutbreakZoneLayerItem
             key={zone.id}
             zone={zone}
             onPress={handleOutbreakPress}
