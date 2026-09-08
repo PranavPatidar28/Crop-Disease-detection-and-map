@@ -7,3 +7,7 @@
 **Vulnerability:** The `/diseases/analyze` endpoint lacked strict rate limiting, despite downloading images and calling external AI APIs (Hugging Face).
 **Learning:** Endpoints that perform expensive operations (network I/O, heavy computation, third-party API calls) are prime targets for DoS/resource exhaustion if left with default or no rate limits.
 **Prevention:** Always apply `@Throttle` with strict limits (e.g., 5 req/min) to resource-intensive endpoints, particularly those processing media or interfacing with external ML models. Use `ThrottlerGuard` at the controller level in NestJS.
+## 2024-03-22 - Add rate limit to report creation endpoints
+**Vulnerability:** The `/reports` create and reprocess endpoints lacked explicit, strict rate limiting, making the backend vulnerable to resource exhaustion DoS attacks due to expensive asynchronous external API calls (e.g., Hugging Face AI).
+**Learning:** Relying solely on a permissive global or controller-level rate limit is insufficient for endpoints that spawn heavy background processing.
+**Prevention:** Explicitly enforce strict rate limits via `@Throttle` on endpoints that trigger expensive, resource-intensive workflows.
