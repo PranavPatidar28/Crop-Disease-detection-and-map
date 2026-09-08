@@ -9,7 +9,7 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ThrottlerGuard } from '@nestjs/throttler';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import type { User } from '@prisma/client';
 
 import { CurrentUser } from '@/common/decorators/current-user.decorator';
@@ -22,8 +22,11 @@ import { ReportsService } from './reports.service';
 export class ReportsController {
   constructor(private readonly reports: ReportsService) {}
 
+  // Security: Prevent resource exhaustion/DoS on this expensive endpoint
+  // (downloads images and runs async external AI calls).
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   create(@CurrentUser() user: User, @Body() dto: CreateReportDto) {
     return this.reports.create(user.id, dto);
   }
@@ -49,8 +52,11 @@ export class ReportsController {
     return this.reports.findById(user.id, id);
   }
 
+  // Security: Prevent resource exhaustion/DoS on this expensive endpoint
+  // (downloads images and runs async external AI calls).
   @Post(':id/reprocess')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   reprocess(@CurrentUser() user: User, @Param('id') id: string) {
     return this.reports.reprocess(user.id, id);
   }
