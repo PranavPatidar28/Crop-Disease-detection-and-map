@@ -7,3 +7,8 @@
 **Vulnerability:** The `/diseases/analyze` endpoint lacked strict rate limiting, despite downloading images and calling external AI APIs (Hugging Face).
 **Learning:** Endpoints that perform expensive operations (network I/O, heavy computation, third-party API calls) are prime targets for DoS/resource exhaustion if left with default or no rate limits.
 **Prevention:** Always apply `@Throttle` with strict limits (e.g., 5 req/min) to resource-intensive endpoints, particularly those processing media or interfacing with external ML models. Use `ThrottlerGuard` at the controller level in NestJS.
+
+## 2025-02-14 - Fix missing rate limit on AI job endpoints
+**Vulnerability:** The `/reports` (create) and `/reports/:id/reprocess` endpoints spawned expensive asynchronous jobs (Hugging Face or FastAPI analysis) but lacked strict individual rate limiting, relying only on the default generous `ThrottlerGuard` limit. This allowed an attacker to overwhelm the AI service or exhaust background processor queues.
+**Learning:** Endpoints that trigger expensive asynchronous background tasks (like `ReportsProcessor.schedule`) need strict rate limits just as much as endpoints that block synchronously. A controller-level `ThrottlerGuard` is often too permissive by default.
+**Prevention:** Apply explicit `@Throttle` decorators with strict limits (e.g., 5 req/min) to any endpoint that enqueues resource-intensive tasks, such as image processing or external AI API calls.
