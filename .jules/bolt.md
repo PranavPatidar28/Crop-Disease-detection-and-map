@@ -1,3 +1,7 @@
 ## 2025-02-23 - Memoizing map markers to prevent O(N) re-render waterfalls in react-native-maps
 **Learning:** In React Native applications using `react-native-maps`, rendering a large number of custom markers dynamically (e.g. within a map or loop) causes a massive O(N) re-render waterfall. Defining marker items as inline callbacks inside arrays passes new props and references to children on each parent render, breaking optimizations. In this codebase, inline array mappings with `.map()` inside `MapScreen` were bypassing standard memoization.
 **Action:** Extract marker mappings to standalone memoized components (using `const Item = memo(ItemImpl)` pattern) outside of the main component scope. Any dynamic data or configuration functions passed to these items must be properly stabilized with `useCallback` or `useRef`. For frequently changing dependencies, hold their latest values in refs and update them via `useEffect` to avoid constant callback recreation and subsequent invalidation of the memoized marker items.
+
+## 2024-09-10 - Map re-render waterfalls with custom markers
+**Learning:** Rendering many custom markers (like `OutbreakZoneLayer` or `ReportMarkerItem`) dynamically causes a massive O(N) re-render waterfall in `react-native-maps` when parent state changes.
+**Action:** Always wrap marker components in `React.memo()` using the named inner function pattern (e.g. `const Component = memo(ComponentImpl)`). When mapping arrays to marker items, extract the inline iterations into standalone memoized components.
