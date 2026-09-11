@@ -11,7 +11,7 @@ import {
   Radius,
   Sprout,
 } from 'lucide-react-native';
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { ScrollView, Switch } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -64,6 +64,12 @@ export default function ProfileScreen() {
     await onboardingStorage.setSkipped(false);
     await logout();
   };
+
+  // ⚡ Bolt: Memoize the onPress callback to prevent PlotCard re-renders
+  const handlePlotPress = useCallback((p: Plot) => {
+    setEditingPlot(p);
+    formRef.current?.present();
+  }, []);
 
   return (
     <View className="flex-1 bg-bg">
@@ -130,10 +136,7 @@ export default function ProfileScreen() {
                   <PlotCard
                     key={plot.id}
                     plot={plot}
-                    onPress={(p) => {
-                      setEditingPlot(p);
-                      formRef.current?.present();
-                    }}
+                    onPress={handlePlotPress}
                   />
                 ))
               ) : (
