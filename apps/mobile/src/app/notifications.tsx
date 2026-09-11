@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState , memo } from 'react';
 import { RefreshControl, ScrollView } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -26,6 +26,24 @@ import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/i18n';
 import { usePreferencesStore } from '@/store/preferences.store';
 import { Text, View } from '@/tw';
+
+// ⚡ Bolt: Extracted Animated.View wrapper into a memoized component.
+// While NotificationCard was memoized, wrapping it in an inline Animated.View
+// inside the map broke the memoization for the parent list, causing O(N) re-renders.
+const NotificationItemImpl = ({
+  item,
+  delay,
+  onPress,
+}: {
+  item: Notification;
+  delay: number;
+  onPress: (n: Notification) => void;
+}) => (
+  <Animated.View entering={FadeInDown.delay(delay).duration(260)}>
+    <NotificationCard notification={item} onPress={onPress} />
+  </Animated.View>
+);
+const NotificationItem = memo(NotificationItemImpl);
 
 export default function NotificationsScreen() {
   const theme = useTheme();
@@ -150,12 +168,12 @@ export default function NotificationsScreen() {
                 <DayLabel>{group.label}</DayLabel>
                 <View className="gap-2">
                   {group.items.map((item, i) => (
-                    <Animated.View
+                    <NotificationItem
                       key={item.id}
-                      entering={FadeInDown.delay((gi * 100 + i) * 30).duration(260)}
-                    >
-                      <NotificationCard notification={item} onPress={handlePress} />
-                    </Animated.View>
+                      item={item}
+                      delay={(gi * 100 + i) * 30}
+                      onPress={handlePress}
+                    />
                   ))}
                 </View>
               </View>

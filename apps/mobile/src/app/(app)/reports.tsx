@@ -1,7 +1,7 @@
 // app/(app)/reports.tsx
 import { router } from 'expo-router';
 import { Leaf, SearchX } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
+import { useMemo, useState , memo } from 'react';
 import { RefreshControl, ScrollView } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -24,8 +24,19 @@ import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/i18n';
 import { palette } from '@/theme/colors';
 import { Text, View } from '@/tw';
+import type { Report } from '@/features/upload-report/types';
 
 const NEAR_BOTTOM_PX = 240;
+
+// ⚡ Bolt: Extracted Animated.View wrapper into a memoized component.
+// While ReportHistoryCard was memoized, wrapping it in an inline Animated.View
+// inside the map broke the memoization for the parent list, causing O(N) re-renders.
+const ReportItemImpl = ({ report, delay }: { report: Report; delay: number }) => (
+  <Animated.View entering={FadeInDown.delay(delay).duration(360)}>
+    <ReportHistoryCard report={report} />
+  </Animated.View>
+);
+const ReportItem = memo(ReportItemImpl);
 
 /**
  * "Reports" — the full history of the signed-in user's reports, now a primary
@@ -140,12 +151,11 @@ export default function ReportsScreen() {
                   <DayLabel>{group.label}</DayLabel>
                   <View className="gap-2.5">
                     {group.items.map((report, i) => (
-                      <Animated.View
+                      <ReportItem
                         key={report.id}
-                        entering={FadeInDown.delay(Math.min(gi * 60 + i * 40, 360)).duration(360)}
-                      >
-                        <ReportHistoryCard report={report} />
-                      </Animated.View>
+                        report={report}
+                        delay={Math.min(gi * 60 + i * 40, 360)}
+                      />
                     ))}
                   </View>
                 </View>
