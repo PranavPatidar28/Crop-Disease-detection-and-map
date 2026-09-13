@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -26,6 +26,24 @@ import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/i18n';
 import { usePreferencesStore } from '@/store/preferences.store';
 import { Text, View } from '@/tw';
+
+const AnimatedNotificationCard = memo(function AnimatedNotificationCard({
+  notification,
+  groupIndex,
+  itemIndex,
+  onPress,
+}: {
+  notification: Notification;
+  groupIndex: number;
+  itemIndex: number;
+  onPress: (n: Notification) => void;
+}) {
+  return (
+    <Animated.View entering={FadeInDown.delay((groupIndex * 100 + itemIndex) * 30).duration(260)}>
+      <NotificationCard notification={notification} onPress={onPress} />
+    </Animated.View>
+  );
+});
 
 export default function NotificationsScreen() {
   const theme = useTheme();
@@ -150,12 +168,13 @@ export default function NotificationsScreen() {
                 <DayLabel>{group.label}</DayLabel>
                 <View className="gap-2">
                   {group.items.map((item, i) => (
-                    <Animated.View
+                    <AnimatedNotificationCard
                       key={item.id}
-                      entering={FadeInDown.delay((gi * 100 + i) * 30).duration(260)}
-                    >
-                      <NotificationCard notification={item} onPress={handlePress} />
-                    </Animated.View>
+                      notification={item}
+                      groupIndex={gi}
+                      itemIndex={i}
+                      onPress={handlePress}
+                    />
                   ))}
                 </View>
               </View>
