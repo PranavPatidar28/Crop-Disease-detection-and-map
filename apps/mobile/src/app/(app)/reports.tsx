@@ -1,7 +1,7 @@
 // app/(app)/reports.tsx
 import { router } from 'expo-router';
 import { Leaf, SearchX } from 'lucide-react-native';
-import { useMemo, useState } from 'react';
+import { memo, useMemo, useState } from 'react';
 import { RefreshControl, ScrollView } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,12 +20,31 @@ import {
   type ReportFilter,
 } from '@/features/disease-analysis/utils/filter-reports';
 import { groupReportsByDay } from '@/features/disease-analysis/utils/group-reports-by-day';
+import type { Report } from '@/features/upload-report/types';
 import { useTheme } from '@/hooks/use-theme';
 import { useTranslation } from '@/i18n';
 import { palette } from '@/theme/colors';
 import { Text, View } from '@/tw';
 
 const NEAR_BOTTOM_PX = 240;
+
+const AnimatedReportCard = memo(function AnimatedReportCard({
+  report,
+  groupIndex,
+  itemIndex,
+}: {
+  report: Report;
+  groupIndex: number;
+  itemIndex: number;
+}) {
+  return (
+    <Animated.View
+      entering={FadeInDown.delay(Math.min(groupIndex * 60 + itemIndex * 40, 360)).duration(360)}
+    >
+      <ReportHistoryCard report={report} />
+    </Animated.View>
+  );
+});
 
 /**
  * "Reports" — the full history of the signed-in user's reports, now a primary
@@ -140,12 +159,12 @@ export default function ReportsScreen() {
                   <DayLabel>{group.label}</DayLabel>
                   <View className="gap-2.5">
                     {group.items.map((report, i) => (
-                      <Animated.View
+                      <AnimatedReportCard
                         key={report.id}
-                        entering={FadeInDown.delay(Math.min(gi * 60 + i * 40, 360)).duration(360)}
-                      >
-                        <ReportHistoryCard report={report} />
-                      </Animated.View>
+                        report={report}
+                        groupIndex={gi}
+                        itemIndex={i}
+                      />
                     ))}
                   </View>
                 </View>
