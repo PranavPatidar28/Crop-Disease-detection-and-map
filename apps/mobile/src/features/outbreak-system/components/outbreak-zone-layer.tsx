@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Circle } from 'react-native-maps';
 
 import { TrackingMarker } from '@/features/map-system/components';
@@ -28,7 +29,7 @@ function alphaHex(opacity: number): string {
  * bitmap reliably on Android (and re-captured whenever the content changes),
  * without leaving view-tracking on forever.
  */
-export function OutbreakZoneLayer({ zone, onPress }: OutbreakZoneLayerProps) {
+function OutbreakZoneLayerImpl({ zone, onPress }: OutbreakZoneLayerProps) {
   const fill = mapSeverityFill(zone.severity);
   const dimmed = !zone.active;
   const steps = zoneGlowSteps(zone.severity);
@@ -129,3 +130,7 @@ export function OutbreakZoneLayer({ zone, onPress }: OutbreakZoneLayerProps) {
     </>
   );
 }
+
+// ⚡ Bolt: Memoized component to prevent massive O(N) re-render waterfalls when
+// the map is panned/zoomed (which rapidly triggers `region` state updates in MapScreen).
+export const OutbreakZoneLayer = memo(OutbreakZoneLayerImpl);
